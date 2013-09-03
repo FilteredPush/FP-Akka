@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>FP</groupId>
+    <artifactId>AkkaFP</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+<build>
+  <plugins>
+   <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+     <source>1.6</source>
+     <target>1.6</target>
+    </configuration>
+   </plugin>
+  <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <classpathPrefix>lib/</classpathPrefix>
+              <mainClass>akka.fp.FP</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin> 
+                <groupId>org.apache.maven.plugins</groupId> 
+                <artifactId>maven-dependency-plugin</artifactId> 
+                <configuration> 
+                    
+<outputDirectory>${project.build.directory}/lib/</outputDirectory> 
+                    <overWriteReleases>false</overWriteReleases> 
+                    <overWriteSnapshots>false</overWriteSnapshots> 
+                    <overWriteIfNewer>true</overWriteIfNewer> 
+                </configuration> 
+                <executions> 
+                    <execution> 
+                        <id>copy-dependencies</id> 
+                        <phase>package</phase> 
+                        <goals> 
+                            <goal>copy-dependencies</goal> 
+                        </goals> 
+                    </execution> 
+                </executions> 
+            </plugin> 
+  </plugins>
+ </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>FP</groupId>
+            <artifactId>FP-KurationServices</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.mongodb</groupId>
+        	<artifactId>mongo-java-driver</artifactId>
+        	<version>2.11.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>jaxen</groupId>
+        	<artifactId>jaxen</artifactId>
+        	<version>1.1.4</version>
+        </dependency>
+        <dependency>
+        	<groupId>org.scala-lang</groupId>
+        	<artifactId>scala-library</artifactId>
+        	<version>2.10.1</version>
+        </dependency>
+        <dependency>
+        	<groupId>com.typesafe.akka</groupId>
+        	<artifactId>akka-actor_2.10</artifactId>
+        	<version>2.1.4</version>
+        </dependency>
+        <dependency>
+        	<groupId>args4j</groupId>
+        	<artifactId>args4j</artifactId>
+        	<version>2.0.23</version>
+        </dependency>
+    </dependencies>
+</project>
