@@ -1,5 +1,6 @@
 package akka.fp;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
@@ -12,20 +13,20 @@ import java.io.PrintStream;
  */
 public class Prov {
 
-    private static PrintStream log = null;
+    private static PrintStream log = System.err;
 
     public static void init(String file) {
         try {
-            log = new PrintStream(file);
+            if (file != null)
+                log = new PrintStream(file);
+            else
+                log = new PrintStream(new ByteArrayOutputStream());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     public static PrintStream log() {
-        if (log == null) {
-            log = System.err;
-        }
         return log;
     }
 }

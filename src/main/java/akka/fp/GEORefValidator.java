@@ -1,5 +1,7 @@
 package akka.fp;
 
+import akka.Token;
+import akka.TokenWithProv;
 import akka.actor.*;
 import fp.services.GeoLocate2;
 import fp.services.IGeoRefValidationService;
@@ -12,6 +14,7 @@ import fp.util.SpecimenRecord;
 
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -29,6 +32,17 @@ public class GEORefValidator extends UntypedActor {
             }).withRouter(new SmallestMailboxRouter(4)), "workerRouter");
         getContext().watch(workerRouter);
 	}
+
+    public GEORefValidator(final String service, final boolean useCache, final double certainty, final ActorRef listener, final int instances) {
+        this.listener = listener;
+        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+                    @Override
+                    public Actor create() throws Exception {
+            return new GEORefValidatorInvocation(service, useCache, certainty, listener);
+            }
+            }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
+        getContext().watch(workerRouter);
+    }
 
 
     public void onReceive(Object message) {
@@ -60,7 +74,7 @@ public class GEORefValidator extends UntypedActor {
         private String serviceClassQN;
        	private IGeoRefValidationService geoRefValidationService;
        	private double certainty; 	//the unit is km
-       	private double defaultCertainty = 500;
+       	private double defaultCertainty = 200;
         private int invoc;
         private final Random rand;
 
@@ -192,9 +206,11 @@ public class GEORefValidator extends UntypedActor {
                     }else if(curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
                         curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
                     }
-
                     //output
                     constructOutput(fields, curationComment);
+                    for (List l : geoRefValidationService.getLog()) {
+                        Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, (String)l.get(0), (Long)l.get(1), (Long)l.get(2),l.get(3),curationStatus.toString());
+                    }
                 }
                 Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
             }

@@ -39,6 +39,15 @@ public class FP {
     @Option(name="-o",usage="output records to file")
     private String out = "/Users/cobalt/X31out.txt";
 
+    @Option(name="-p",usage="output provenance to file")
+    private String pout;
+
+    @Option(name="-instGRV",usage="instances of Geo Ref Validator")
+    private Integer instGRV = 4;
+
+    @Option(name="-instSNV",usage="instances of Scientific Name Validator")
+    private Integer instSNV = 6;
+
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
@@ -54,7 +63,8 @@ public class FP {
             return;
         }
         System.out.println("Query: "+ query);
-        Prov.init("testProv.log");
+        System.out.println("Provenance file: "+ pout);
+        Prov.init(pout);
     }
 
     public void calculate() {
@@ -90,13 +100,13 @@ public class FP {
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new ScientificNameValidator("fp.services.IPNIService",true,true,flwtValidator);
+                return new ScientificNameValidator("fp.services.IPNIService",true,true,flwtValidator,instSNV);
             }
         }), "scinValidator");
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
           public UntypedActor create() {
-           return new GEORefValidator("fp.services.GeoLocate2",true,certainty,scinValidator);
+           return new GEORefValidator("fp.services.GeoLocate2",true,certainty,scinValidator,instGRV);
           }
         }), "geoValidator");
 
@@ -106,12 +116,18 @@ public class FP {
             }
         }), "reader");
 
+        final ActorRef starter = system.actorOf(new Props(new UntypedActorFactory() {
+                    public UntypedActor create() {
+                        return new Starter(reader);
+                    }
+        }), "starter");
+
         // start the calculation
-        reader.tell(new Curate());
+        //reader.tell(new Curate());
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);
-        System.err.printf("%d",stoptime-starttime);
+        System.err.printf("%d\t%d\t%d\n",stoptime-starttime,instGRV,instSNV);
     }
 
     static class Curate {
