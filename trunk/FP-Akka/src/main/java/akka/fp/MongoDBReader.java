@@ -24,10 +24,13 @@
  */
 package akka.fp;
 
+import akka.Token;
+import akka.TokenWithProv;
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 
+import java.net.SocketException;
 import java.net.UnknownHostException;
 
 import akka.routing.Broadcast;
@@ -106,14 +109,31 @@ public class MongoDBReader extends UntypedActor {
             e.printStackTrace();
         }
 
+        int seen;
         do {
             //System.out.println(" Starting ");
-            readData();
-            //System.out.println(" End ");
-            if (!cursor.hasNext() || cRecords % 100 == 0) {
+            seen = cursor.numSeen();
+            try {
+                readData();
+            } catch (SocketException se) {
+                System.out.println("Recovering...");
+                MongoClient mongoClient = new MongoClient(_mongodbHost);
+                DB db = mongoClient.getDB(_mongodbDB);
+                DBCollection coll = db.getCollection(_mongodbCollection);
+                if (!_mongodbQuery.isEmpty()) {
+                    Object query = JSON.parse(_mongodbQuery);
+                    cursor = coll.find((DBObject)query);
+                } else {
+                    cursor = coll.find();
+                }
+                cursor.skip(seen);
+            }
+            if (cRecords % 100 == 0) {
                 //System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
             }
         } while (cursor.hasNext());
+        //System.out.println(" End ");
+        //System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
 
         if (cursor != null)
             cursor.close();
@@ -126,7 +146,7 @@ public class MongoDBReader extends UntypedActor {
         invoc++;
     }
 
-    private void readData() {
+    private void readData() throws SocketException {
         if ( cursor == null || !cursor.hasNext()) return;
 
         DBObject dbo = cursor.next();

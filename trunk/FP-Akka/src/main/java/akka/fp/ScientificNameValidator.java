@@ -1,15 +1,14 @@
 package akka.fp;
 
+import akka.Token;
+import akka.TokenWithProv;
 import akka.actor.*;
 import fp.services.IScientificNameValidationService;
 import fp.util.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class ScientificNameValidator extends UntypedActor {
 
@@ -31,6 +30,20 @@ public class ScientificNameValidator extends UntypedActor {
                 return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
             }
         }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
+        getContext().watch(workerRouter);
+    }
+
+    public ScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener, final int instances) {
+        this.listener = listener;
+        this.service = service;
+        this.useCache = useCache;
+        this.insertLSID = insertLSID;
+        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+            @Override
+            public Actor create() throws Exception {
+                return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
+            }
+        }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
@@ -103,25 +116,28 @@ public class ScientificNameValidator extends UntypedActor {
             try {
                 scientificNameLabel = specimenRecordTypeConf.getLabel("ScientificName");
                 if(scientificNameLabel == null){
-                    throw new CurrationException(" failed since the ScientificName label of the SpecimenRecordType is not set.");
+                    scientificNameLabel = "scientificName";
+                    //throw new CurrationException(" failed since the ScientificName label of the SpecimenRecordType is not set.");
                 }
 
                 authorLabel = specimenRecordTypeConf.getLabel("ScientificNameAuthorship");
                 if(authorLabel == null){
-                    throw new CurrationException("failed since the ScientificNameAuthorship label of the SpecimenRecordType is not set.");
+                    authorLabel = "scientificNameAuthorship";
+                    //throw new CurrationException("failed since the ScientificNameAuthorship label of the SpecimenRecordType is not set.");
                 }
 
                 if(insertLSID){
                     LSIDLabel = specimenRecordTypeConf.getLabel("IdentificationTaxon");
                     if(LSIDLabel == null){
-                        throw new CurrationException(" failed since the IdentificationTaxon label of the SpecimenRecordType is not set.");
+                        LSIDLabel = "IdentificationTaxon";
+                        //throw new CurrationException(" failed since the IdentificationTaxon label of the SpecimenRecordType is not set.");
                     }
                 }
 
                 scientificNameService = (IScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
                 scientificNameService.setUseCache(hasDataCache);
-            } catch (CurrationException e) {
-                e.printStackTrace();
+            //} catch (CurrationException e) {
+            //    e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } catch (InstantiationException e) {
@@ -184,11 +200,14 @@ public class ScientificNameValidator extends UntypedActor {
                         curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getComment()+addLSIDComment,getName());
                     } else if (curationStatus == CurationComment.UNABLE_CURATED){
                         curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,scientificNameService.getComment(),getName());
-                    }else if(curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
+                    } else if (curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
                         curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,scientificNameService.getComment(),getName());
                     }
                     //output
                     constructOutput(cleanedSpecimenRecord, curationComment);
+                    for (List l : scientificNameService.getLog()) {
+                        Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());
+                    }
                 }
                 Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
             }

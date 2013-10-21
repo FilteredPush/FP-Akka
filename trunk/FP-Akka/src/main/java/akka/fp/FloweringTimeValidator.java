@@ -1,6 +1,8 @@
 package akka.fp;
 
 
+import akka.Token;
+import akka.TokenWithProv;
 import akka.actor.*;
 import fp.services.IFloweringTimeValidationService;
 import fp.util.*;
@@ -69,19 +71,21 @@ public class FloweringTimeValidator extends UntypedActor {
             //initialize required label
             SpecimenRecordTypeConf speicmenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
 
-            try {
+            //try {
                 scientificNameLabel = speicmenRecordTypeConf.getLabel("ScientificName");
                 if(scientificNameLabel == null){
-                    throw new CurrationException(getName()+" failed since the ScientificName label of the SpecimenRecordType is not set.");
+                    scientificNameLabel = "scientificName";
+                    //throw new CurrationException(getName()+" failed since the ScientificName label of the SpecimenRecordType is not set.");
                 }
 
                 ReproductiveConditionLabel = speicmenRecordTypeConf.getLabel("ReproductiveCondition");
                 if(ReproductiveConditionLabel == null){
-                    throw new CurrationException(getName()+" failed since the ReproductiveCondition label of the SpecimenRecordType is not set.");
+                    ReproductiveConditionLabel = "reproductiveCondition";
+                    //throw new CurrationException(getName()+" failed since the ReproductiveCondition label of the SpecimenRecordType is not set.");
                 }
-            } catch (CurrationException e) {
-                e.printStackTrace();
-            }
+            //} catch (CurrationException e) {
+            //e.printStackTrace();
+            //}
 
             //resolve service
             serviceClassQN = service;
