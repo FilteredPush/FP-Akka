@@ -18,18 +18,6 @@ public class FP {
         fp.calculate();
     }
 
-    @Option(name="-h",usage="MongoDB host")
-    private String host = "fp3.acis.ufl.edu";
-
-    @Option(name="-db",usage="MongoDB database")
-    private String mdb = "db";
-
-    @Option(name="-icol",usage="input MongoDB collection")
-    private String inCol = "Occurrence";
-
-    @Option(name="-ocol",usage="output MongoDB collection")
-    private String outCol = "AkkaTest";
-
     @Option(name="-q",usage="query for MongoDB")
     private String query = "{year:\"1957\"}";
 
@@ -37,16 +25,8 @@ public class FP {
     private String enc = "UTF-8";
 
     @Option(name="-o",usage="output records to file")
-    private String out = "/Users/cobalt/X31out.txt";
-
-    @Option(name="-p",usage="output provenance to file")
-    private String pout;
-
-    @Option(name="-instGRV",usage="instances of Geo Ref Validator")
-    private Integer instGRV = 4;
-
-    @Option(name="-instSNV",usage="instances of Scientific Name Validator")
-    private Integer instSNV = 6;
+    //private String out = "/Users/cobalt/X31out.txt";
+    private String out = "/home/tianhong/X31out.txt";
 
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -62,13 +42,11 @@ public class FP {
             System.err.println();
             return;
         }
-        System.out.println("Query: "+ query);
-        System.out.println("Provenance file: "+ pout);
-        Prov.init(pout);
+        Prov.init("testProv.log");
     }
 
     public void calculate() {
-        this.calculate(host, mdb, inCol, outCol, query, 200.0);
+        this.calculate("fp3.acis.ufl.edu", "db", "Occurrence", "AkkaTest", query, 200.0);
     }
 
     public void calculate(
@@ -83,7 +61,7 @@ public class FP {
 
         // Create an Akka system
         ActorSystem system = ActorSystem.create("FpSystem");
-
+        /*
         // create the result listener, which will print the result and shutdown the system
         //final ActorRef display = system.actorOf(new Props(TextDisplay.class), "display");
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
@@ -92,21 +70,24 @@ public class FP {
             }
         }), "MongoDBWriter");
 
+
         final ActorRef flwtValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new FloweringTimeValidator("fp.services.FNAFloweringTimeService",true,true,writer);
             }
         }), "flwtValidator");
 
+
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new ScientificNameValidator("fp.services.IPNIService",true,true,flwtValidator,instSNV);
+                return new ScientificNameValidator("fp.services.IPNIService",true,true,flwtValidator);
             }
         }), "scinValidator");
 
+
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
           public UntypedActor create() {
-           return new GEORefValidator("fp.services.GeoLocate2",true,certainty,scinValidator,instGRV);
+           return new GEORefValidator("fp.services.GeoLocate2",true,certainty,flwtValidator);
           }
         }), "geoValidator");
 
@@ -115,19 +96,40 @@ public class FP {
                 return new MongoDBReader(host,db,collectionIn,query,geoValidator);
             }
         }), "reader");
+                  */
 
-        final ActorRef starter = system.actorOf(new Props(new UntypedActorFactory() {
-                    public UntypedActor create() {
-                        return new Starter(reader);
-                    }
-        }), "starter");
+        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new CSVWriter(null);
+            }
+        }), "MongoDBWriter");
+
+        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new ScientificNameValidator("fp.services.IPNIService",true,true,writer);
+            }
+        }), "scinValidator");
+
+
+        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new CSVReader(null, scinValidator);
+            }
+        }), "reader");
+        /*
+
+        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new MongoDBReader(host,db,collectionIn,query,scinValidator);
+            }
+        }), "reader"); */
 
         // start the calculation
-        //reader.tell(new Curate());
+        reader.tell(new Curate());
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);
-        System.err.printf("%d\t%d\t%d\n",stoptime-starttime,instGRV,instSNV);
+        System.err.printf("%d",stoptime-starttime);
     }
 
     static class Curate {
