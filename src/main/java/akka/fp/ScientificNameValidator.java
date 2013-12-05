@@ -1,7 +1,5 @@
 package akka.fp;
 
-import akka.Token;
-import akka.TokenWithProv;
 import akka.actor.*;
 import fp.services.IScientificNameValidationService;
 import fp.util.*;

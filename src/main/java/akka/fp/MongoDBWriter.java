@@ -1,7 +1,5 @@
 package akka.fp;
 
-import akka.Token;
-import akka.TokenWithProv;
 import akka.actor.UntypedActor;
 import fp.util.CurationCommentType;
 import akka.routing.Broadcast;
