@@ -24,19 +24,16 @@
  */
 package akka.fp;
 
-import akka.Token;
-import akka.TokenWithProv;
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
-
-import java.net.SocketException;
-import java.net.UnknownHostException;
-
 import akka.routing.Broadcast;
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 import fp.util.SpecimenRecord;
+
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 /**
  * Created with IntelliJ IDEA.
