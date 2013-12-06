@@ -5,6 +5,8 @@
 package akka.fp;
 
 
+import java.io.File;
+
 import akka.actor.*;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -26,8 +28,12 @@ public class FP {
 
     @Option(name="-o",usage="output records to file")
     //private String out = "/Users/cobalt/X31out.txt";
-    private String out = "/home/tianhong/X31out.txt";
+    //private String out = "/home/tianhong/X31out.txt";
+    private String outputFilename = "testoutput.txt";
 
+    @Option(name="-i",usage="Input records from CSV file")
+    private String inputFilename = "test.csv";
+    
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
@@ -35,6 +41,14 @@ public class FP {
             parser.parseArgument(args);
             //if( arguments.isEmpty() )
             //    throw new CmdLineException(parser,"No argument is given");
+            File inputFile = new File(inputFilename);
+            if (!inputFile.canRead()) { 
+                throw new CmdLineException(parser,"Can't read Input File " + inputFilename );
+            }
+            File outputFile = new File(outputFilename);
+            if (outputFile.exists()) { 
+                throw new CmdLineException(parser,"Output File Exists " + outputFilename );
+            }
         } catch( CmdLineException e ) {
             System.err.println(e.getMessage());
             System.err.println("java FP [options...] arguments...");
@@ -100,7 +114,7 @@ public class FP {
 
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new CSVWriter(null);
+                return new CSVWriter(outputFilename);
             }
         }), "MongoDBWriter");
 
@@ -113,7 +127,7 @@ public class FP {
 
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new CSVReader(null, scinValidator);
+                return new CSVReader(inputFilename, scinValidator);
             }
         }), "reader");
         /*
