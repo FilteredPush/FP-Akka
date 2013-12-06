@@ -47,7 +47,7 @@ public class CSVReader extends UntypedActor {
     private final ActorRef listener;
 
     private String _filePath = "/home/tianhong/test/data/1000.csv";
-
+    
     private DBCursor cursor = null;
     private int cRecords = 0;
     private int cValidRecords = 0;
@@ -71,34 +71,37 @@ public class CSVReader extends UntypedActor {
 
         BufferedReader collectionFileReader = new BufferedReader(new FileReader(_filePath));
         String strLine = collectionFileReader.readLine();
-        labelList = strLine.split(",");
+        if (strLine!=null) { 
+        	labelList = strLine.split(",");
 
-       /* //handle the head line
-        ArrayList<String> fieldNameArray = parseRecord(strLine, delimiter);
-        for(int i=0;i<fieldNameArray.size();i++){
-            String fieldName = fieldNameArray.get(i);
-            if(fieldName.equals("")){
-                throw new IllegalActionException(getClass().getName()+" failed for invalid csv file format: the field name field can't be empty.");
-            }
-            //replace colon by underscore since colon is not allowed to appear in the label name and also a field name of record type
-            fieldName = fieldName.replaceAll(":", "_");
+/*        	
+        	//handle the header line
+        	ArrayList<String> fieldNameArray = parseRecord(strLine, delimiter);
+        	for(int i=0;i<fieldNameArray.size();i++){
+        		String fieldName = fieldNameArray.get(i);
+        		if(fieldName.equals("")){
+        			throw new IllegalActionException(getClass().getName()+" failed for invalid csv file format: the field name field can't be empty.");
+        		}
+        		//replace colon by underscore since colon is not allowed to appear in the label name and also a field name of record type
+        		fieldName = fieldName.replaceAll(":", "_");
 
-            fieldNameArray.set(i, fieldName);
+        		fieldNameArray.set(i, fieldName);
+        	}
+*/
+
+
+
+        	do {
+        		strLine = collectionFileReader.readLine();
+        		//System.out.println(" Starting ");
+        		readData(strLine);
+        		//System.out.println(" End ");
+        		if (strLine == null || cRecords % 1000 == 0) {
+        			System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
+        		}
+        	} while (strLine != null);
+
         }
-         */
-
-
-
-        do {
-            strLine = collectionFileReader.readLine();
-            //System.out.println(" Starting ");
-            readData(strLine);
-            //System.out.println(" End ");
-            if (strLine == null || cRecords % 1000 == 0) {
-                System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
-            }
-        } while (strLine != null);
-
         //listener.tell(new Done(),getSelf());
         //listener.tell(new Broadcast(new Done()),getSel;
         //listener.tell(new Broadcast(Poiso
@@ -114,6 +117,13 @@ public class CSVReader extends UntypedActor {
         cRecords++;
 
         SpecimenRecord out = new SpecimenRecord();
+        /* Fails here on lines that contain " to enclose strings that contain the comma delimiter. 
+         strLine = "106497",,,,,"Parmeliaceae","Melanohalea ","Melanohalea subolivacea","(Nylander) O. Blanco, A. Crespo, P. K. Divakar, Esslinger, D. Hawksworth & Lumbsch",,,
+[ERROR] [12/06/2013 10:55:36.856] [FpSystem-akka.actor.default-dispatcher-6] [akka://FpSystem/user/reader] 12
+java.lang.ArrayIndexOutOfBoundsException: 12
+	at akka.fp.CSVReader.readData(CSVReader.java:132)
+         */
+        // TODO: Use javacsv library with CSVReader and CSVWriter here instead of parsing by hand.
         String[] dataList = strLine.split(",");
 
         if (dataList.length > labelList.length) {
