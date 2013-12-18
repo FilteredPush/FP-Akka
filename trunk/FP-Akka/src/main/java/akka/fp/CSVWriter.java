@@ -2,10 +2,13 @@ package akka.fp;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+import com.csvreader.CsvWriter;
 import fp.util.SpecimenRecord;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * Created with IntelliJ IDEA.
@@ -18,14 +21,15 @@ public class CSVWriter extends UntypedActor {
     int cRecords = 0;
     int invoc = 0;
     private String _filePath = "/home/tianhong/test/data/out1000.csv";
-    FileWriter writer;
-    Boolean header = true;
-
+    CsvWriter csvOutput;
+    Boolean headerWritten = false;
+    List<String> headers = new ArrayList<String>();
+    //todo: make it more flexible
 
     public CSVWriter(String filePath) {
         if (filePath != null) this._filePath = filePath;
         try {
-            writer = new FileWriter(_filePath);
+            CsvWriter writer = new CsvWriter(new FileWriter(_filePath, true), ',');
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -44,51 +48,25 @@ public class CSVWriter extends UntypedActor {
                     System.currentTimeMillis());
         }
         if (message instanceof Token) {
-            if (((Token) message).getData() instanceof SpecimenRecord) {
-                SpecimenRecord rec = (SpecimenRecord)((Token) message).getData();
-                StringBuffer b = new StringBuffer();
-                b.append("\"");
-                b.append(rec.get("id"));
-                b.append("\"");
-                if (rec.get("geoRefStatus") != null) {
-                    b.append("\tGEORefValidator=");
-                    b.append(rec.get("geoRefStatus"));
-                }
-                if (rec.get("scinStatus") != null) {
-                    b.append("\tScientificNameValidator=");
-                    b.append(rec.get("scinStatus"));
-                }
-                if (rec.get("flwtStatus") != null) {
-                    b.append("\tFloweringTimeValidator=");
-                    b.append(rec.get("flwtStatus"));
-                }
-                b.append("\t[");
-                boolean first = true;
-                for (String s : rec.keySet()) {
-                    if (!(s.equals("geoRefStatus") ||
-                            s.equals("scinStatus") ||
-                            s.equals("flwtStatus") ||
-                            s.equals("geoRefComment") ||
-                            s.equals("scinComment") ||
-                            s.equals("flwtComment") )) {
-                        if (!first) {
-                            b.append(" , ");
-                        } else {
-                            first = false;
-                        }
-                        b.append("\"");
-                        b.append(s);
-                        b.append("\" : \"");
-                        b.append(rec.get(s));
-                        b.append("\"");
-                    }
-                }
-                b.append("]\n");
-                //System.out.print(b.toString());
+            Object o = ((Token) message).getData();
 
-            }
             try {
-                convertObject(((Token) message).getData());
+                if (!headerWritten) {
+                    //write header first
+                    //use headers list to keep track of the order
+                    for (String label  : ((SpecimenRecord)o).keySet()) {
+                        csvOutput.write(label);
+                        headers.add(label);
+                    }
+                    csvOutput.endRecord();
+                }
+
+                //write the values
+                for (String header : headers){
+                    csvOutput.write(((SpecimenRecord)o).get(header));
+                }
+                csvOutput.endRecord();
+
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
@@ -109,28 +87,9 @@ public class CSVWriter extends UntypedActor {
     public void postStop() {
         System.out.println("Stopped Display");
         //System.out.println("Wrote " + cRecords + " records.");
+        csvOutput.close();
         getContext().system().shutdown();
         super.postStop();
     }
 
-    private void convertObject(Object o) throws IOException {
-        //System.out.println("o.toString() = " + o.toString());
-        if (header){
-            for (String label  : ((SpecimenRecord)o).keySet()) {
-                writer.append(label + ",");
-            }
-            writer.append("\n");
-        }
-        if (o instanceof SpecimenRecord) {
-            for (String label  : ((SpecimenRecord)o).keySet()) {
-                String t = ((SpecimenRecord)o).get(label);
-                writer.append(t + ",");
-            }
-        } else {
-            System.out.println(o.getClass().getName());
-            writer.append(o.toString());
-        }
-        writer.append("\n");
-        writer.flush();
-    }
 }

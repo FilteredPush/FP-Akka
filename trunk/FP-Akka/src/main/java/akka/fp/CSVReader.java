@@ -28,11 +28,12 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+import com.csvreader.CsvReader;
 import com.mongodb.DBCursor;
 import fp.util.SpecimenRecord;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -69,29 +70,13 @@ public class CSVReader extends UntypedActor {
     public void onReceive(Object o) throws Exception {
         start = System.currentTimeMillis();
 
+        /* use java csv library instead
         BufferedReader collectionFileReader = new BufferedReader(new FileReader(_filePath));
         String strLine = collectionFileReader.readLine();
         if (strLine!=null) { 
         	labelList = strLine.split(",");
 
-/*        	
-        	//handle the header line
-        	ArrayList<String> fieldNameArray = parseRecord(strLine, delimiter);
-        	for(int i=0;i<fieldNameArray.size();i++){
-        		String fieldName = fieldNameArray.get(i);
-        		if(fieldName.equals("")){
-        			throw new IllegalActionException(getClass().getName()+" failed for invalid csv file format: the field name field can't be empty.");
-        		}
-        		//replace colon by underscore since colon is not allowed to appear in the label name and also a field name of record type
-        		fieldName = fieldName.replaceAll(":", "_");
-
-        		fieldNameArray.set(i, fieldName);
-        	}
-*/
-
-
-
-        	do {
+     	do {
         		strLine = collectionFileReader.readLine();
         		//System.out.println(" Starting ");
         		readData(strLine);
@@ -102,6 +87,34 @@ public class CSVReader extends UntypedActor {
         	} while (strLine != null);
 
         }
+        */
+
+        try {
+            CsvReader reader = new CsvReader(_filePath);
+            reader.readHeaders();
+            while (reader.readRecord())
+            {
+                cRecords++;
+                SpecimenRecord out = new SpecimenRecord();
+                //reader through the whole record
+                for (String header : reader.getHeaders()){
+                    out.put(header.replace("\"", ""), reader.get(header));
+                    System.out.println("header = " + header + ": " + reader.get(header));
+                    //todo: may need validation steps here, some errors are ignored
+                }
+                Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(out,this.getClass().getSimpleName(),invoc);
+
+                ++cValidRecords;
+                listener.tell(t,getSelf());
+            }
+            reader.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         //listener.tell(new Done(),getSelf());
         //listener.tell(new Broadcast(new Done()),getSel;
         //listener.tell(new Broadcast(Poiso
@@ -112,39 +125,13 @@ public class CSVReader extends UntypedActor {
         invoc++;
     }
 
-    private void readData(String strLine) {
-        if ( strLine == null) return;
-        cRecords++;
-
-        SpecimenRecord out = new SpecimenRecord();
         /* Fails here on lines that contain " to enclose strings that contain the comma delimiter. 
          strLine = "106497",,,,,"Parmeliaceae","Melanohalea ","Melanohalea subolivacea","(Nylander) O. Blanco, A. Crespo, P. K. Divakar, Esslinger, D. Hawksworth & Lumbsch",,,
 [ERROR] [12/06/2013 10:55:36.856] [FpSystem-akka.actor.default-dispatcher-6] [akka://FpSystem/user/reader] 12
 java.lang.ArrayIndexOutOfBoundsException: 12
 	at akka.fp.CSVReader.readData(CSVReader.java:132)
          */
-        // TODO: Use javacsv library with CSVReader and CSVWriter here instead of parsing by hand.
-        String[] dataList = strLine.split(",");
 
-        if (dataList.length > labelList.length) {
-            System.out.println("strLine = " + strLine);
-        }
-
-        for(int i=0;i<dataList.length;i++){
-            //if (fieldName.startsWith("_")) fieldName = fieldName.substring(1);
-           // if (fieldName.contains(":")) fieldName = fieldName.replace(":","");
-
-           // Object o = dbo.get(key);
-
-            out.put(labelList[i].replace("\"", ""),dataList[i]);
-        }
-
-        //System.out.println("out = " + out);
-        Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(out,this.getClass().getSimpleName(),invoc);
-
-        ++cValidRecords;
-        listener.tell(t,getSelf());
-    }
 
     @Override
     public void postStop() {
