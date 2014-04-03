@@ -1,31 +1,30 @@
 package akka.fp;
 
-import akka.actor.ActorRef;
-import akka.actor.UntypedActor;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.mongodb.BasicDBObject;
-import fp.util.CurationComment;
-import fp.util.CurationCommentType;
-import fp.util.SpecimenRecord;
-import org.filteredpush.client.FPNetworkAccessPointService;
-import org.filteredpush.client.auth.XMLSignatureAuth;
-import org.filteredpush.handler.model.*;
-import org.filteredpush.message.ApplePieMessageFactory;
-import org.filteredpush.message.ClientIdentity;
-import org.filteredpush.message.FPMessage;
-import org.filteredpush.rdf.handler.RdfBeanHandler;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.namespace.QName;
-import java.io.FileInputStream;
-import java.io.StringWriter;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.UUID;
+
+import org.filteredpush.client.util.ClientHelperService;
+import org.filteredpush.knowledge.rdf.RdfUtil;
+import org.filteredpush.model.annotations.Agent;
+import org.filteredpush.model.annotations.Annotation;
+import org.filteredpush.model.annotations.ContentAsText;
+import org.filteredpush.model.annotations.Evidence;
+import org.filteredpush.model.annotations.Expectation;
+import org.filteredpush.model.annotations.Selector;
+import org.filteredpush.model.annotations.SpecificResource;
+import org.filteredpush.model.dwc.Georeference;
+import org.ontoware.rdf2go.model.Syntax;
+
+import akka.actor.ActorRef;
+import akka.actor.UntypedActor;
+
+import com.mongodb.BasicDBObject;
+import com.viceversatech.rdfbeans.exceptions.RDFBeanException;
+
+import fp.util.CurationComment;
+import fp.util.CurationCommentType;
+import fp.util.SpecimenRecord;
 
 /**
 * Created with IntelliJ IDEA.
@@ -79,13 +78,12 @@ public class AnnotationInserter extends UntypedActor {
 
                         // First we construct an annotation from the following POJOs
                         Annotation annotation = new Annotation();
-                        Target target = new Target();
+                        SpecificResource target = new SpecificResource();
                         Selector selector = new Selector();
                         //Source source = new Source();
-                        Body body = new Body();
-                        Expectation expectation = new Expectation();
+                        Expectation expectation;
                         Evidence evidence = new Evidence();
-                        Annotator annotator = new Annotator();
+                        Agent annotator = new Agent();
                         //Agent georefBy = new Agent();
                         //Generator generator = new Generator();
                         String configurationFile = null;
@@ -102,14 +100,16 @@ public class AnnotationInserter extends UntypedActor {
 
                             //distinguish two types of curated status: update or insert
                             if (status.equals(CurationComment.CURATED.toString())) {
-                                expectation.setType(EXPECTATION_UPDATE);
+                                expectation = Expectation.UPDATE;
                             }
                             else{
-                                expectation.setType(EXPECTATION_INSERT);
+                                expectation = Expectation.INSERT;
                             }
-                            annotation.setHasExpectation(expectation);
+                            Georeference body = new Georeference();
+                            
+                            annotation.setExpectation(expectation);
                             evidence.setChars(comment);
-                            annotation.setHasEvidence(evidence);
+                            annotation.setEvidence(evidence);
 
                             //body.setCoordinatePrecision("9");
                             //body.setCoordinateUncertaintyInMeters("281");
@@ -157,21 +157,22 @@ public class AnnotationInserter extends UntypedActor {
                             //body.setGeoreferenceSources("Schopf, K., Morris, P.. 1994. \"Description of a Muscle Scar and two other novel features from steinkerns of Hypomphalocirrus (Mollusca: Paragastropoda)\" Jour.Paleontology, 68(1):47-58");
                             //body.setGeoreferenceVerificationStatus("verified by collector");
                             //body.setGeoreferencedBy(georefBy);
-                            annotation.setHasBody(body);
+                            annotation.setBody(body);
 
                             configurationFile = "georeference.xml";
                         }
                         else if(status.equals(CurationComment.UNABLE_CURATED.toString()) ){    //||
                             //comment.getStatus().equals(CurationComment.UNABLE_DETERMINE_VALIDITY.toString())){
 
-                            expectation.setType(EXPECTATION_SOLVE_WITH_MORE_DATA);
-                            annotation.setHasExpectation(expectation);
+                        	ContentAsText body = new ContentAsText();
+                            expectation = Expectation.SOLVE_WITH_MORE_DATA;
+                            annotation.setExpectation(expectation);
 
                             evidence.setChars(comment);
-                            annotation.setHasEvidence(evidence);
+                            annotation.setEvidence(evidence);
 
                             body.setChars(comment);
-                            annotation.setHasBody(body);
+                            annotation.setBody(body);
 
                             configurationFile = "solve_with_more_data.xml";
                         }
@@ -191,47 +192,30 @@ public class AnnotationInserter extends UntypedActor {
                         } catch (Exception ignored) {}
 
                         //target.setHasSource(source);
-                        target.setHasSelector(selector);
-                        annotation.setHasTarget(target);
+                        target.setSelector(selector);
+                        annotation.setTarget(target);
 
                         //evidence.setChars(comment.getDetails());
                         //annotation.setHasEvidence(evidence);
 
                         //annotation.setGenerator(generator);
 
-                        // Once we have created an instance of the Annotation object and its members
-                        // we initialize the RdfBeanHandler with the configuration in georeference.xml to generate
-                        // a Jena Model and finally serialize it as rdf/xml via the write() method
-
-                        RdfBeanHandler handler = null;
+                        
                         try {
-                            //handler = new RdfBeanHandler(Annotation.class,
-                            // FPAnnotationInserter.class.getResourceAsStream("/georeference.xml"));
-                            handler = new RdfBeanHandler(Annotation.class,
-                                    new FileInputStream("/etc/filteredpush/descriptors/" + configurationFile));
-                        } catch (Exception e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                        }
-                        Model model = null;
-                        try {
-                            model = handler.createJenaModel(annotation, BASE_URI + UUID.randomUUID().toString());
-                        } catch (Exception e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                        }
-
-                        StringWriter writer = new StringWriter();
-                        model.write(writer);
-                        String annotationRdf = writer.toString();
-
-                        System.out.println("Annotation RDF/XML:");
-                        //System.out.println();
-                        //System.out.println(annotationRdf);
+							String annotationRdf = RdfUtil.serialize(annotation, Syntax.RdfXml);
+							
+	                        System.out.println("Annotation RDF/XML:");
+	                        System.out.println();
+	                        System.out.println(annotationRdf);
+						} catch (RDFBeanException e) {
+							e.printStackTrace();
+						}
 
                         //Inject the annotation into the FPush stack in a FP Message
                        // boolean injectOrNot = ((BooleanToken)injectToFPush.getToken()).booleanValue();
                         if (injectOrNot){
                             try {
-                                injectAnnotation(annotationRdf);
+                                injectAnnotation(annotation);
                             } catch (Exception e) {
                                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                             }
@@ -301,55 +285,21 @@ public class AnnotationInserter extends UntypedActor {
     //private String mongodbCollection = null;
     //private String resultId;
 
-    private void injectAnnotation (String annotationRdf) throws Exception {
+    private void injectAnnotation (Annotation annotation) throws Exception {
         // Create a new FPMessage and put the annotation rdf/xml into the FPMessage content
 
-        ApplePieMessageFactory factory = new ApplePieMessageFactory();
-        FPMessage message = factory.createAnnotationMessage(annotationRdf);
-
-        // Serialize the FPMessage as xml and use the XMLSignatureAuth utility to sign the xml before
-        // sending it to the network.
-
-        StringWriter sw = new StringWriter();
-
-        try {
-            JAXBContext context = JAXBContext.newInstance(FPMessage.class);
-            Marshaller m = context.createMarshaller();
-            m.marshal(message, sw);
-        } catch (JAXBException e) {
-            throw new RuntimeException(e);
-        }
-
-        XMLSignatureAuth auth = new XMLSignatureAuth();
-        String signedMessage = auth.sign(sw.toString(), "keystore");
-
-       /* System.out.println();
-        System.out.println("Signed FPMessage xml:");
+    	ClientHelperService service = new ClientHelperService(ENDPOINT_HOST, ENDPOINT_PORT);
+        String response = service.insertIdentification(annotation);
+        
         System.out.println();
-        System.out.println(signedMessage);   */
-
-        // Now we invoke the AccessPoint soap web service via the classes generated from the wsdl
-        // and supply the signed message xml
-
-        URL wsdlLocation = new URL("http://" + ENDPOINT_HOST_AND_PORT +
-                "/FPNetworkAccessPointService/FPNetworkAccessPoint?wsdl");
-        FPNetworkAccessPointService service = new FPNetworkAccessPointService(
-                wsdlLocation,
-                new QName("http://triage.filteredpush.org/", "FPNetworkAccessPointService"));
-
-
-        String messageHandle = service.getFPNetworkAccessPointPort().acceptMessage(signedMessage, new ClientIdentity());
-        System.out.println();
-        System.out.println("Success: message handle " + messageHandle + " for annotation");
+        System.out.println("Success: response " + response + " for annotation");
     }
 
     //public final Parameter collectionScope;
 
-    private static final String EXPECTATION_UPDATE = "oad:Expectation_Update";
-    private static final String EXPECTATION_INSERT = "oad:Expectation_Insert";
-    private static final String EXPECTATION_SOLVE_WITH_MORE_DATA = "oad:Expectation_Solve_With_More_Data";
     private static final String BASE_URI = "http://etaxonomy.org/ontologies/oa";
-    private static String ENDPOINT_HOST_AND_PORT = "fp3.acis.ufl.edu:8088";
+    private static String ENDPOINT_HOST = "localhost";
+    private static int ENDPOINT_PORT = 8082;
 
     boolean injectOrNot = true;
     private final ActorRef listener;
