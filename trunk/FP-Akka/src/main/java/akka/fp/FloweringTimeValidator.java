@@ -48,6 +48,15 @@ public class FloweringTimeValidator extends UntypedActor {
             } else {
                 unhandled(message);
             }
+
+            /*
+            //pass through the original token
+            if (message instanceof TokenWithProv) {
+                if (((TokenWithProv) message).getActorCreated().equals("MongoDBReader")) {
+                    listener.tell(message, getSelf());
+                }
+            }
+            */
         }
 
         @Override
@@ -238,8 +247,9 @@ public class FloweringTimeValidator extends UntypedActor {
 
         private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
             if(comment!=null){
-                result.put("flwtComment", comment.toString());
+                result.put("flwtComment", comment.getDetails());
                 result.put("flwtStatus", comment.getStatus());
+                result.put("flwtSource", comment.getSource());
             }
             listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc), getContext().parent());
         }

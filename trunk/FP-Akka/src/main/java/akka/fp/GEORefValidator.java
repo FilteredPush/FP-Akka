@@ -58,6 +58,15 @@ public class GEORefValidator extends UntypedActor {
         } else {
             unhandled(message);
         }
+
+        /*
+        //pass through the original token
+        if (message instanceof TokenWithProv) {
+            if (((TokenWithProv) message).getActorCreated().equals("MongoDBReader")) {
+                listener.tell(message, getSelf());
+            }
+        }
+        */
     }
 
     @Override
@@ -216,11 +225,13 @@ public class GEORefValidator extends UntypedActor {
 
         private void constructOutput(Map<String, String> result, CurationCommentType comment) {
             if (comment != null) {
-                result.put("geoRefComment",comment.toString());
+                result.put("geoRefComment",comment.getDetails());
                 result.put("geoRefStatus",comment.getStatus());
+                result.put("geoRefSource",comment.getSource());
             } else {
                 result.put("geoRefStatus",CurationComment.CORRECT.toString());
                 result.put("geoRefComment","None");
+                result.put("geoRefSource",comment.getSource());
             }
             SpecimenRecord r = new SpecimenRecord(result);
             Token token = new TokenWithProv<SpecimenRecord>(r,getName(),invoc);

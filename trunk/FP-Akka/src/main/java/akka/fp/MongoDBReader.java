@@ -47,10 +47,10 @@ public class MongoDBReader extends UntypedActor {
 
     private final ActorRef listener;
 
-    private String _mongodbHost = "fp3.acis.ufl.edu";
+    private String _mongodbHost = "fp2.acis.ufl.edu";
     private String _mongodbDB = "db";
     private String _mongodbCollection = "Occurrence";
-    private String _mongodbQuery = "{year:\"1913\"}";
+    private String _mongodbQuery = "{year:\"1898\"}";
 
     private DBCursor cursor = null;
     private int cRecords = 0;
@@ -72,6 +72,16 @@ public class MongoDBReader extends UntypedActor {
 
     @Override
     public void onReceive(Object o) throws Exception {
+         /*
+        Boolean test = true;
+        while (test) {
+            if (o instanceof String) {
+                System.out.println("o = " + o.toString());
+                test = false;
+            }
+        }
+        */
+
         long start = System.currentTimeMillis();
         //System.out.println("Accessing MongoDB ...");
         try {

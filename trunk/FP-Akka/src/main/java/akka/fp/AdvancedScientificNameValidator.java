@@ -1,14 +1,14 @@
 package akka.fp;
 
 import akka.actor.*;
-import fp.services.IScientificNameValidationService;
-import fp.util.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
+import fp.services.IAdvancedScientificNameValidationService;
+import fp.util.*;
 
 import java.util.*;
 
-public class ScientificNameValidator extends UntypedActor {
+public class AdvancedScientificNameValidator extends UntypedActor {
 
     private final ActorRef listener;
     private final ActorRef workerRouter;
@@ -16,7 +16,7 @@ public class ScientificNameValidator extends UntypedActor {
     private final boolean useCache;
     private final boolean insertLSID;
 
-    public ScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener) {
+    public AdvancedScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener) {
 
         this.listener = listener;
         this.service = service;
@@ -31,7 +31,7 @@ public class ScientificNameValidator extends UntypedActor {
         getContext().watch(workerRouter);
     }
 
-    public ScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener, final int instances) {
+    public AdvancedScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener, final int instances) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
@@ -104,7 +104,7 @@ public class ScientificNameValidator extends UntypedActor {
         private String authorLabel;
         private String LSIDLabel;
 
-        private IScientificNameValidationService scientificNameService;
+        private IAdvancedScientificNameValidationService scientificNameService;
 
         private final Random rand;
         private int invoc;
@@ -141,7 +141,7 @@ public class ScientificNameValidator extends UntypedActor {
                     }
                 }
 
-                scientificNameService = (IScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
+                scientificNameService = (IAdvancedScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
                 scientificNameService.setUseCache(hasDataCache);
             //} catch (CurrationException e) {
             //    e.printStackTrace();
@@ -188,25 +188,36 @@ public class ScientificNameValidator extends UntypedActor {
                         return;
                     }
 
-                    scientificNameService.validateScientificName(scientificName, author);
+                    String genus = inputSpecimenRecord.get("genus");
+                    String subgenus = inputSpecimenRecord.get("subgenus");
+                    String specificEpithet = inputSpecimenRecord.get("specificEpithet");
+                    String verbatimTaxonRank = inputSpecimenRecord.get("verbatimTaxonRank");
+                    String infraspecificEpithet = inputSpecimenRecord.get("infraspecificEpithet");
+                    String taxonRank = inputSpecimenRecord.get("taxonRank");
+                    /*
+                    System.out.println("taxonRank = " + taxonRank);
+                    System.out.println("infraspecificEpithet = " + infraspecificEpithet);
+                    System.out.println("verbatimTaxonRank = " + verbatimTaxonRank);
+                    System.out.println("specificEpithet = " + specificEpithet);
+                    System.out.println("subgenus = " + subgenus);
+                    System.out.println("genus = " + genus);
+                     */
+                    scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank);
 
                     SpecimenRecord cleanedSpecimenRecord = new SpecimenRecord(inputSpecimenRecord);
                     CurationCommentType curationComment = null;
-                    String addLSIDComment = "";
-                    if(insertLSID){
-                        addLSIDComment = "Add LSID from service "+scientificNameService.getServiceName()+".";
-                    }
+
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
-                    if(curationStatus == CurationComment.CORRECT && insertLSID){
-                        cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificName,author,scientificNameService.getLSID());
-                        curationComment = CurationComment.construct(CurationComment.CURATED,addLSIDComment,getName());
+                    if(curationStatus == CurationComment.CORRECT){
+                        cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificName,author);
+                        curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getServiceName(),getName());
                     } else if (curationStatus == CurationComment.CURATED){
                         if (insertLSID) {
-                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor(),scientificNameService.getLSID());
+                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor());
                         } else {
-                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor(),null);
+                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor());
                         }
-                        curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getComment()+addLSIDComment,getName());
+                        curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getComment()+scientificNameService.getServiceName(),getName());
                     } else if (curationStatus == CurationComment.UNABLE_CURATED){
                         curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,scientificNameService.getComment(),getName());
                     } else if (curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
@@ -214,15 +225,15 @@ public class ScientificNameValidator extends UntypedActor {
                     }
                     //output
                     constructOutput(cleanedSpecimenRecord, curationComment);
-                    for (List l : scientificNameService.getLog()) {
+                    /*for (List l : scientificNameService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());
-                    }
+                    }     */
                 }
                 Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
             }
         }
 
-        private SpecimenRecord constructCleanedSpecimenRecord(SpecimenRecord inputSpecimenRecord, String scientificName,String author, String lsid) {
+        private SpecimenRecord constructCleanedSpecimenRecord(SpecimenRecord inputSpecimenRecord, String scientificName,String author) {
             LinkedHashMap<String,String> valueMap = new LinkedHashMap<String, String>();
             Set<String> labelSet = inputSpecimenRecord.keySet();
             Iterator<String> iter = labelSet.iterator();
@@ -234,11 +245,7 @@ public class ScientificNameValidator extends UntypedActor {
                     valueMap.put(label, scientificName);
                 } else if (label.equals(authorLabel)){
                     valueMap.put(label, author);
-                    if(lsid == null){
-                        valueMap.put(LSIDLabel, "");
-                    }else{
-                        valueMap.put(LSIDLabel, lsid);
-                    }
+
                 } else {
                     valueMap.put(label, value);
                 }
