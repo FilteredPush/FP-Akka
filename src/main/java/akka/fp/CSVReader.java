@@ -99,10 +99,12 @@ public class CSVReader extends UntypedActor {
                 //reader through the whole record
                 for (String header : reader.getHeaders()){
                     out.put(header.replace("\"", ""), reader.get(header));
-                    System.out.println("header = " + header + ": " + reader.get(header));
+                    //System.out.println("header = " + header + ": " + reader.get(header));
                     //todo: may need validation steps here, some errors are ignored
                 }
                 Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(out,this.getClass().getSimpleName(),invoc);
+
+               // System.out.println("t.toString() = " + t.toString());
 
                 ++cValidRecords;
                 listener.tell(t,getSelf());
@@ -136,7 +138,7 @@ java.lang.ArrayIndexOutOfBoundsException: 12
     @Override
     public void postStop() {
         System.out.println("Stopped Reader");
-        System.out.println(System.currentTimeMillis() - start);
+        //System.out.println(System.currentTimeMillis() - start);
         super.postStop();
     }
 

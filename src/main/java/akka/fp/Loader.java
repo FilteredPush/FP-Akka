@@ -10,45 +10,42 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.File;
-
-public class FP {
+public class Loader {
 
     public static void main(String[] args) {
-        FP fp = new FP();
+        Loader fp = new Loader();
         fp.setup(args);
         fp.calculate();
     }
 
-    @Option(name="-q",usage="query for MongoDB")
-    private String query = "{year:\"1898\"}";
+    @Option(name="-h",usage="MongoDB Host")
+    private String mongoHost = "fp2.acis.ufl.edu";
 
-    @Option(name="-e",usage="encoding for output file")
-    private String enc = "UTF-8";
+    @Option(name="-d",usage="db")
+    private String db = "db";
 
-    @Option(name="-o",usage="output records to file")
-    //private String out = "/Users/cobalt/X31out.txt";
-    private String outputFilename = "/home/tianhong/Downloads/test.csv";
-    //private String outputFilename = "testoutput.txt";
+    @Option(name="-ci",usage="Input Collection")
+    private String inputCollection = "data1905";
 
-    @Option(name="-i",usage="Input records from CSV file")
-    private String inputFilename = "/home/tianhong/Downloads/occurrence_short.csv";
+    @Option(name="-co",usage="Output Collection")
+    private String outputCollection = "ASU1905";
+
+    @Option(name="-q",usage="Query")
+    private String query = "";
+
+    //private String query = "{year:\"1898\"}";
+
     
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
         try {
             parser.parseArgument(args);
-            //if( arguments.isEmpty() )
-            //    throw new CmdLineException(parser,"No argument is given");
-            File inputFile = new File(inputFilename);
-            if (!inputFile.canRead()) { 
-                throw new CmdLineException(parser,"Can't read Input File " + inputFilename );
-            }
-            File outputFile = new File(outputFilename);
-            if (outputFile.exists()) { 
-                throw new CmdLineException(parser,"Output File Exists " + outputFilename );
-            }
+            System.err.println("java FP [options...] arguments...");
+            parser.printUsage(System.err);
+            //if (parser.getArguments().size()<1 ) throw new CmdLineException(parser,"No argument is given");
+
+
         } catch( CmdLineException e ) {
             System.err.println(e.getMessage());
             System.err.println("java FP [options...] arguments...");
@@ -60,7 +57,7 @@ public class FP {
     }
 
     public void calculate() {
-        this.calculate("fp3.acis.ufl.edu", "db", "Occurrence", "AkkaTest", query, 200.0);
+        this.calculate(mongoHost, db, inputCollection, outputCollection, query, 200.0);
     }
 
     public void calculate(
@@ -111,47 +108,74 @@ public class FP {
             }
         }), "reader");
 
-         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
+        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new CSVWriter(outputFilename);
+            }
+        }), "MongoDBWriter");
+
+        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new CSVReader(inputFilename, scinValidator);
             }
         }), "reader");
 
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+        final ActorRef starter = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new CSVWriter(outputFilename);
+                return new Starter(reader);
             }
-        }), "writer");
-                   */
+        }), "starter");
+
+          final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new InternalDateValidator("fp.services.InternalDateValidationService", writer);
+            }
+        }), "geoValidator");
+
+        final ActorRef annotationInserter = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new AnnotationInserter(writer);
+            }
+        }), "annotationInserter");
+        */
 
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new MongoDBWriter(host,db,collectionOut,"", enc);
+                return new MongoSummaryWriter(host,db,collectionOut,null);
             }
         }), "MongoDBWriter");
 
+        final ActorRef annotationInserter = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new AnnotationInserter(writer);
+            }
+        }), "annotationInserter");
+
+        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new GEORefValidator("fp.services.GeoLocate2",false,certainty,annotationInserter);
+            }
+        }), "geoValidator");
+
+
+        final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new InternalDateValidator("fp.services.InternalDateValidationService", geoValidator);
+            }
+        }), "dateValidator");
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new ScientificNameValidator("fp.services.IPNIService",true,true,writer);
+                return new AdvancedScientificNameValidator("fp.services.AdvancedSciNameService",true,true,dateValidator);
             }
         }), "scinValidator");
 
-        final ActorRef flwtValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new FloweringTimeValidator("fp.services.FNAFloweringTimeService",true,true,scinValidator);
-            }
-        }), "flwtValidator");
-
-
-
-
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new MongoDBReader(host,db,collectionIn,query,flwtValidator);
+                return new MongoDBReader(host,db,collectionIn,query,scinValidator);
             }
         }), "reader");
+
 
 
         // start the calculation

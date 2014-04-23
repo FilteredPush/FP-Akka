@@ -1,17 +1,14 @@
 package akka.fp;
 
 import akka.actor.UntypedActor;
-import fp.util.CurationCommentType;
 import akka.routing.Broadcast;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
+import fp.util.CurationCommentType;
 import fp.util.SpecimenRecord;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -26,9 +23,9 @@ import java.nio.charset.Charset;
 public class MongoDBWriter extends UntypedActor {
     int cRecords = 0;
     int invoc = 0;
-    private final OutputStreamWriter ost;
+    //private final OutputStreamWriter ost;
 
-    public MongoDBWriter(String mongodbHost, String mongodbDB, String mongodbCollection, String resultId, String fileOut, String fileEncoding) {
+    public MongoDBWriter(String mongodbHost, String mongodbDB, String mongodbCollection, String resultId, String fileEncoding) {
         //System.out.println("Accessing MongoDB ...");
         OutputStreamWriter o = null;
         try {
@@ -49,21 +46,18 @@ public class MongoDBWriter extends UntypedActor {
                 _collection = _db.getCollection(mongodbCollection + resultId);
             }
 
+
             Charset enc;
             if (fileEncoding != null) {
                 enc = Charset.forName(fileEncoding);
             } else {
                 enc = Charset.forName("UTF-8");
             }
-            System.out.println("Output file encoding: " + enc.name());
-            System.out.println("Output file: " + fileOut);
-            o = new OutputStreamWriter(new FileOutputStream(fileOut),enc);
+//            o = new OutputStreamWriter(new FileOutputStream(fileOut),enc);
         } catch (UnknownHostException e1) {
             e1.printStackTrace();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         }
-        ost = o;
+        //ost = o;
     }
 
     public void onReceive(Object message) {
@@ -118,12 +112,7 @@ public class MongoDBWriter extends UntypedActor {
                     }
                 }
                 b.append("]\n");
-                //System.out.print(b.toString());
-                try {
-                    ost.write(b.toString());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+
             }
 
             Object data = convertObject(((Token) message).getData());
@@ -145,12 +134,14 @@ public class MongoDBWriter extends UntypedActor {
     public void postStop() {
         //System.out.println("Stopped Display");
         //System.out.println("Wrote " + cRecords + " records.");
+        /*
         try {
             ost.flush();
             ost.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        */
         getContext().system().shutdown();
         super.postStop();
     }

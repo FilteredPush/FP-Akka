@@ -27,7 +27,8 @@ public class Starter extends UntypedConsumerActor {
             CamelMessage camelMessage = (CamelMessage) message;
             String body = "Bla";
             getSender().tell(String.format("Received message: %s",body), getSelf());
-            listener.tell(new FP.Curate(), getSelf());
+            //listener.tell(new FP.Curate(), getSelf());
+            listener.tell("XXXXXXXXXXXXXXXXXXXX", getSelf());
         } else
             unhandled(message);
     }

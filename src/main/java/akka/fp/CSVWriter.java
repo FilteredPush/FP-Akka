@@ -20,7 +20,7 @@ import java.util.List;
 public class CSVWriter extends UntypedActor {
     int cRecords = 0;
     int invoc = 0;
-    private String _filePath = "/home/tianhong/test/data/out1000.csv";
+    private String _filePath = "/home/tianhong/test/data/test.csv";
     CsvWriter csvOutput;
     Boolean headerWritten = false;
     List<String> headers = new ArrayList<String>();
@@ -29,7 +29,8 @@ public class CSVWriter extends UntypedActor {
     public CSVWriter(String filePath) {
         if (filePath != null) this._filePath = filePath;
         try {
-            CsvWriter writer = new CsvWriter(new FileWriter(_filePath, true), ',');
+            System.out.println("filePath = " + filePath);
+            csvOutput = new CsvWriter(new FileWriter(_filePath, true), ',');
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -55,6 +56,7 @@ public class CSVWriter extends UntypedActor {
                     //write header first
                     //use headers list to keep track of the order
                     for (String label  : ((SpecimenRecord)o).keySet()) {
+
                         csvOutput.write(label);
                         headers.add(label);
                     }
@@ -63,6 +65,7 @@ public class CSVWriter extends UntypedActor {
 
                 //write the values
                 for (String header : headers){
+                    //System.out.println("asfeafadf" + ((SpecimenRecord)o).get(header));
                     csvOutput.write(((SpecimenRecord)o).get(header));
                 }
                 csvOutput.endRecord();

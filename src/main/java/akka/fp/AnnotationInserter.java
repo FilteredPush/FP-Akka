@@ -1,30 +1,21 @@
 package akka.fp;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
-import org.filteredpush.client.util.ClientHelperService;
-import org.filteredpush.knowledge.rdf.RdfUtil;
-import org.filteredpush.model.annotations.Agent;
-import org.filteredpush.model.annotations.Annotation;
-import org.filteredpush.model.annotations.ContentAsText;
-import org.filteredpush.model.annotations.Evidence;
-import org.filteredpush.model.annotations.Expectation;
-import org.filteredpush.model.annotations.Selector;
-import org.filteredpush.model.annotations.SpecificResource;
-import org.filteredpush.model.dwc.Georeference;
-import org.ontoware.rdf2go.model.Syntax;
-
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-
 import com.mongodb.BasicDBObject;
 import com.viceversatech.rdfbeans.exceptions.RDFBeanException;
-
 import fp.util.CurationComment;
 import fp.util.CurationCommentType;
 import fp.util.SpecimenRecord;
+import org.filteredpush.client.util.ClientHelperService;
+import org.filteredpush.knowledge.rdf.RdfUtil;
+import org.filteredpush.model.annotations.*;
+import org.filteredpush.model.dwc.Georeference;
+import org.ontoware.rdf2go.model.Syntax;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
 * Created with IntelliJ IDEA.
@@ -298,8 +289,8 @@ public class AnnotationInserter extends UntypedActor {
     //public final Parameter collectionScope;
 
     private static final String BASE_URI = "http://etaxonomy.org/ontologies/oa";
-    private static String ENDPOINT_HOST = "localhost";
-    private static int ENDPOINT_PORT = 8082;
+    private static String ENDPOINT_HOST = "fp1.acis.ufl.edu";
+    private static int ENDPOINT_PORT = 8080;
 
     boolean injectOrNot = true;
     private final ActorRef listener;
