@@ -289,8 +289,8 @@ public class AnnotationInserter extends UntypedActor {
     //public final Parameter collectionScope;
 
     private static final String BASE_URI = "http://etaxonomy.org/ontologies/oa";
-    private static String ENDPOINT_HOST = "fp1.acis.ufl.edu";
-    private static int ENDPOINT_PORT = 8080;
+    private static String ENDPOINT_HOST = "localhost";
+    private static int ENDPOINT_PORT = 8081;
 
     boolean injectOrNot = true;
     private final ActorRef listener;

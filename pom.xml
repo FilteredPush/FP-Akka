@@ -10,11 +10,12 @@
 
     <parent>
         <groupId>org.filteredpush</groupId>
-        <artifactId>FP-JavaSOA</artifactId>
+        <artifactId>FP-Parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
     <dependencies>
+
         <dependency>
             <groupId>org.filteredpush</groupId>
             <artifactId>FP-Core</artifactId>
@@ -25,6 +26,8 @@
             <artifactId>FP-KurationServices</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+
         <!--
      <dependency>
          <groupId>${project.groupId}</groupId>
@@ -38,12 +41,7 @@
         <version>1.0-SNAPSHOT</version>
     </dependency>
        -->
-        <dependency>
-            <groupId>org.apache.jena</groupId>
-            <artifactId>apache-jena-libs</artifactId>
-            <type>pom</type>
-            <version>2.10.1</version>
-        </dependency>
+
 
         <dependency>
         	<groupId>org.mongodb</groupId>
@@ -124,29 +122,7 @@
        </configuration>
      </plugin>
 
-
-           <plugin>
-                     <groupId>org.apache.maven.plugins</groupId>
-                     <artifactId>maven-dependency-plugin</artifactId>
-                     <configuration>
-                         <outputDirectory>${project.build.directory}/lib/</outputDirectory>
-                         <overWriteReleases>false</overWriteReleases>
-                         <overWriteSnapshots>false</overWriteSnapshots>
-                         <overWriteIfNewer>true</overWriteIfNewer>
-                     </configuration>
-                     <executions>
-                         <execution>
-                             <id>copy-dependencies</id>
-                             <phase>package</phase>
-                             <goals>
-                                 <goal>copy-dependencies</goal>
-                             </goals>
-                         </execution>
-                     </executions>
-                 </plugin>
-
-
-              <plugin>
+      <plugin>
                 <groupId>org.eclipse.m2e</groupId>
                 <artifactId>lifecycle-mapping</artifactId>
                 <version>1.0.0</version>
@@ -170,10 +146,34 @@
                   </lifecycleMappingMetadata>
                 </configuration>
               </plugin>
+          -->
 
-                    -->
+           <plugin>
+                     <groupId>org.apache.maven.plugins</groupId>
+                     <artifactId>maven-dependency-plugin</artifactId>
+                     <configuration>
+                         <outputDirectory>${project.build.directory}/lib/</outputDirectory>
+                         <overWriteReleases>false</overWriteReleases>
+                         <overWriteSnapshots>false</overWriteSnapshots>
+                         <overWriteIfNewer>true</overWriteIfNewer>
+                     </configuration>
+                     <executions>
+                         <execution>
+                             <id>copy-dependencies</id>
+                             <phase>package</phase>
+                             <goals>
+                                 <goal>copy-dependencies</goal>
+                             </goals>
+                         </execution>
+                     </executions>
+                 </plugin>
 
-             <!-- for build executable jar only
+
+
+
+
+
+             <!-- for build executable jar only -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -200,7 +200,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>akka.fp.FP</Main-Class>
+                                        <Main-Class>akka.fp.Loader</Main-Class>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -209,7 +209,7 @@
                 </executions>
             </plugin>
 
-           -->
+
         </plugins>
     </build>
 
