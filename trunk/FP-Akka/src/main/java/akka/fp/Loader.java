@@ -144,29 +144,29 @@ public class Loader {
                 return new MongoSummaryWriter(host,db,collectionOut,null);
             }
         }), "MongoDBWriter");
-
+        /*
         final ActorRef annotationInserter = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new AnnotationInserter(writer);
             }
-        }), "annotationInserter");
+        }), "annotationInserter");         */
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("fp.services.GeoLocate2",false,certainty,annotationInserter);
+                return new GEORefValidator("fp.services.GeoLocate2",false,certainty,writer);
             }
         }), "geoValidator");
 
-
+        /*
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new InternalDateValidator("fp.services.InternalDateValidationService", geoValidator);
             }
-        }), "dateValidator");
+        }), "dateValidator");      */
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new AdvancedScientificNameValidator("fp.services.AdvancedSciNameService",true,true,dateValidator);
+                return new AdvancedScientificNameValidator("fp.services.AdvancedSciNameService",true,true,geoValidator);
             }
         }), "scinValidator");
 
