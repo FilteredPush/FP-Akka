@@ -170,6 +170,11 @@ public class DateValidator extends UntypedActor {
             //System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
 
             String eventDate = inputSpecimenRecord.get(eventDateLabel);
+            if(eventDate == null){
+                CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY, "EventDate is missing in the incoming SpecimenRecord","");
+                constructOutput(new SpecimenRecord(inputSpecimenRecord),curationComment);
+                return;
+            }
             String collector = inputSpecimenRecord.get(collectorLabel);
             String year = inputSpecimenRecord.get(yearCollectedLabel);
             String month = inputSpecimenRecord.get(monthCollectedLabel);
@@ -183,14 +188,18 @@ public class DateValidator extends UntypedActor {
 
             internalSingleDateValidationService.validateDate(eventDate, verbatimEventDate, startDayOfYear, month, year, day, modified, collector);
 
-            String comment = internalSingleDateValidationService.getComment();
-            CurationStatus curationStatus = internalSingleDateValidationService.getCurationStatus();
 
-            //output
-            CurationCommentType curationComment = null;
-            if(curationStatus == CurationComment.UNABLE_CURATED){
-                curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,internalSingleDateValidationService.getComment(),internalSingleDateValidationService.getServiceName());
-            } else{
+            CurationStatus curationStatus = internalSingleDateValidationService.getCurationStatus();
+            if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+                inputSpecimenRecord.put("eventDate", internalSingleDateValidationService.getCorrectedDate());
+            }
+
+            //todo: unfinished case selection and form output
+            CurationCommentType curationComment = CurationComment.construct(curationStatus,internalSingleDateValidationService.getComment(),internalSingleDateValidationService.getServiceName());
+            constructOutput(inputSpecimenRecord, curationComment);
+
+            //todo: no external for now
+            /*else{
                 externalSingleDateValidationService.validateDate(internalSingleDateValidationService.getCorrectedDate(), collector, latitude, longitude);
 
                 String externalComment = internalSingleDateValidationService.getComment();
@@ -210,7 +219,7 @@ public class DateValidator extends UntypedActor {
                     listener.tell(c, getSender());
                 }
             }
-
+            */
 
             //workerRouter.tell(new Broadcast(((Broadcast) message).message()), getSender());
             getSelf().tell(((Broadcast) message).message(), getSender());
@@ -294,9 +303,14 @@ public class DateValidator extends UntypedActor {
 
 
     private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
-        if(comment!=null){
-            result.put("scinComment", comment.toString());
-            result.put("scinStatus", comment.getStatus());
+        if (comment != null) {
+            result.put("dateComment",comment.getDetails());
+            result.put("dateStatus",comment.getStatus());
+            result.put("dateSource",comment.getSource());
+        } else {
+            result.put("dateStatus",CurationComment.CORRECT.toString());
+            result.put("dateComment","None");
+            result.put("dateSource",comment.getSource());
         }
         listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc),getContext().parent());
     }

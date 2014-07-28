@@ -86,6 +86,8 @@ public class MongoSummaryWriter extends UntypedActor {
 
             //assume the tokenwithprov is specimenrecord
             SpecimenRecord record = (SpecimenRecord)((Token) message).getData();
+            //System.out.println("record.prettyPrint() = " + record.prettyPrint());
+
             Set<Map<String, String>> actorSet = new HashSet<Map<String, String>>();
 
             //System.out.println("inputSpecimenRecord = " + record.toString());
@@ -124,6 +126,17 @@ public class MongoSummaryWriter extends UntypedActor {
                 actorSet.add(actorStatusMap);
             }
 
+            //remove a set of added fields in the record which have been read before
+            HashSet<String> removeLables = new HashSet<String>();
+            removeLables.add("geoRefStatus");removeLables.add("geoRefComment");removeLables.add("geoRefSource");
+            removeLables.add("scinStatus");removeLables.add("scinComment");removeLables.add("scinSource");
+            removeLables.add("flwtStatus");removeLables.add("flwtComment");removeLables.add("flwtSource");
+            removeLables.add("dateStatus");removeLables.add("dateComment");removeLables.add("dateSource");
+            for (String label:removeLables){
+                if (record.keySet().contains(label)) record.remove(label);
+            }
+
+
             //start
             HashMap<String, String> markers = new HashMap<String, String>();    //Construct the appended field (markers) of summary
 
@@ -135,14 +148,14 @@ public class MongoSummaryWriter extends UntypedActor {
                 //set the markers first
                 String marker = null;
                 if(eachActorStatusMap.get("status").equals(CurationComment.CORRECT.toString())){
-                    marker = "TICK";
+                    marker = "CORRECT";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.CURATED.toString()) ||
                         eachActorStatusMap.get("status").equals(CurationComment.Filled_in.toString())){
-                    marker = "DELTA";
+                    marker = "CURATED";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.UNABLE_CURATED.toString())){
-                    marker = "CROSS";
+                    marker = "UNABLE_CURATE";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.UNABLE_DETERMINE_VALIDITY.toString())){
-                    marker = "QUESTION";  //highlight = "UNABLE_CURATE_FIELD";
+                    marker = "UNABLE_DETERMINE_VALIDITY";  //highlight = "UNABLE_CURATE_FIELD";
                 }else {
                     System.out.println(" start comment type is wrong");
                 }
@@ -157,18 +170,18 @@ public class MongoSummaryWriter extends UntypedActor {
             }
 
             //calculate the overall marker, comparing the new one and the one in the record
-            String wfmarker = "TICK";
+            String wfmarker = "CORRECT";
             for (String lable : markers.keySet()){
                 String mk = markers.get(lable);
-                if (mk.equals("CROSS") || wfmarker.equals("CROSS")){
-                    wfmarker = "CROSS";
+                if (mk.equals("UNABLE_CURATE") || wfmarker.equals("UNABLE_CURATE")){
+                    wfmarker = "UNABLE_CURATE";
                 }else {
-                    if (mk.equals("QUESTION") || wfmarker.equals("QUESTION")){
-                        wfmarker = "QUESTION";
+                    if (mk.equals("UNABLE_DETERMINE_VALIDITY") || wfmarker.equals("UNABLE_DETERMINE_VALIDITY")){
+                        wfmarker = "UNABLE_DETERMINE_VALIDITY";
                     }else {
-                        if (mk.equals("DELTA") && wfmarker.equals("DELTA")) {
-                            wfmarker = "DELTA";
-                        } else wfmarker = "TICK";
+                        if (mk.equals("CURATED") && wfmarker.equals("CURATED")) {
+                            wfmarker = "CURATED";
+                        } else wfmarker = "CORRECT";
                     }
                 }
             }
@@ -179,9 +192,6 @@ public class MongoSummaryWriter extends UntypedActor {
             //_validatedRecordMap.put(record.get("id"), record);
 
             writeOut(record, markers, detailSet);
-
-
-
         }
 
         if (message instanceof Broadcast) {
@@ -257,12 +267,12 @@ public class MongoSummaryWriter extends UntypedActor {
     ////                        private variables                  ////
 
     private HashMap constructDetail(SpecimenRecord record, HashMap<String, String> actorDetail, String marker, HashSet highlights){
-        HashMap<String, String> detailRecord = new HashMap<String, String>();
+        HashMap<String, Object> detailRecord = new HashMap<String, Object>();
+        HashMap<String, String> validationState = new HashMap<String, String>();
         //SpecimenRecord validatedRecord = _validatedRecordMap.get(record.get("id"));
         //todo:assume origianl record and validated record have the same arity
 
         detailRecord.put("Actor Name", actorDetail.get("actor"));
-        detailRecord.put("Actor Run", "Tick") ;
         detailRecord.put("Comment", actorDetail.get("comment"));
         detailRecord.put("Source", actorDetail.get("source"));
         detailRecord.put("Actor Result", marker);
@@ -270,25 +280,44 @@ public class MongoSummaryWriter extends UntypedActor {
 
         for (String label : record.keySet()) {
             if (highlights.contains(label)){
+                validationState.put(label, marker);
                 //four different cases have different content
-                if (marker.equals("TICK")) detailRecord.put(label, "green: TICK");
+                if (marker.equals("CORRECT")) detailRecord.put(label, "CORRECT: " + record.get(label));
                 //no original record is available
-                //else if (marker.equals("DELTA")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
-                else if (marker.equals("DELTA")) detailRecord.put(label, "yellow: CHANGED TO: "  + record.get("label"));
-                else if (marker.equals("CROSS")) detailRecord.put(label, "red: UNABLE_TO_CURATE: " + record.get(label));
-                else if (marker.equals("QUESTION")) detailRecord.put(label, "UNABLE_DETERMINE_VALIDITY_OF: " + record.get(label));
+                //else if (marker.equals("CURATED")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
+                else if (marker.equals("CURATED")) detailRecord.put(label, "CHANGED TO: "  + record.get(label));
+                else if (marker.equals("UNABLE_CURATE")) detailRecord.put(label, "UNABLE_TO_CURATE: " + record.get(label));
+                else if (marker.equals("UNABLE_DETERMINE_VALIDITY")) detailRecord.put(label, "UNABLE_DETERMINE_VALIDITY_OF: " + record.get(label));
                 else System.out.println("detail comment type is wrong");
             }else{
                 detailRecord.put(label, "");
             }
 
         }
+
+        detailRecord.put("ValidationState", validationState);
         return detailRecord;
     }
 
     private void writeOut(SpecimenRecord record, HashMap<String, String> markers, HashSet<HashMap> detailSet){
 
-        BasicDBObject data = new BasicDBObject("Record", record).
+        //add validationStatus in record
+        HashMap validationState = new HashMap<String, String>();
+        for (HashMap item: detailSet){
+            validationState.putAll((Map) item.get("ValidationState"));
+        }
+
+        //record.put("ValidationState", validationState);
+
+        //BasicDBObject recordObject = new BasicDBObject("Record", record);
+
+        HashMap<String, Object> modifiedRecord = new HashMap<String, Object>();
+        for (String label : record.keySet()){
+            modifiedRecord.put(label,record.get(label));
+        }
+        modifiedRecord.put("ValidationState", validationState);
+
+        BasicDBObject data = new BasicDBObject("Record", modifiedRecord).
                 append("Markers", markers).
                 append("ActorDetails", detailSet);
         _collection.insert(data);
@@ -350,7 +379,7 @@ public class MongoSummaryWriter extends UntypedActor {
     //private Map<String, SpecimenRecord> _OriginalRecordMap = new HashMap<String, SpecimenRecord>();
     //private Map<String, SpecimenRecord> _validatedRecordMap = new HashMap<String, SpecimenRecord>();
     //private Map<String, HashMap> _recordMarkersMap = new HashMap<String, HashMap>();
-    private HashMap<String, HashSet> highlightedLabelsMap = new HashMap<String, HashSet>();
+    private HashMap<String, HashSet<String>> highlightedLabelsMap = new HashMap<String, HashSet<String>>();
     //private HashMap<String, HashSet> _recordDetailsMap = new HashMap<String, HashSet>();
 
     private String overallLabel = "Kuration Workflow";

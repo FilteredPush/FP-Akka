@@ -172,7 +172,7 @@ public class ScientificNameValidator extends UntypedActor {
                 if (((Token) message).getData() instanceof SpecimenRecord) {
                     SpecimenRecord inputSpecimenRecord = (SpecimenRecord)((Token) message).getData();
 
-                    System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
+                    //System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
 
                     String scientificName = inputSpecimenRecord.get(scientificNameLabel);
                     if(scientificName == null){

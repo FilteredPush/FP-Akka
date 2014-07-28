@@ -135,6 +135,13 @@ public class GEORefValidator extends UntypedActor {
                         fields.put(key,record.get(key));
                     }
 
+
+                     //if missing, let it run, handle the error in service
+                    String country = record.get("country");
+                    String stateProvince = record.get("stateProvince");
+                    String county = record.get("county");
+                    String locality = record.get("locality");
+                    /*
                     //get the needed information from the input SpecimenRecord
                     String country = record.get("country");
                     if(country == null){
@@ -167,8 +174,8 @@ public class GEORefValidator extends UntypedActor {
                         Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
                         return;
                     }
-
-                    boolean isCoordinateMissing = false;
+                     */
+                    int isCoordinateMissing = 0;
                     String latitudeToken = record.get("decimalLatitude");
                     double latitude = -1;
                     if (latitudeToken != null){
@@ -179,7 +186,7 @@ public class GEORefValidator extends UntypedActor {
                         //}
                         latitude = Double.valueOf(latitudeToken);
                     }else{
-                        isCoordinateMissing = true;
+                        isCoordinateMissing++;
                     }
 
                     String longitudeToken = record.get("decimalLongitude");
@@ -192,12 +199,16 @@ public class GEORefValidator extends UntypedActor {
                         //}
                         longitude = Double.valueOf(longitudeToken);
                     } else {
-                        isCoordinateMissing = true;
+                        isCoordinateMissing++;
                     }
 
                     //invoke the service to parse the locality and return the coordinates
-                    if(isCoordinateMissing){
-                        geoRefValidationService.validateGeoRef(country, stateProvince, county, locality,null,null,certainty);
+                    //isCoordinateMissing == 2 means both longitude and latitude are missing
+                    if(isCoordinateMissing == 2){
+                        //geoRefValidationService.validateGeoRef(country, stateProvince, county, locality,null,null,certainty);
+                        CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY, "Both longitude and latitude are missing in the incoming SpecimenRecord", null);
+                        constructOutput(new SpecimenRecord(fields),curationComment);
+                        return;
                     }else{
                         geoRefValidationService.validateGeoRef(country, stateProvince, county, locality,String.valueOf(latitude),String.valueOf(longitude),certainty);
                     }
@@ -212,8 +223,12 @@ public class GEORefValidator extends UntypedActor {
                         curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
                     }else if(curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
                         curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
+                    }else if(curationStatus == CurationComment.CORRECT){
+                        curationComment = CurationComment.construct(CurationComment.CORRECT,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
                     }
                     //output
+                    //System.out.println("curationStatus = " + curationStatus.toString());
+                    //System.out.println("curationComment = " + curationComment.toString());
                     constructOutput(fields, curationComment);
                     for (List l : geoRefValidationService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, (String)l.get(0), (Long)l.get(1), (Long)l.get(2),l.get(3),curationStatus.toString());
@@ -230,11 +245,12 @@ public class GEORefValidator extends UntypedActor {
                 result.put("geoRefSource",comment.getSource());
             } else {
                 result.put("geoRefStatus",CurationComment.CORRECT.toString());
-                result.put("geoRefComment","None");
+                result.put("geoRefComment",comment.getDetails());
                 result.put("geoRefSource",comment.getSource());
             }
             SpecimenRecord r = new SpecimenRecord(result);
             Token token = new TokenWithProv<SpecimenRecord>(r,getName(),invoc);
+            //System.out.println("r = " + r.prettyPrint());
             listener.tell(token,getContext().parent());
         }
     }
