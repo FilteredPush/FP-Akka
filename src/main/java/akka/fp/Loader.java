@@ -25,14 +25,15 @@ public class Loader {
     private String db = "db";
 
     @Option(name="-ci",usage="Input Collection")
-    private String inputCollection = "data1905";
+    private String inputCollection = "scan_prod_occurrences";
 
     @Option(name="-co",usage="Output Collection")
-    private String outputCollection = "ASU1905";
+    private String outputCollection = "NAU1966D";
 
     @Option(name="-q",usage="Query")
-    private String query = "";
-
+    private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
+    //private String query = "{\"institutionCode\" : \"MCZ\"}";
+    //private String query = "{oaiid:\"SCAN.occurrence.833567\"}";   //834964 829560
     //private String query = "{year:\"1898\"}";
 
     
@@ -144,12 +145,7 @@ public class Loader {
                 return new MongoSummaryWriter(host,db,collectionOut,null);
             }
         }), "MongoDBWriter");
-        /*
-        final ActorRef annotationInserter = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new AnnotationInserter(writer);
-            }
-        }), "annotationInserter");         */
+
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
@@ -157,16 +153,16 @@ public class Loader {
             }
         }), "geoValidator");
 
-        /*
+
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new InternalDateValidator("fp.services.InternalDateValidationService", geoValidator);
             }
-        }), "dateValidator");      */
+        }), "dateValidator");
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new AdvancedScientificNameValidator("fp.services.AdvancedSciNameService",true,true,geoValidator);
+                return new AdvancedScientificNameValidator("fp.services.COLService",true,true,dateValidator);
             }
         }), "scinValidator");
 

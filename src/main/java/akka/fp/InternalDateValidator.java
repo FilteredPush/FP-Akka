@@ -155,16 +155,17 @@ public class InternalDateValidator extends UntypedActor {
 
             CurationCommentType curationComment = null;
             CurationStatus curationStatus = singleDateValidationService.getCurationStatus();
-            if(curationStatus == CurationComment.CURATED){
-                curationComment = CurationComment.construct(CurationComment.CURATED,singleDateValidationService.getComment(),singleDateValidationService.getServiceName());
+
+            //System.out.println("curationStatus = " + curationStatus);
+            //System.out.println("singleDateValidationService.getComment() = " + singleDateValidationService.getComment());
+            //System.out.println("singleDateValidationService.getServiceName() = " + singleDateValidationService.getServiceName());
+
+            if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
                 //replace the old value if curated
-                inputSpecimenRecord.put("decimalLatitude", String.valueOf(singleDateValidationService.getCorrectedDate()));
-            }else if(curationStatus == CurationComment.UNABLE_CURATED){
-                curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,singleDateValidationService.getComment(),singleDateValidationService.getServiceName());
-            }else if(curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
-                curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,singleDateValidationService.getComment(),singleDateValidationService.getServiceName());
+                inputSpecimenRecord.put("eventDate", String.valueOf(singleDateValidationService.getCorrectedDate()));
             }
-            //output
+
+            curationComment = CurationComment.construct(curationStatus,singleDateValidationService.getComment(),singleDateValidationService.getServiceName());
             constructOutput(inputSpecimenRecord, curationComment);
             /*
             for (List l : singleDateValidationService.getLog()) {
@@ -191,7 +192,12 @@ public class InternalDateValidator extends UntypedActor {
             result.put("dateComment", comment.getDetails());
             result.put("dateStatus", comment.getStatus());
             result.put("dateSource", comment.getSource());
+        } else {
+            result.put("dateComment","None");
+            result.put("dateStatus",CurationComment.CORRECT.toString());
+            result.put("dateSource",comment.getSource());
         }
+        //System.out.println("result.prettyPrint() = " + result.prettyPrint());
         listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc),getContext().parent());
     }
 

@@ -79,7 +79,7 @@ public class AnnotationInserter extends UntypedActor {
                         //Generator generator = new Generator();
                         String configurationFile = null;
 
-                        annotator.setName("Kepler Workflow System");
+                        annotator.setName("Akka Workflow System");
                         //annotator.setMbox_sha1sum("043856881f6b4d6c87b89a0da68c96b460d07787");
                         annotation.setAnnotator(annotator);
 

@@ -3,7 +3,7 @@ package akka.fp;
 import akka.actor.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
-import fp.services.IAdvancedScientificNameValidationService;
+import fp.services.INewScientificNameValidationService;
 import fp.util.*;
 
 import java.util.*;
@@ -104,7 +104,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
         private String authorLabel;
         private String LSIDLabel;
 
-        private IAdvancedScientificNameValidationService scientificNameService;
+        private INewScientificNameValidationService scientificNameService;
 
         private final Random rand;
         private int invoc;
@@ -119,6 +119,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
 
             //initialize required label
             SpecimenRecordTypeConf specimenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
+
 
             try {
                 scientificNameLabel = specimenRecordTypeConf.getLabel("ScientificName");
@@ -141,8 +142,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
                     }
                 }
 
-                scientificNameService = (IAdvancedScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
-                scientificNameService.setUseCache(hasDataCache);
+                scientificNameService = (INewScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
             //} catch (CurrationException e) {
             //    e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -172,9 +172,10 @@ public class AdvancedScientificNameValidator extends UntypedActor {
                 if (((Token) message).getData() instanceof SpecimenRecord) {
                     SpecimenRecord inputSpecimenRecord = (SpecimenRecord)((Token) message).getData();
 
-                    System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
+                    //System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
 
                     String scientificName = inputSpecimenRecord.get(scientificNameLabel);
+                    //System.out.println("scientificName = " + scientificName);
                     if(scientificName == null){
                         CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY, scientificNameLabel + " is missing in the incoming SpecimenRecord", "ScientificNameValidator");
                         constructOutput(new SpecimenRecord(inputSpecimenRecord),curationComment);
@@ -182,11 +183,12 @@ public class AdvancedScientificNameValidator extends UntypedActor {
                     }
 
                     String author = inputSpecimenRecord.get(authorLabel);
-                    if(author == null){
+                    //System.out.println("author = " + author);
+                    /*if(author == null){
                         CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,authorLabel+" is missing in the incoming SpecimenRecord","ScientificNameValidator");
                         constructOutput(new SpecimenRecord(inputSpecimenRecord),curationComment);
                         return;
-                    }
+                    }  */
 
                     String genus = inputSpecimenRecord.get("genus");
                     String subgenus = inputSpecimenRecord.get("subgenus");
@@ -194,6 +196,13 @@ public class AdvancedScientificNameValidator extends UntypedActor {
                     String verbatimTaxonRank = inputSpecimenRecord.get("verbatimTaxonRank");
                     String infraspecificEpithet = inputSpecimenRecord.get("infraspecificEpithet");
                     String taxonRank = inputSpecimenRecord.get("taxonRank");
+                    String kingdom = inputSpecimenRecord.get("kingdom");
+                    String phylum = inputSpecimenRecord.get("phylum");
+                    String tclass = inputSpecimenRecord.get("tclass");
+                    String order = inputSpecimenRecord.get("order");
+                    String family = inputSpecimenRecord.get("family");
+
+
                     /*
                     System.out.println("taxonRank = " + taxonRank);
                     System.out.println("infraspecificEpithet = " + infraspecificEpithet);
@@ -202,29 +211,17 @@ public class AdvancedScientificNameValidator extends UntypedActor {
                     System.out.println("subgenus = " + subgenus);
                     System.out.println("genus = " + genus);
                      */
-                    scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank);
-
-                    SpecimenRecord cleanedSpecimenRecord = new SpecimenRecord(inputSpecimenRecord);
-                    CurationCommentType curationComment = null;
+                    scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family);
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
-                    if(curationStatus == CurationComment.CORRECT){
-                        cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificName,author);
-                        curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getServiceName(),getName());
-                    } else if (curationStatus == CurationComment.CURATED){
-                        if (insertLSID) {
-                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor());
-                        } else {
-                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor());
-                        }
-                        curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getComment()+scientificNameService.getServiceName(),getName());
-                    } else if (curationStatus == CurationComment.UNABLE_CURATED){
-                        curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,scientificNameService.getComment(),getName());
-                    } else if (curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
-                        curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,scientificNameService.getComment(),getName());
+                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+                        inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
+                        inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
                     }
+
                     //output
-                    constructOutput(cleanedSpecimenRecord, curationComment);
+                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());
+                    constructOutput(inputSpecimenRecord, curationComment);
                     /*for (List l : scientificNameService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());
                     }     */
