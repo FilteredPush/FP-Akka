@@ -220,7 +220,7 @@ public class DateValidator extends UntypedActor {
                 }
             }
             */
-
+        }else if (message instanceof Broadcast){
             //workerRouter.tell(new Broadcast(((Broadcast) message).message()), getSender());
             getSelf().tell(((Broadcast) message).message(), getSender());
         } else if (message instanceof Terminated) {
@@ -233,7 +233,7 @@ public class DateValidator extends UntypedActor {
 
     @Override
     public void postStop() {
-        //System.out.println("Stopped ScinRefValidator");
+        System.out.println("Stopped DateValidator");
         getSelf().tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 	
@@ -312,6 +312,7 @@ public class DateValidator extends UntypedActor {
             result.put("dateComment","None");
             result.put("dateSource",comment.getSource());
         }
+
         listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc),getContext().parent());
     }
 

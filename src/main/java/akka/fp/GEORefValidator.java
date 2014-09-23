@@ -71,6 +71,7 @@ public class GEORefValidator extends UntypedActor {
 
     @Override
     public void postStop() {
+        System.out.println("Stopped GeoRefValidator");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
@@ -130,6 +131,7 @@ public class GEORefValidator extends UntypedActor {
             if (message instanceof Token) {
                 if (((Token) message).getData() instanceof SpecimenRecord) {
                     SpecimenRecord record = (SpecimenRecord) ((Token) message).getData();
+                    //System.err.println("georefstart#"+record.get("oaiid").toString() + "#" + System.currentTimeMillis());
                     Map<String,String> fields = new HashMap<String,String>();
                     for (String key : record.keySet()) {
                         fields.put(key,record.get(key));
@@ -178,26 +180,35 @@ public class GEORefValidator extends UntypedActor {
                     int isCoordinateMissing = 0;
                     String latitudeToken = record.get("decimalLatitude");
                     double latitude = -1;
-                    if (latitudeToken != null){
+
+                    if (latitudeToken != null && !latitudeToken.isEmpty()){
                         //if(!(latitudeToken instanceof ScalarToken)){
                         //    CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,"latitudeLabel of the input is not of scalar type.",getName());
                         //    constructOutput(fields, curationComment);
                         //    return;
                         //}
-                        latitude = Double.valueOf(latitudeToken);
+                        try{
+                            latitude = Double.valueOf(latitudeToken);
+                        }catch (Exception e){
+                            System.out.println("latitude token has issue: |" + latitudeToken + "|");
+                        }
                     }else{
                         isCoordinateMissing++;
                     }
 
                     String longitudeToken = record.get("decimalLongitude");
                     double longitude = -1;
-                    if (longitudeToken != null) {
+                    if (longitudeToken != null && !longitudeToken.isEmpty()) {
                         //if(!(longitudeToken instanceof ScalarToken)){
                         //CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,"longitudeLabel of the input is not of scalar type.",getName());
                         //constructOutput(fields, curationComment);
                         //return;
                         //}
-                        longitude = Double.valueOf(longitudeToken);
+                        try{
+                            longitude = Double.valueOf(longitudeToken);
+                        }catch (Exception e){
+                            System.out.println("longitude token has issue: |" + latitudeToken + "|");
+                        }
                     } else {
                         isCoordinateMissing++;
                     }
@@ -250,7 +261,7 @@ public class GEORefValidator extends UntypedActor {
             }
             SpecimenRecord r = new SpecimenRecord(result);
             Token token = new TokenWithProv<SpecimenRecord>(r,getName(),invoc);
-            //System.out.println("r = " + r.prettyPrint());
+            //System.err.println("georefend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
             listener.tell(token,getContext().parent());
         }
     }

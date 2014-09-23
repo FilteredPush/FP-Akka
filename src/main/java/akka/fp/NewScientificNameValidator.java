@@ -8,7 +8,7 @@ import fp.util.*;
 
 import java.util.*;
 
-public class AdvancedScientificNameValidator extends UntypedActor {
+public class NewScientificNameValidator extends UntypedActor {
 
     private final ActorRef listener;
     private final ActorRef workerRouter;
@@ -16,7 +16,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
     private final boolean useCache;
     private final boolean insertLSID;
 
-    public AdvancedScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener) {
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener) {
 
         this.listener = listener;
         this.service = service;
@@ -31,7 +31,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
         getContext().watch(workerRouter);
     }
 
-    public AdvancedScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener, final int instances) {
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener, final int instances) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
@@ -71,6 +71,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
         } else if (message instanceof Broadcast) {
             workerRouter.tell(new Broadcast(((Broadcast) message).message()), getSender());
         } else if (message instanceof Terminated) {
+            //System.out.println("SciName termianted");
             if (((Terminated) message).getActor().equals(workerRouter))
                 this.getContext().stop(getSelf());
         } else {
@@ -89,7 +90,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
 
     @Override
     public void postStop() {
-        //System.out.println("Stopped ScinRefValidator");
+        System.out.println("Stopped ScinRefValidator");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
@@ -171,7 +172,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
             if (message instanceof Token) {
                 if (((Token) message).getData() instanceof SpecimenRecord) {
                     SpecimenRecord inputSpecimenRecord = (SpecimenRecord)((Token) message).getData();
-
+                    //System.err.println("scinamestart#"+inputSpecimenRecord.get("oaiid").toString() + "#" + System.currentTimeMillis());
                     //System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
 
                     String scientificName = inputSpecimenRecord.get(scientificNameLabel);
@@ -256,6 +257,7 @@ public class AdvancedScientificNameValidator extends UntypedActor {
                 result.put("scinStatus", comment.getStatus());
                 result.put("scinSource", comment.getSource());
             }
+            //System.err.println("scinameend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
             listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc),getContext().parent());
         }
 
