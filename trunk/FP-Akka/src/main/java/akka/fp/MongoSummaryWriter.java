@@ -9,8 +9,11 @@ import com.mongodb.MongoClient;
 import fp.util.CurationComment;
 import fp.util.SpecimenRecord;
 import fp.util.SpecimenRecordTypeConf;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
-import java.io.OutputStreamWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -29,7 +32,7 @@ public class MongoSummaryWriter extends UntypedActor {
 
     public MongoSummaryWriter(String mongodbHost, String mongodbDB, String mongodbCollection, String fileEncoding) {
         //System.out.println("MongoSummaryWriter created!!!!!!!!!!!");
-        OutputStreamWriter o = null;
+        outputToFile = false;
         try {
             //System.out.println(" Host: " + mongodbHost);
             _mongoClient = new MongoClient(mongodbHost);
@@ -46,7 +49,7 @@ public class MongoSummaryWriter extends UntypedActor {
             if (!_db.collectionExists(collectionName)) {
                 _collection = _db.createCollection(collectionName, new BasicDBObject());
             } else {
-                System.out.println("collection exit");
+                //System.out.println("collection exit");
                 _collection = _db.getCollection(collectionName);
             }
 
@@ -62,6 +65,27 @@ public class MongoSummaryWriter extends UntypedActor {
             e1.printStackTrace();
         }
 
+        constructMaps();
+    }
+
+    public MongoSummaryWriter(String filePath){
+        outputToFile = true;
+
+        if (filePath == null) {
+            System.out.println("no file path specified");
+            //filePath = "./test.json";
+        }
+
+        try {
+            //FileWriter file = new FileWriter("/home/tianhong/data/akka/test.json");
+            _outputFile = new FileWriter(filePath);
+            _outputFile.write("[");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        outputToFile = true;
         constructMaps();
     }
 
@@ -195,6 +219,7 @@ public class MongoSummaryWriter extends UntypedActor {
         }
 
         if (message instanceof Broadcast) {
+            //System.out.println("summaryWriter stopped");
             getSelf().tell(((Broadcast) message).message(), getSender());
         } else {
             unhandled(message);
@@ -205,60 +230,18 @@ public class MongoSummaryWriter extends UntypedActor {
 
     @Override
     public void postStop() {
-       // for (String id : _validatedRecordMap.keySet()){
+        System.out.println("Stopped MongoSummaryWriter");
 
-            /*
-            BasicDBObject recordObject = new BasicDBObject();
-            SpecimenRecord record =  _validatedRecordMap.get(id);
-            for (String label : record.keySet()){
-                recordObject.put(label, record.get(label));
+        if(outputToFile) {
+            try {
+                _outputFile.write("]");
+                _outputFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            BasicDBObject originalObject = new BasicDBObject();
-            SpecimenRecord original =  _OriginalRecordMap.get(id);
-            for (String label : original.keySet()){
-                originalObject.put(label, original.get(label));
-            }
-            BasicDBObject markerObject = new BasicDBObject();
-            HashMap<String, String> markersMap =  _recordMarkersMap.get(id);
-            for (String label : markersMap.keySet()){
-                markerObject.put(label, markersMap.get(label));
-            }
-
-            ArrayList detailEntry = new ArrayList();
-            BasicDBObject detailObject = new BasicDBObject();
-            HashSet detailMap =  _recordDetailsMap.get(id);
-            Iterator itd = detailMap.iterator();
-            while (itd.hasNext()){
-                HashMap<String, String> eachDetailMap = (HashMap)itd.next();
-                BasicDBObject eachDetailObject = new BasicDBObject();
-                for (String label : eachDetailMap.keySet()){
-                    detailObject.put(label, eachDetailMap.get(label));
-                }
-                detailEntry.add(eachDetailObject);
-            }
-
-            BasicDBObject data = new BasicDBObject("Record", recordObject).
-                    append("Original", originalObject).
-                    append("Markers", markerObject).
-                    append("ActorDetails", detailEntry);
-
-            BasicDBObject data = new BasicDBObject("Record", "t1").
-                    append("Original", "t2").
-                    append("Markers", "t3").
-                    append("ActorDetails", "t4");
-
-            System.out.println("start reading");
-            _collection.insert(data);
-
-
-            BasicDBObject data = new BasicDBObject("Record", _validatedRecordMap.get(id)).
-            append("Original", _OriginalRecordMap.get(id)).
-            append("Markers", _recordMarkersMap.get(id)).
-            append("ActorDetails", _recordDetailsMap.get(id));
-            _collection.insert(data);       */
-
-
+        }
         getContext().system().shutdown();
+
         super.postStop();
     }
 
@@ -290,7 +273,7 @@ public class MongoSummaryWriter extends UntypedActor {
                 else if (marker.equals("UNABLE_DETERMINE_VALIDITY")) detailRecord.put(label, "UNABLE_DETERMINE_VALIDITY_OF: " + record.get(label));
                 else System.out.println("detail comment type is wrong");
             }else{
-                detailRecord.put(label, "");
+                //detailRecord.put(label, "");
             }
 
         }
@@ -317,10 +300,48 @@ public class MongoSummaryWriter extends UntypedActor {
         }
         modifiedRecord.put("ValidationState", validationState);
 
-        BasicDBObject data = new BasicDBObject("Record", modifiedRecord).
-                append("Markers", markers).
-                append("ActorDetails", detailSet);
-        _collection.insert(data);
+        if(!outputToFile){
+            BasicDBObject data = new BasicDBObject("Record", modifiedRecord).
+                    append("Markers", markers).
+                    append("ActorDetails", detailSet);
+            _collection.insert(data);
+            //System.err.println("writeout#"+modifiedRecord.get("oaiid").toString() + "#" + System.currentTimeMillis());
+        }else{
+            JSONObject obj = new JSONObject();
+            obj.put("Record", modifiedRecord);
+            obj.put("Markers", markers);
+
+            JSONArray detailList = new JSONArray();
+            for (HashMap item : detailSet){
+                detailList.add(item);
+            }
+            obj.put("ActorDetails", detailList);
+
+            try {
+                //_outputFile.write("["+obj.toString()+"]");
+
+                if(firstRecord){
+                    firstRecord = false;
+                }else{
+                    _outputFile.write(",\n");
+                }
+
+                _outputFile.write(obj.toJSONString());
+
+                _outputFile.flush();
+                /*
+                JSONObject obj1 = new JSONObject();
+                obj.put("name", "mkyong.com");
+
+                FileWriter file = new FileWriter("/home/tianhong/data/test2.json");
+                file.write(obj1.toJSONString());
+                file.flush();
+                file.close();*/
+
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
     }
 
     private void constructMaps() {
@@ -375,6 +396,9 @@ public class MongoSummaryWriter extends UntypedActor {
     private MongoClient _mongoClient;
     private DB _db;
     private DBCollection _collection;
+    private FileWriter _outputFile;
+    private boolean outputToFile;
+    private boolean firstRecord = true;
 
     //private Map<String, SpecimenRecord> _OriginalRecordMap = new HashMap<String, SpecimenRecord>();
     //private Map<String, SpecimenRecord> _validatedRecordMap = new HashMap<String, SpecimenRecord>();

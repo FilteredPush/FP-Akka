@@ -29,7 +29,7 @@ public class CSVWriter extends UntypedActor {
     public CSVWriter(String filePath) {
         if (filePath != null) this._filePath = filePath;
         try {
-            System.out.println("filePath = " + filePath);
+            //System.out.println("filePath = " + filePath);
             csvOutput = new CsvWriter(new FileWriter(_filePath, true), ',');
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.

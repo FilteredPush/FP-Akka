@@ -103,8 +103,7 @@ public class CSVReader extends UntypedActor {
                     //todo: may need validation steps here, some errors are ignored
                 }
                 Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(out,this.getClass().getSimpleName(),invoc);
-
-               // System.out.println("t.toString() = " + t.toString());
+                //System.out.println("out = " + out.prettyPrint());
 
                 ++cValidRecords;
                 listener.tell(t,getSelf());

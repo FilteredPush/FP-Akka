@@ -105,11 +105,11 @@ public class MongoDBReader extends UntypedActor {
                 //System.out.println(" With query: "+ _mongodbQuery);
                 Object query = JSON.parse(_mongodbQuery);
                 cursor = coll.find((DBObject)query);
-                totalRecords = cursor.count();
+                //totalRecords = cursor.count();
             } else {
                 //System.out.println(" Without query");
                 cursor = coll.find();
-                totalRecords = cursor.count();
+                //totalRecords = cursor.count();
             }
             //System.out.println(" Records: "+ totalRecords);
         } catch (UnknownHostException e) {
@@ -146,7 +146,7 @@ public class MongoDBReader extends UntypedActor {
             cursor.close();
         //listener.tell(new Done(),getSelf());
         //listener.tell(new Broadcast(new Done()),getSelf());
-        listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
+        //listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
         //listener.tell(PoisonPill.getInstance(),getSelf());
         getContext().stop(getSelf());
         Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
@@ -172,12 +172,15 @@ public class MongoDBReader extends UntypedActor {
         Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(out,this.getClass().getSimpleName(),invoc);
 
         ++cValidRecords;
+        //System.err.println("read#"+out.get("oaiid").toString() + "#" + System.currentTimeMillis());
         listener.tell(t,getSelf());
     }
 
     @Override
     public void postStop() {
-        //System.out.println("Stopped Reader");
+        System.out.println("Read " + cValidRecords + " records");
+        System.out.println("Stopped Reader");
+        listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
         super.postStop();
     }
 }

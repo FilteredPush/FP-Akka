@@ -28,12 +28,12 @@ public class Loader {
     private String inputCollection = "scan_prod_occurrences";
 
     @Option(name="-co",usage="Output Collection")
-    private String outputCollection = "NAU1966D";
+    private String outputCollection = "NAUAll5";
 
     @Option(name="-q",usage="Query")
-    private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
-    //private String query = "{\"institutionCode\" : \"MCZ\"}";
-    //private String query = "{oaiid:\"SCAN.occurrence.833567\"}";   //834964 829560
+    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1934\"}";
+    private String query = "{\"institutionCode\" : \"NAU\"}";
+    //private String query = "{oaiid:\"SCAN.occurrence.9378021\"}";   //834964 829560 833567
     //private String query = "{year:\"1898\"}";
 
     
@@ -42,16 +42,16 @@ public class Loader {
         parser.setUsageWidth(4096);
         try {
             parser.parseArgument(args);
-            System.err.println("java FP [options...] arguments...");
-            parser.printUsage(System.err);
+            //System.err.println("java FP [options...] arguments...");
+            //parser.printUsage(System.err);
             //if (parser.getArguments().size()<1 ) throw new CmdLineException(parser,"No argument is given");
 
 
         } catch( CmdLineException e ) {
-            System.err.println(e.getMessage());
-            System.err.println("java FP [options...] arguments...");
+            //System.err.println(e.getMessage());
+            //System.err.println("java FP [options...] arguments...");
             parser.printUsage(System.err);
-            System.err.println();
+            //System.err.println();
             return;
         }
         Prov.init("testProv.log");
@@ -138,13 +138,20 @@ public class Loader {
                 return new AnnotationInserter(writer);
             }
         }), "annotationInserter");
-        */
+
+         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new MongoSummaryWriter("/home/tianhong/data/test.json");
+            }
+        }), "MongoDBWriter");
+                                  */
 
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoSummaryWriter(host,db,collectionOut,null);
             }
         }), "MongoDBWriter");
+
 
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
@@ -162,7 +169,7 @@ public class Loader {
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new AdvancedScientificNameValidator("fp.services.COLService",true,true,dateValidator);
+                return new NewScientificNameValidator("fp.services.COLService",true,true,dateValidator);
             }
         }), "scinValidator");
 
@@ -175,11 +182,13 @@ public class Loader {
 
 
         // start the calculation
+        System.err.println("systemstart#"+" " + "#" + System.currentTimeMillis());
         reader.tell(new Curate());
+        //system.shutdown();
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);
-        System.err.printf("%d",stoptime-starttime);
+        System.err.printf("runtime: %d",stoptime-starttime);
     }
 
     static class Curate {
