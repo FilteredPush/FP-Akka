@@ -173,6 +173,8 @@ public class MongoDBReader extends UntypedActor {
 
         ++cValidRecords;
         //System.err.println("read#"+out.get("oaiid").toString() + "#" + System.currentTimeMillis());
+        //System.out.println("record:" + out.prettyPrint());
+        if(cValidRecords%10000 == 0) System.out.println("cValidRecords = " + cValidRecords);
         listener.tell(t,getSelf());
     }
 

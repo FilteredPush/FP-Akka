@@ -34,9 +34,10 @@ import fp.services.IExternalDateValidationService;
 import fp.services.IInternalDateValidationService;
 import fp.util.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Random;
+import java.util.TreeSet;
 
 /**
  * clustering on Collectors
@@ -58,16 +59,6 @@ public class DateValidator extends UntypedActor {
                                 String remoteComparatorDataLabelStr, String localComparatorDataLabelStr,
                                 boolean getRemoteEvidence, ActorRef listener) {
         this.listener = listener;
-        this.dataLabelStr = dataLabelStr;
-        this.resultCollectionLabelStr = resultCollectionLabelStr;
-        this.normalDataCollectionLabelStr = normalDataCollectionLabelStr;
-        this.outlierCommentLabelStr = outlierCommentLabelStr;
-        this.outlierCollectionLabelStr = outlierCollectionLabelStr;
-        this.outlierDataLabelStr = outlierDataLabelStr;
-        this.normalDataLabelStr = normalDataLabelStr;
-        this.localComparatorDataLabelStr = localComparatorDataLabelStr;
-        this.getRemoteEvidence = getRemoteEvidence;
-        this.remoteComparatorDataLabelStr = remoteComparatorDataLabelStr;
         this.rand = new Random();
 
         try {
@@ -199,27 +190,6 @@ public class DateValidator extends UntypedActor {
             constructOutput(inputSpecimenRecord, curationComment);
 
             //todo: no external for now
-            /*else{
-                externalSingleDateValidationService.validateDate(internalSingleDateValidationService.getCorrectedDate(), collector, latitude, longitude);
-
-                String externalComment = internalSingleDateValidationService.getComment();
-                CurationStatus externalCurationStatus = internalSingleDateValidationService.getCurationStatus();
-
-
-                if (curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY) {
-                    HashMap<String,CurationCommentType> commentAn = new HashMap<String, CurationCommentType>();
-                    commentAn.put(outlierCommentLabelStr, CurationComment.construct(curationStatus, comment, externalSingleDateValidationService.getServiceName()));
-
-                    LinkedList<SpecimenRecord> topClusterCM = new LinkedList<SpecimenRecord>();
-                    for (SpecimenRecord i : inputObjList) {
-                        // TODO dependencies?
-                        topClusterCM.add(i);
-                    }
-                    Collection<SpecimenRecord> c = new Collection<SpecimenRecord>(resultCollectionLabelStr,topClusterCM,commentAn);
-                    listener.tell(c, getSender());
-                }
-            }
-            */
         }else if (message instanceof Broadcast){
             //workerRouter.tell(new Broadcast(((Broadcast) message).message()), getSender());
             getSelf().tell(((Broadcast) message).message(), getSender());
@@ -236,71 +206,6 @@ public class DateValidator extends UntypedActor {
         System.out.println("Stopped DateValidator");
         getSelf().tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
-	
-	private void addDataToken(SpecimenRecord dataToken){
-        String collector = dataToken.get(collectorLabel);
-		TreeSet<SpecimenRecord> recordSet;
-		if(inputDataMap.containsKey(collector)){
-			recordSet = inputDataMap.get(collector);
-		}else{
-			recordSet = new TreeSet<SpecimenRecord>(new SpecimenDataTokenComparator());
-			inputDataMap.put(collector, recordSet);
-		}
-		recordSet.add(dataToken);
-	}	
-	
-	private class SpecimenDataTokenComparator implements Comparator<SpecimenRecord>{
-		public int compare(SpecimenRecord o1, SpecimenRecord o2) {
-			int year1 = Integer.parseInt(o1.get(yearCollectedLabel));
-			int month1 = Integer.parseInt(o1.get(monthCollectedLabel));
-			int day1 = Integer.parseInt(o1.get(dayCollectedLabel));
-			long timestamp1 = getTimestamp(getFormatedDate(year1,month1,day1));
-
-            int year2 = Integer.parseInt(o2.get(yearCollectedLabel));
-            int month2 = Integer.parseInt(o2.get(monthCollectedLabel));
-            int day2 = Integer.parseInt(o2.get(dayCollectedLabel));
-            long timestamp2 = getTimestamp(getFormatedDate(year2,month2,day2));
-			
-			if(timestamp1>timestamp2){
-				return 1;
-			}else{
-				//if they're equal, they're treated as less
-				return -1;
-			}
-		}	
-	}	
-
-	private long getTimestamp(String dateStr){	
-		//date is in format of mm-dd-yyyy
-		SimpleDateFormat format = new SimpleDateFormat("MM-dd-yyyy");
-		Date date;
-		try {
-			date = format.parse(dateStr);
-			return date.getTime();
-		} catch (ParseException e) {
-			// shouldn't happen
-			e.printStackTrace();
-		}
-		return 0;
-	}	
-	
-	private String getFormatedDate(int year, int month, int day){
-		//assume year is four digit
-		String yearStr = String.valueOf(year);
-
-		String monthStr = String.valueOf(month);		
-		if(month<10){
-			monthStr = "0"+monthStr;
-		}
-
-		String dayStr = String.valueOf(day);		
-		if(day<10){
-			dayStr = "0"+dayStr;
-		}
-		
-		return monthStr+"-"+dayStr+"-"+yearStr;
-	}
-
 
     private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
         if (comment != null) {
@@ -318,16 +223,6 @@ public class DateValidator extends UntypedActor {
 
 	private String outlierServiceClassQN;
     private String singleServiceClassQN;
-    private String dataLabelStr = null; 
-    private String resultCollectionLabelStr = null;
-    private String normalDataCollectionLabelStr = null;
-    private String outlierCommentLabelStr = null;
-    private String outlierCollectionLabelStr = null;
-    private String outlierDataLabelStr = null;
-    private String normalDataLabelStr = null;
-    private String localComparatorDataLabelStr = null;
-    private boolean getRemoteEvidence = false;
-    private String remoteComparatorDataLabelStr = null;    
     
     private String collectorLabel;
     private String yearCollectedLabel;

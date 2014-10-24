@@ -63,6 +63,19 @@ public class InternalDateValidator extends UntypedActor {
         getContext().watch(workerRouter);
     }
 
+    public InternalDateValidator(final String service, int numIns, final ActorRef listener) {
+
+        this.listener = listener;
+        this.service = service;
+        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+            @Override
+            public Actor create() throws Exception {
+                return new InternalDateValidatorInvocation(service,  listener);
+            }
+        }).withRouter(new SmallestMailboxRouter(numIns)), "workerRouter");
+        getContext().watch(workerRouter);
+    }
+
     public void onReceive(Object message) {
         //System.out.println("ScinRef message: "+ message+toString());
         if (message instanceof Token) {
@@ -75,7 +88,7 @@ public class InternalDateValidator extends UntypedActor {
             SpecimenRecord result = (SpecimenRecord) message;
             listener.tell(result, getSelf());
             //if (done && --num == 0) {
-            //    //TODO: watch children!
+            //    //TODO: watch children!        numIns
             //    getContext().stop(getSelf());
             //}
             // Stops this actor and all its supervised children
@@ -205,8 +218,9 @@ public class InternalDateValidator extends UntypedActor {
                 String verbatimEventDate = inputSpecimenRecord.get(verbatimEventDateLabel);
                 String modified = inputSpecimenRecord.get(modifiedLabel);
 
-                //System.out.println("start validating: " + collector);
+                //System.err.println("servicestart#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
                 singleDateValidationService.validateDate(eventDate, verbatimEventDate, startDayOfYear, year, month, day, modified, collector);
+                //System.err.println("servicesend#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
 
                 CurationCommentType curationComment = null;
                 CurationStatus curationStatus = singleDateValidationService.getCurationStatus();

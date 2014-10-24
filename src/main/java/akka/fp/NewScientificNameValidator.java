@@ -16,8 +16,8 @@ public class NewScientificNameValidator extends UntypedActor {
     private final boolean useCache;
     private final boolean insertLSID;
 
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener) {
 
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID,  final ActorRef listener ) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
@@ -31,7 +31,7 @@ public class NewScientificNameValidator extends UntypedActor {
         getContext().watch(workerRouter);
     }
 
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final ActorRef listener, final int instances) {
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final int instances, final ActorRef listener ) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
@@ -46,7 +46,8 @@ public class NewScientificNameValidator extends UntypedActor {
     }
 
     public void onReceive(Object message) {
-        //System.out.println("ScinRef message: "+ message+toString());
+        //System.out.println("ScinRef message: "+ message.toString());
+        //System.out.println("ScinRef message: "+ message.getClass().getName());
         if (message instanceof Token) {
             if (!getSender().equals(getSelf())) {
                 workerRouter.tell(message, getSelf());

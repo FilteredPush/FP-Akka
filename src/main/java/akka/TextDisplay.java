@@ -25,7 +25,7 @@ public class TextDisplay extends UntypedActor {
                                     System.currentTimeMillis());
         }
         if (message instanceof Token) {
-            System.out.println(((Token) message).getData());
+            System.out.println("TextDisplay"+((Token) message).getData());
         } else if (message instanceof Broadcast) {
             getSelf().tell(((Broadcast) message).message(), getSender());
         } else {
