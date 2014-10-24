@@ -257,7 +257,20 @@ public class MongoSummaryWriter extends UntypedActor {
 
         detailRecord.put("Actor Name", actorDetail.get("actor"));
         detailRecord.put("Comment", actorDetail.get("comment"));
-        detailRecord.put("Source", actorDetail.get("source"));
+        //get the original value
+        HashMap<String, String> originMap = new HashMap<String, String>();
+
+        String source =  actorDetail.get("source");
+        if(source != null && source.contains("#")){
+            String[] sub = source.split("#");
+            for(int i = 0; i < sub.length-1; i++){
+                originMap.put(sub[i].split(":")[0], sub[i].split(":")[1]);
+            }
+            detailRecord.put("Source", sub[sub.length-1]);
+        }else{
+            detailRecord.put("Source", actorDetail.get("source"));
+        }
+
         detailRecord.put("Actor Result", marker);
 
 
@@ -268,7 +281,13 @@ public class MongoSummaryWriter extends UntypedActor {
                 if (marker.equals("CORRECT")) detailRecord.put(label, "CORRECT: " + record.get(label));
                 //no original record is available
                 //else if (marker.equals("CURATED")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
-                else if (marker.equals("CURATED")) detailRecord.put(label, "CHANGED TO: "  + record.get(label));
+                else if (marker.equals("CURATED")){
+                    if(!originMap.get(label).equals(record.get(label)) ) {
+                        detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
+                    }else{
+                        detailRecord.put(label, "CORRECT: " + record.get(label));
+                    }
+                }
                 else if (marker.equals("UNABLE_CURATE")) detailRecord.put(label, "UNABLE_TO_CURATE: " + record.get(label));
                 else if (marker.equals("UNABLE_DETERMINE_VALIDITY")) detailRecord.put(label, "UNABLE_DETERMINE_VALIDITY_OF: " + record.get(label));
                 else System.out.println("detail comment type is wrong");

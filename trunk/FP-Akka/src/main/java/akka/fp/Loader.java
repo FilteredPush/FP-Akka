@@ -16,6 +16,7 @@ public class Loader {
         Loader fp = new Loader();
         fp.setup(args);
         fp.calculate();
+
     }
 
     @Option(name="-h",usage="MongoDB Host")
@@ -28,13 +29,16 @@ public class Loader {
     private String inputCollection = "scan_prod_occurrences";
 
     @Option(name="-co",usage="Output Collection")
-    private String outputCollection = "NAUAll5";
+    private String outputCollection = "NAUtest";
 
     @Option(name="-q",usage="Query")
-    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1934\"}";
-    private String query = "{\"institutionCode\" : \"NAU\"}";
-    //private String query = "{oaiid:\"SCAN.occurrence.9378021\"}";   //834964 829560 833567
+    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
+    //private String query = "{\"institutionCode\" : \"NAU\"}";
+    //private String query = "{oaiid:\"SCAN.occurrence.10826\"}";   //834964 829560 833567
     //private String query = "{year:\"1898\"}";
+    //private String query = "{month:\"3\"}";
+    private String query = "{collectionCode: \"ASUHIC\" }";
+    //private String query = "{catalogNumber: \"NAUF4A0038275\" }";
 
     
     public void setup(String[] args) {
@@ -60,6 +64,7 @@ public class Loader {
     public void calculate() {
         this.calculate(mongoHost, db, inputCollection, outputCollection, query, 200.0);
     }
+
 
     public void calculate(
             final String host,
@@ -146,6 +151,8 @@ public class Loader {
         }), "MongoDBWriter");
                                   */
 
+
+
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoSummaryWriter(host,db,collectionOut,null);
@@ -156,7 +163,7 @@ public class Loader {
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("fp.services.GeoLocate2",false,certainty,writer);
+                return new GEORefValidator("fp.services.GeoLocate3",false,certainty, writer);
             }
         }), "geoValidator");
 
@@ -169,7 +176,7 @@ public class Loader {
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new NewScientificNameValidator("fp.services.COLService",true,true,dateValidator);
+                return new NewScientificNameValidator("fp.services.COLService",true,true, dateValidator);
             }
         }), "scinValidator");
 
@@ -181,6 +188,10 @@ public class Loader {
 
 
 
+
+
+
+
         // start the calculation
         System.err.println("systemstart#"+" " + "#" + System.currentTimeMillis());
         reader.tell(new Curate());
@@ -188,7 +199,7 @@ public class Loader {
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);
-        System.err.printf("runtime: %d",stoptime-starttime);
+        System.err.printf("runtime: %d\n",stoptime-starttime);
     }
 
     static class Curate {

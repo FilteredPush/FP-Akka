@@ -31,7 +31,7 @@ public class GEORefValidator extends UntypedActor {
         getContext().watch(workerRouter);
 	}
 
-    public GEORefValidator(final String service, final boolean useCache, final double certainty, final ActorRef listener, final int instances) {
+    public GEORefValidator(final String service, final boolean useCache, final double certainty, final int instances, final ActorRef listener) {
         this.listener = listener;
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
                     @Override
