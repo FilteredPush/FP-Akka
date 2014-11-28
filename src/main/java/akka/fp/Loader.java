@@ -29,15 +29,15 @@ public class Loader {
     private String inputCollection = "scan_prod_occurrences";
 
     @Option(name="-co",usage="Output Collection")
-    private String outputCollection = "NAUtest";
+    private String outputCollection = "NAUtest56";
 
     @Option(name="-q",usage="Query")
-    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
-    //private String query = "{\"institutionCode\" : \"NAU\"}";
-    //private String query = "{oaiid:\"SCAN.occurrence.10826\"}";   //834964 829560 833567
+    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1956\"}";
+    private String query = "{\"institutionCode\" : \"DMNS\"}";
+    //private String query = "{oaiid:\"SCAN.occurrence.344912\"}";   //834964 829560 833567   SCAN.occurrence.907687
     //private String query = "{year:\"1898\"}";
     //private String query = "{month:\"3\"}";
-    private String query = "{collectionCode: \"ASUHIC\" }";
+    //private String query = "{collectionCode: \"ASUHIC\" }";
     //private String query = "{catalogNumber: \"NAUF4A0038275\" }";
 
     
