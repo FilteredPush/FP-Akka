@@ -220,6 +220,8 @@ public class NewScientificNameValidator extends UntypedActor {
                         inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
                         inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
                     }
+                    //no need to put empty LSID due to empty result from the checklistbank
+                    if(!scientificNameService.getLSID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getLSID());
 
                     //output
                     CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());

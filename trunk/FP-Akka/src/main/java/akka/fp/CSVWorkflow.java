@@ -30,10 +30,10 @@ public class CSVWorkflow {
     //private String out = "/Users/cobalt/X31out.txt";
     //private String outputFilename = "/home/tianhong/data/akka/2011Demo_out.csv";
     //private String outputFilename = "/home/tianhong/data/akka/test.json";
-    private String outputFilename = "/home/tianhong/data/akka/outTest.json";
+    private String outputFilename = "/home/tianhong/data/akka/test/outTest.json";
 
     @Option(name="-i",usage="Input records from CSV file")
-    private String inputFilename = "/home/tianhong/data/akka/2011Demo_back.csv";
+    private String inputFilename = "/home/tianhong/data/akka/test/head.csv";
     
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);

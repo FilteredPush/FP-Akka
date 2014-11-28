@@ -262,9 +262,18 @@ public class MongoSummaryWriter extends UntypedActor {
 
         String source =  actorDetail.get("source");
         if(source != null && source.contains("#")){
+            //not sure how to handle the case source = "...:...#", i.e., no source case
+            if(source.substring(source.length()-1,source.length()).equals("#"))  source += " ";
             String[] sub = source.split("#");
             for(int i = 0; i < sub.length-1; i++){
-                originMap.put(sub[i].split(":")[0], sub[i].split(":")[1]);
+                //to handle null value
+                String[] each = sub[i].split(":");
+                try {
+                    if (each.length > 1) originMap.put(each[0], each[1]);
+                    else originMap.put(each[0], null);
+                } catch(ArrayIndexOutOfBoundsException e){
+                    System.out.println("source = " + source);
+                }
             }
             detailRecord.put("Source", sub[sub.length-1]);
         }else{
@@ -282,9 +291,9 @@ public class MongoSummaryWriter extends UntypedActor {
                 //no original record is available
                 //else if (marker.equals("CURATED")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
                 else if (marker.equals("CURATED")){
-                    if(!originMap.get(label).equals(record.get(label)) ) {
+                    if (!originMap.get(label).equals(record.get(label))) {
                         detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
-                    }else{
+                    } else {
                         detailRecord.put(label, "CORRECT: " + record.get(label));
                     }
                 }
