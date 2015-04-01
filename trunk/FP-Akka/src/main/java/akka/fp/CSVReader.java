@@ -28,12 +28,18 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-import com.csvreader.CsvReader;
 import com.mongodb.DBCursor;
 import fp.util.SpecimenRecord;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -54,6 +60,17 @@ public class CSVReader extends UntypedActor {
     private int cValidRecords = 0;
     private int totalRecords = 0;
     String[] labelList;
+
+    public char fieldDelimiter = ',';
+    public Character quote = '"';
+    public boolean trimWhitespace = true;
+
+    public Reader inputReader = null;
+    public String filePath = null;
+    public String recordClass = null;
+    public String[] headers = new String[]{};
+
+
     int invoc;
     long start;
 
@@ -70,25 +87,7 @@ public class CSVReader extends UntypedActor {
     public void onReceive(Object o) throws Exception {
         start = System.currentTimeMillis();
 
-        /* use java csv library instead
-        BufferedReader collectionFileReader = new BufferedReader(new FileReader(_filePath));
-        String strLine = collectionFileReader.readLine();
-        if (strLine!=null) { 
-        	labelList = strLine.split(",");
-
-     	do {
-        		strLine = collectionFileReader.readLine();
-        		//System.out.println(" Starting ");
-        		readData(strLine);
-        		//System.out.println(" End ");
-        		if (strLine == null || cRecords % 1000 == 0) {
-        			System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
-        		}
-        	} while (strLine != null);
-
-        }
-        */
-
+        /* use apache common CSV library instead
         try {
             CsvReader reader = new CsvReader(_filePath);
             reader.readHeaders();
@@ -114,6 +113,62 @@ public class CSVReader extends UntypedActor {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        */
+
+        if (inputReader == null) {
+            if (filePath != null) {
+
+                Reader reader = null;
+
+                try {
+                    reader = new FileReader(_filePath);
+                } catch (FileNotFoundException e) {
+                    throw new FileNotFoundException("Input CSV file not found: " + filePath);
+                }
+
+                inputReader = reader;
+            } else {
+                System.out.println("filePath is null");
+            }
+        }
+
+        CSVFormat csvFormat = CSVFormat.newFormat(fieldDelimiter)
+                .withIgnoreSurroundingSpaces(trimWhitespace)
+                .withQuote(quote)
+                .withHeader(headers);
+
+        try (CSVParser csvParser = new CSVParser(inputReader, csvFormat)) {
+
+            Map<String,Integer> csvHeader = csvParser.getHeaderMap();
+            headers = new String[csvHeader.size()];
+            int i = 0;
+            for (String header: csvHeader.keySet()) {
+                headers[i++] = header;
+            }
+
+            for (Iterator<CSVRecord> iterator = csvParser.iterator();iterator.hasNext();) {
+
+                CSVRecord csvRecord = iterator.next();
+
+                if (!csvRecord.isConsistent()) {
+                    throw new Exception("Wrong number of fields in record " + csvRecord.getRecordNumber());
+                }
+
+                //Map<String, String> record = _recordClass.newInstance();
+                SpecimenRecord record = new SpecimenRecord();
+
+                for (String header : headers) {
+                    String value = csvRecord.get(header);
+                    record.put(header, value);
+                }
+               // broadcast(record);
+
+                Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(record,this.getClass().getSimpleName(),invoc);
+
+                ++cValidRecords;
+                listener.tell(t,getSelf());
+            }
         }
 
         //listener.tell(new Done(),getSelf());
