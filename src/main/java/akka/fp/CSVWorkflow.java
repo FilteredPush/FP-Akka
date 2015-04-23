@@ -20,20 +20,18 @@ public class CSVWorkflow {
         fp.calculate();
     }
 
-    @Option(name="-q",usage="query for MongoDB")
-    private String query = "{year:\"1898\"}";
 
-    @Option(name="-e",usage="encoding for output file")
-    private String enc = "UTF-8";
+    /*@Option(name="-e",usage="encoding for output file")
+    private String enc = "UTF-8";          */
 
-    @Option(name="-o",usage="output records to file")
+    @Option(name="-o",usage="output JSON file")
     //private String out = "/Users/cobalt/X31out.txt";
     //private String outputFilename = "/home/tianhong/data/akka/2011Demo_out.csv";
     //private String outputFilename = "/home/tianhong/data/akka/test.json";
-    private String outputFilename = "/home/tianhong/data/akka/test/outTest.json";
+    private String outputFilename = "/home/tianhong/Downloads/data/test.json";
 
-    @Option(name="-i",usage="Input records from CSV file")
-    private String inputFilename = "/home/tianhong/data/akka/test/head.csv";
+    @Option(name="-i",usage="Input CSV file")
+    private String inputFilename = "/home/tianhong/Downloads/data/occ.txt";
     
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -57,19 +55,17 @@ public class CSVWorkflow {
             //System.err.println();
             return;
         }
-        Prov.init("testProv.log");
+        //Prov.init("testProv.log");
     }
 
     public void calculate() {
-        this.calculate("fp2.acis.ufl.edu", "db", "Occurrence", "AkkaTest", query, 200.0);
+        this.calculate( "db", "Occurrence", 200.0);
     }
 
     public void calculate(
-            final String host,
-            final String db,
-            final String collectionIn,
-            final String collectionOut,
-            final String query,
+            final String fileIn,
+            final String fileOut,
+            //final String query,
             final Double certainty) {
 
         long starttime = System.currentTimeMillis();

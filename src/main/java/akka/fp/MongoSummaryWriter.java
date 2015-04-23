@@ -92,13 +92,13 @@ public class MongoSummaryWriter extends UntypedActor {
     public void onReceive(Object message) {
         long start = System.currentTimeMillis();
         if (message instanceof TokenWithProv) {
-            Prov.log().printf("datadep\t%s\t%d\t%s\t%d\t%d\t%d\n",
+           /* Prov.log().printf("datadep\t%s\t%d\t%s\t%d\t%d\t%d\n",
                     ((TokenWithProv) message).getActorCreated(),
                     ((TokenWithProv) message).getInvocCreated(),
                     this.getClass().getSimpleName(),
                     invoc,
                     ((TokenWithProv) message).getTimeCreated(),
-                    System.currentTimeMillis());
+                    System.currentTimeMillis());     */
 
             /*
             //original record
@@ -224,7 +224,7 @@ public class MongoSummaryWriter extends UntypedActor {
         } else {
             unhandled(message);
         }
-        Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
+        //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
         invoc++;
     }
 
@@ -240,6 +240,7 @@ public class MongoSummaryWriter extends UntypedActor {
                 e.printStackTrace();
             }
         }
+        System.out.println("Wrote out " + validCount + " records");
         getContext().system().shutdown();
 
         super.postStop();
@@ -291,7 +292,10 @@ public class MongoSummaryWriter extends UntypedActor {
                 //no original record is available
                 //else if (marker.equals("CURATED")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
                 else if (marker.equals("CURATED")){
-                    if (!originMap.get(label).equals(record.get(label))) {
+                   // System.out.println("source = " + source);
+                    //System.out.println("originMap = " + originMap);
+                    //System.out.println("record = " + record);
+                    if (originMap.get(label) == null || !originMap.get(label).equals(record.get(label))) {
                         detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
                     } else {
                         detailRecord.put(label, "CORRECT: " + record.get(label));
@@ -327,6 +331,8 @@ public class MongoSummaryWriter extends UntypedActor {
             modifiedRecord.put(label,record.get(label));
         }
         modifiedRecord.put("ValidationState", validationState);
+
+
 
         if(!outputToFile){
             BasicDBObject data = new BasicDBObject("Record", modifiedRecord).
@@ -370,6 +376,7 @@ public class MongoSummaryWriter extends UntypedActor {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
         }
+        validCount++;
     }
 
     private void constructMaps() {
@@ -421,6 +428,7 @@ public class MongoSummaryWriter extends UntypedActor {
         highlightedLabelsMap.put("DateValidator", dset);
     }
 
+    private int validCount = 0;
     private MongoClient _mongoClient;
     private DB _db;
     private DBCollection _collection;
