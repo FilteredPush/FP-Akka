@@ -71,32 +71,32 @@ public class CollectingEventOutlierFinder extends UntypedActor {
 
             CollectorLabel = speicmenRecordTypeConf.getLabel("RecordedBy");
             if(CollectorLabel == null){
-                throw new CurrationException(getName()+" failed since the RecordedBy label of the SpecimenRecordType is not set.");
+                throw new CurationException(getName()+" failed since the RecordedBy label of the SpecimenRecordType is not set.");
             }
 
             yearCollectedLabel = speicmenRecordTypeConf.getLabel("YearCollected");
             if(yearCollectedLabel == null){
-                throw new CurrationException(getName()+" failed since the YearCollected label of the SpecimenRecordType is not set.");
+                throw new CurationException(getName()+" failed since the YearCollected label of the SpecimenRecordType is not set.");
             }
 
             monthCollectedLabel = speicmenRecordTypeConf.getLabel("MonthCollected");
             if(monthCollectedLabel == null){
-                throw new CurrationException(getName()+" failed since the MonthCollected label of the SpecimenRecordType is not set.");
+                throw new CurationException(getName()+" failed since the MonthCollected label of the SpecimenRecordType is not set.");
             }
 
             dayCollectedLabel = speicmenRecordTypeConf.getLabel("DayCollected");
             if(dayCollectedLabel == null){
-                throw new CurrationException(getName()+" failed since the DayCollected label of the SpecimenRecordType is not set.");
+                throw new CurationException(getName()+" failed since the DayCollected label of the SpecimenRecordType is not set.");
             }
 
             latitudeLabel = speicmenRecordTypeConf.getLabel("DecimalLatitude");
             if(latitudeLabel == null){
-                throw new CurrationException(getName()+" failed since the DecimalLatitude label of the SpecimenRecordType is not set.");
+                throw new CurationException(getName()+" failed since the DecimalLatitude label of the SpecimenRecordType is not set.");
             }
 
             longitudeLabel = speicmenRecordTypeConf.getLabel("DecimalLongitude");
             if(longitudeLabel == null){
-                throw new CurrationException(getName()+" failed since the DecimalLongitude label of the SpecimenRecordType is not set.");
+                throw new CurationException(getName()+" failed since the DecimalLongitude label of the SpecimenRecordType is not set.");
             }
 
             //resolve service
@@ -109,7 +109,7 @@ public class CollectingEventOutlierFinder extends UntypedActor {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        } catch (CurrationException e) {
+        } catch (CurationException e) {
             e.printStackTrace();
         }
 

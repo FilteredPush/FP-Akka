@@ -128,42 +128,42 @@ public class InternalDateValidator extends UntypedActor {
 
                 collectorLabel = speicmenRecordTypeConf.getLabel("RecordedBy");
                 if (collectorLabel == null) {
-                    throw new CurrationException(getName() + " failed since the RecordedBy label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the RecordedBy label of the SpecimenRecordType is not set.");
                 }
 
                 yearCollectedLabel = speicmenRecordTypeConf.getLabel("YearCollected");
                 if (yearCollectedLabel == null) {
-                    throw new CurrationException(getName() + " failed since the YearCollected label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the YearCollected label of the SpecimenRecordType is not set.");
                 }
 
                 monthCollectedLabel = speicmenRecordTypeConf.getLabel("MonthCollected");
                 if (monthCollectedLabel == null) {
-                    throw new CurrationException(getName() + " failed since the MonthCollected label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the MonthCollected label of the SpecimenRecordType is not set.");
                 }
 
                 dayCollectedLabel = speicmenRecordTypeConf.getLabel("DayCollected");
                 if (dayCollectedLabel == null) {
-                    throw new CurrationException(getName() + " failed since the DayCollected label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the DayCollected label of the SpecimenRecordType is not set.");
                 }
 
                 eventDateLabel = speicmenRecordTypeConf.getLabel("EventDate");
                 if (eventDateLabel == null) {
-                    throw new CurrationException(getName() + " failed since the eventDate label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the eventDate label of the SpecimenRecordType is not set.");
                 }
 
                 startDayOfYearLabel = speicmenRecordTypeConf.getLabel("StartDayOfYear");
                 if (startDayOfYearLabel == null) {
-                    throw new CurrationException(getName() + " failed since the startDayOfYearLabel label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the startDayOfYearLabel label of the SpecimenRecordType is not set.");
                 }
 
                 verbatimEventDateLabel = speicmenRecordTypeConf.getLabel("VerbatimEventDate");
                 if (verbatimEventDateLabel == null) {
-                    throw new CurrationException(getName() + " failed since the verbatimEventDate label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the verbatimEventDate label of the SpecimenRecordType is not set.");
                 }
 
                 modifiedLabel = speicmenRecordTypeConf.getLabel("Modified");
                 if (modifiedLabel == null) {
-                    throw new CurrationException(getName() + " failed since the modified label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName() + " failed since the modified label of the SpecimenRecordType is not set.");
                 }
 
                 //resolve service
@@ -176,7 +176,7 @@ public class InternalDateValidator extends UntypedActor {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
-            } catch (CurrationException e) {
+            } catch (CurationException e) {
                 e.printStackTrace();
             }
 
