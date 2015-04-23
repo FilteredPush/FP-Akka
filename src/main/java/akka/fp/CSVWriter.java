@@ -2,13 +2,18 @@ package akka.fp;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-import com.csvreader.CsvWriter;
+// import com.csvreader.CsvWriter;
 import fp.util.SpecimenRecord;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
 * Created with IntelliJ IDEA.
@@ -18,10 +23,13 @@ import java.util.List;
 * To change this template use File | Settings | File Templates.
 */
 public class CSVWriter extends UntypedActor {
+
+	private static final Log log = LogFactory.getLog(CSVWriter.class);
+	
     int cRecords = 0;
     int invoc = 0;
     private String _filePath = "/home/tianhong/test/data/test.csv";
-    CsvWriter csvOutput;
+    CSVPrinter csvPrinter;
     Boolean headerWritten = false;
     List<String> headers = new ArrayList<String>();
     //todo: make it more flexible
@@ -30,8 +38,9 @@ public class CSVWriter extends UntypedActor {
         if (filePath != null) this._filePath = filePath;
         try {
             //System.out.println("filePath = " + filePath);
-            csvOutput = new CsvWriter(new FileWriter(_filePath, true), ',');
+            csvPrinter = new CSVPrinter(new FileWriter(_filePath, true), CSVFormat.DEFAULT);
         } catch (IOException e) {
+        	log.error(e.getMessage(),e);
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         invoc = 0;
@@ -57,25 +66,26 @@ public class CSVWriter extends UntypedActor {
                     //use headers list to keep track of the order
                     for (String label  : ((SpecimenRecord)o).keySet()) {
 
-                        csvOutput.write(label);
+                        csvPrinter.print(label);
                         headers.add(label);
                     }
-                    csvOutput.endRecord();
+                    csvPrinter.println();
                 }
 
                 //write the values
                 for (String header : headers){
                     //System.out.println("asfeafadf" + ((SpecimenRecord)o).get(header));
-                    csvOutput.write(((SpecimenRecord)o).get(header));
+                    csvPrinter.print(((SpecimenRecord)o).get(header));
                 }
-                csvOutput.endRecord();
-
+                csvPrinter.println();
+                csvPrinter.flush();
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
 
             if (++cRecords % 100 == 0) {
                 //System.out.println("Wrote " + cRecords + " records.");
+                log.debug("Wrote " + cRecords + " records.");
             }
         } else if (message instanceof Broadcast) {
             getSelf().tell(((Broadcast) message).message(), getSender());
@@ -90,7 +100,14 @@ public class CSVWriter extends UntypedActor {
     public void postStop() {
         System.out.println("Stopped Display");
         //System.out.println("Wrote " + cRecords + " records.");
-        csvOutput.close();
+        try { 
+            csvPrinter.close();
+        } catch (NullPointerException e) { 
+            System.out.println(e.getMessage());
+        } catch (IOException e) {
+        	System.out.println(e.getMessage());
+        	log.error(e.getMessage(),e);
+		}
         getContext().system().shutdown();
         super.postStop();
     }
