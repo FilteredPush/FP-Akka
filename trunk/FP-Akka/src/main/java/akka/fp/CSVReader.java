@@ -36,7 +36,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.InputStreamReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
@@ -61,12 +61,12 @@ public class CSVReader extends UntypedActor {
     private int totalRecords = 0;
     String[] labelList;
 
-    public char fieldDelimiter = ',';
+    public char fieldDelimiter = '\t';
     public Character quote = '"';
     public boolean trimWhitespace = true;
 
     public Reader inputReader = null;
-    public String filePath = null;
+    //public String filePath = null;
     public String recordClass = null;
     public String[] headers = new String[]{};
 
@@ -117,14 +117,16 @@ public class CSVReader extends UntypedActor {
         */
 
         if (inputReader == null) {
-            if (filePath != null) {
+            if (_filePath != null) {
 
                 Reader reader = null;
 
                 try {
                     reader = new FileReader(_filePath);
                 } catch (FileNotFoundException e) {
-                    throw new FileNotFoundException("Input CSV file not found: " + filePath);
+                    System.out.println("file not found");
+                    throw new FileNotFoundException("Input CSV file not found: " + _filePath);
+
                 }
 
                 inputReader = reader;
@@ -135,10 +137,15 @@ public class CSVReader extends UntypedActor {
 
         CSVFormat csvFormat = CSVFormat.newFormat(fieldDelimiter)
                 .withIgnoreSurroundingSpaces(trimWhitespace)
-                .withQuote(quote)
                 .withHeader(headers);
+                //.withQuote(quote)
 
-        try (CSVParser csvParser = new CSVParser(inputReader, csvFormat)) {
+
+        Object debug = new Object();
+
+        try{
+
+            CSVParser csvParser = new CSVParser(inputReader, csvFormat);
 
             Map<String,Integer> csvHeader = csvParser.getHeaderMap();
             headers = new String[csvHeader.size()];
@@ -150,6 +157,7 @@ public class CSVReader extends UntypedActor {
             for (Iterator<CSVRecord> iterator = csvParser.iterator();iterator.hasNext();) {
 
                 CSVRecord csvRecord = iterator.next();
+                debug = csvRecord;
 
                 if (!csvRecord.isConsistent()) {
                     throw new Exception("Wrong number of fields in record " + csvRecord.getRecordNumber());
@@ -169,6 +177,16 @@ public class CSVReader extends UntypedActor {
                 ++cValidRecords;
                 listener.tell(t,getSelf());
             }
+        }catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }catch (IOException e) {
+            System.out.println("1wrongcValidRecords = " + cValidRecords);
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            System.out.println("2wrongcValidRecords = " + cValidRecords);
+            System.out.println("debug = " + debug);
+
+            e.printStackTrace();
         }
 
         //listener.tell(new Done(),getSelf());
@@ -177,7 +195,7 @@ public class CSVReader extends UntypedActor {
             //System.out.println(" DB: " + mongodbDB);nPill.getInstance()),getSelf());
         listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
         getContext().stop(getSelf());
-        Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
+        //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
         invoc++;
     }
 
@@ -191,6 +209,7 @@ java.lang.ArrayIndexOutOfBoundsException: 12
 
     @Override
     public void postStop() {
+        System.out.println("Read " + cValidRecords + " records");
         System.out.println("Stopped Reader");
         //System.out.println(System.currentTimeMillis() - start);
         super.postStop();

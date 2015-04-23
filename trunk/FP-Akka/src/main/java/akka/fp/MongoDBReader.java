@@ -138,7 +138,7 @@ public class MongoDBReader extends UntypedActor {
             if (cRecords % 100 == 0) {
                 //System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
             }
-        } while (cursor.hasNext());
+        } while (cursor.hasNext());// && cValidRecords < 10000);
         //System.out.println(" End ");
         //System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
 
