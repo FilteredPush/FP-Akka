@@ -29,16 +29,17 @@ public class Loader {
     private String inputCollection = "scan_prod_occurrences";
 
     @Option(name="-co",usage="Output Collection")
-    private String outputCollection = "NAUtest56";
+    private String outputCollection = "test";
 
     @Option(name="-q",usage="Query")
-    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1956\"}";
-    private String query = "{\"institutionCode\" : \"DMNS\"}";
-    //private String query = "{oaiid:\"SCAN.occurrence.344912\"}";   //834964 829560 833567   SCAN.occurrence.907687
+    //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
+    //private String query = "{\"institutionCode\" : \"NMSU\"}";
+    //private String query = "{oaiid:\"SCAN.occurrence.1098032\"}";   //834964 829560 833567   SCAN.occurrence.907687
     //private String query = "{year:\"1898\"}";
-    //private String query = "{month:\"3\"}";
+    private String query = "{month:\"12\"}";
     //private String query = "{collectionCode: \"ASUHIC\" }";
     //private String query = "{catalogNumber: \"NAUF4A0038275\" }";
+    //private String query = "";
 
     
     public void setup(String[] args) {
@@ -144,21 +145,19 @@ public class Loader {
             }
         }), "annotationInserter");
 
-         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoSummaryWriter("/home/tianhong/data/test.json");
-            }
-        }), "MongoDBWriter");
-                                  */
-
-
 
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoSummaryWriter(host,db,collectionOut,null);
             }
         }), "MongoDBWriter");
+        */
 
+         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new MongoSummaryWriter("/home/tianhong/Downloads/data/test.json");
+            }
+        }), "MongoDBWriter");
 
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
@@ -180,9 +179,17 @@ public class Loader {
             }
         }), "scinValidator");
 
+        /*
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoDBReader(host,db,collectionIn,query,scinValidator);
+            }
+        }), "reader");
+        */
+
+        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new CSVReader("/home/tianhong/Downloads/data/tt2.txt",scinValidator);
             }
         }), "reader");
 
