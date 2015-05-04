@@ -159,13 +159,13 @@ public class ScientificNameValidator extends UntypedActor {
             long start = System.currentTimeMillis();
             invoc = rand.nextInt();
             if (message instanceof TokenWithProv) {
-                Prov.log().printf("datadep\t%s\t%d\t%s\t%d\t%d\t%d\n",
+                /*Prov.log().printf("datadep\t%s\t%d\t%s\t%d\t%d\t%d\n",
                                         ((TokenWithProv) message).getActorCreated(),
                                         ((TokenWithProv) message).getInvocCreated(),
                                         this.getClass().getSimpleName(),
                                         invoc,
                                         ((TokenWithProv) message).getTimeCreated(),
-                                        System.currentTimeMillis());
+                                        System.currentTimeMillis());   */
             }
 
             if (message instanceof Token) {
