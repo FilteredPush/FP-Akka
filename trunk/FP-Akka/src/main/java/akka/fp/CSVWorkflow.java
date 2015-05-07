@@ -35,14 +35,19 @@ public class CSVWorkflow {
     @Option(name="-i",usage="Input CSV file")
     private String inputFilename = "/home/thsong/data/scan_data/tt.txt";
     
+    /**
+     * Setup conditions to run the workflow.
+     * @param args command line arguments
+     * @return true if setup was successful, false otherwise.
+     */
     public boolean setup(String[] args) {
         boolean setupOK = false;
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
         try {
+            if(args==null || args.length==0)
+                throw new CmdLineException(parser,"No arguments were provided, you must specify -i and -o.");
             parser.parseArgument(args);
-            //if( arguments.isEmpty() )
-            //    throw new CmdLineException(parser,"No argument is given");
             File inputFile = new File(inputFilename);
             if (!inputFile.canRead()) { 
                 throw new CmdLineException(parser,"Can't read Input File " + inputFilename );
@@ -53,7 +58,7 @@ public class CSVWorkflow {
             }
             setupOK = true;
         } catch( CmdLineException e ) {
-            //System.err.println(e.getMessage());
+            System.err.println(e.getMessage());
             //System.err.println("java FP [options...] arguments...");
             parser.printUsage(System.err);
             //System.err.println();
