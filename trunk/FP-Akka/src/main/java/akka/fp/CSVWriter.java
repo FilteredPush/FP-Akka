@@ -2,7 +2,6 @@ package akka.fp;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-// import com.csvreader.CsvWriter;
 import fp.util.SpecimenRecord;
 
 import java.io.FileWriter;
@@ -16,11 +15,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
+ * Actor to write output to a CSV file.  
+ * 
+ * @author cobalt
+ * @author mole
+ * 
 * Created with IntelliJ IDEA.
 * User: cobalt
 * Date: 06.05.2013
 * Time: 13:06
-* To change this template use File | Settings | File Templates.
 */
 public class CSVWriter extends UntypedActor {
 
