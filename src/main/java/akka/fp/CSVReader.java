@@ -176,6 +176,8 @@ public class CSVReader extends UntypedActor {
 
                 ++cValidRecords;
                 listener.tell(t,getSelf());
+
+                if(cValidRecords % 1000 == 0) break;
             }
         }catch (FileNotFoundException e) {
             e.printStackTrace();

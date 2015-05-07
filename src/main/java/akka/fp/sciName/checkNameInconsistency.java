@@ -4,32 +4,38 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 import akka.fp.Token;
 import fp.util.CurationComment;
+import fp.util.CurationCommentType;
 import fp.util.CurationStatus;
 import fp.util.SpecimenRecord;
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.nameparser.NameParser;
 import org.gbif.nameparser.UnparsableException;
+import akka.fp.sciName.Component;
+
 
 import java.util.HashMap;
 
 /**
  * Created by tianhong on 2/9/15.
  */
-public class checkNameInconsistency extends UntypedActor {
+public class checkNameInconsistency extends Component {
 
     //SpecimenRecord inputData = new SpecimenRecord();
-    String validName;
-    final ActorRef listener;
+
+    private static int count=0;
+
 
     public checkNameInconsistency(final ActorRef listener){
-        this.listener = listener;
+        super(listener);
     }
 
     @Override
     public void onReceive(Object message){
 
-        if (((Token) message).getData() instanceof SpecimenRecord) {
-            SpecimenRecord record = (SpecimenRecord) ((Token) message).getData();
+        if (message instanceof SpecimenRecord) {
+            //System.out.println("count = " + count++);
+            //SpecimenRecord record = (SpecimenRecord) ((Token) message).getData();
+            SpecimenRecord record = (SpecimenRecord) message;
             //System.err.println("georefstart#"+record.get("oaiid").toString() + "#" + System.currentTimeMillis());
 
             /*
@@ -42,9 +48,8 @@ public class checkNameInconsistency extends UntypedActor {
 
             //todo: need to change to parsing a configuration
             checkConsistencyToAtomicField(record.get("sciName"), record.get("genus"), record.get("subgenus"), record.get("specificEpithet"), record.get("verbatimTaxonRank"), record.get("taxonRank"), record.get("infraspecificEpithet"));
-            SpecimenRecord result = new SpecimenRecord();
-            result.put("sciName", validName);
-            listener.tell(result, getSelf());
+
+            listener.tell(constructOutput(record), getSelf());
         }
     }
 
@@ -104,10 +109,12 @@ public class checkNameInconsistency extends UntypedActor {
 
 
             if(pn == null){
-                if(pn.equals(cn)){
+                //if(pn.equals(cn)){
+                if(cn == null){
                     curationStatus = CurationComment.UNABLE_DETERMINE_VALIDITY;
                     comment = comment + "| cannot get a valid scientificName from the record";
-                    name =  pn.canonicalName();
+                    name = null;
+                    //name =  pn.canonicalName();
                     //validatedAuthor = pn.getAuthorship();
                 } else{
                     //validatedAuthor = null;
@@ -144,11 +151,18 @@ public class checkNameInconsistency extends UntypedActor {
             name =  scientificName;
         }
 
-        validName = name;
+
+
+        curationComment = CurationComment.construct(curationStatus,comment,null);
+
+        /*
         resultMap.put("scientificName", name);
         resultMap.put("curationStatus", curationStatus.toString());
         resultMap.put("comment", comment);
         resultMap.put("source", null);
+        return resultMap;
+        */
+        //return constructOutput(record, name, curationStatus.toString(), comment, null );
         return resultMap;
     }
 }

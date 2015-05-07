@@ -21,30 +21,34 @@ import java.util.HashMap;
 /**
  * Created by tianhong on 2/9/15.
  */
-public class NameReconciliation extends UntypedActor {
+public class NameReconciliation extends Component {
 
     //SpecimenRecord inputData = new SpecimenRecord();
     String validName;
-    final ActorRef listener;
 
     public NameReconciliation(final ActorRef listener) {
-        this.listener = listener;
+        super(listener);
     }
 
     @Override
     public void onReceive(Object message) {
 
-        if (((Token) message).getData() instanceof SpecimenRecord) {
-            SpecimenRecord record = (SpecimenRecord) ((Token) message).getData();
+        if (message instanceof SpecimenRecord) {
+            //SpecimenRecord record = (SpecimenRecord) ((Token) message).getData();
+            SpecimenRecord record = (SpecimenRecord) message;
             //System.err.println("georefstart#"+record.get("oaiid").toString() + "#" + System.currentTimeMillis());
 
-            checkMisspelling(record.get("sciName"));
-            SpecimenRecord result = new SpecimenRecord();
-            result.put("sciName", validName);
-            listener.tell(result, getSelf());
+            String sciName = record.get("scientificName");
+            if(sciName == null || sciName.length() == 0){
+                curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY, "The original scientificName in the record is empty",null);
+                listener.tell(constructOutput(record), getSelf());
+            }
+
+            checkMisspelling(sciName);
+            listener.tell(constructOutput(record), getSelf());
         }
     }
-    public HashMap checkMisspelling (String name){
+    public void checkMisspelling (String name){
 
         CurationStatus curationStatus = null;
         String comment = "";
@@ -84,20 +88,14 @@ public class NameReconciliation extends UntypedActor {
             if (jresults == null){
                 //comment = comment + " | the name is misspelled and cannot be corrected.";
                 comment = comment + " | the provided name cannot be found in Global Name Resolver";
-                resultMap.put("scientificName", null);
-                resultMap.put("curationStatus", CurationComment.UNABLE_CURATED.toString());
-                resultMap.put("comment", comment);
-                return resultMap;
+                curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,comment,"Global Name Resolver");
             }
             last = (JSONObject)jresults.get(0);
             //System.out.println("last = " + last.toString());
 
         } catch (ParseException e) {
             comment = comment + " | cannot get result from global name resolver due to error";
-            resultMap.put("scientificName", null);
-            resultMap.put("curationStatus", CurationComment.UNABLE_DETERMINE_VALIDITY.toString());
-            resultMap.put("comment", comment);
-            return resultMap;
+            curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,comment,"Global Name Resolver");
         }
         double score = Double.parseDouble(getValFromKey(last,"score"));
         int type = Integer.parseInt(getValFromKey(last,"match_type"));
@@ -134,10 +132,8 @@ public class NameReconciliation extends UntypedActor {
         }
 
         validName = resolvedName;
-        resultMap.put("scientificName", resolvedName);
-        resultMap.put("curationStatus", curationStatus.toString());
-        resultMap.put("comment", comment);
-        return resultMap;
+
+        curationComment = CurationComment.construct(curationStatus,comment,"Global Name Resolver");
     }
 
     public static String getValFromKey(JSONObject json, String key) {
