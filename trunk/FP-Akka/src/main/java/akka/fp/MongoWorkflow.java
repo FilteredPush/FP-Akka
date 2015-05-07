@@ -1,22 +1,24 @@
 /**
- * Copyright (C) 2009-2012 Typesafe Inc. <http://www.typesafe.com>
+ * 
+ * Copyright (C) 2014 President and Fellows of Harvard College
+ * 
+ * @author Tianhong Song
  */
 
 package akka.fp;
-
 
 import akka.actor.*;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-public class Loader {
+public class MongoWorkflow {
 
     public static void main(String[] args) {
-        Loader fp = new Loader();
-        fp.setup(args);
+        MongoWorkflow fp = new MongoWorkflow();
+        if (fp.setup(args)) { 
         fp.calculate();
-
+        }
     }
 
     @Option(name="-h",usage="MongoDB Host")
@@ -25,24 +27,30 @@ public class Loader {
     @Option(name="-d",usage="db")
     private String db = "db";
 
-    @Option(name="-ci",usage="Input Collection")
+    @Option(name="-ci",usage="Input Collection in mongo to query for records to process.")
     private String inputCollection = "scan_prod_occurrences";
 
-    @Option(name="-co",usage="Output Collection")
+    @Option(name="-co",usage="Output Collection in mongo into which to write results.")
     private String outputCollection = "test";
 
-    @Option(name="-q",usage="Query")
+    @Option(name="-q",usage="Query on Mongo collection to select records to process, e.g. {\"institutionCode\" : \"NMSU\"} ")
+    private String query = "{month:\"12\"}";
     //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
     //private String query = "{\"institutionCode\" : \"NMSU\"}";
     //private String query = "{oaiid:\"SCAN.occurrence.1098032\"}";   //834964 829560 833567   SCAN.occurrence.907687
     //private String query = "{year:\"1898\"}";
-    private String query = "{month:\"12\"}";
     //private String query = "{collectionCode: \"ASUHIC\" }";
     //private String query = "{catalogNumber: \"NAUF4A0038275\" }";
     //private String query = "";
-
     
-    public void setup(String[] args) {
+    /**
+     * Setup conditions for the workflow to execute
+     * 
+     * @param args command line arguments
+     * @return true if setup was successfull, false otherwise
+     */
+    public boolean setup(String[] args) {
+    	boolean result = false;
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
         try {
@@ -50,16 +58,15 @@ public class Loader {
             //System.err.println("java FP [options...] arguments...");
             //parser.printUsage(System.err);
             //if (parser.getArguments().size()<1 ) throw new CmdLineException(parser,"No argument is given");
-
-
+            result = true;
         } catch( CmdLineException e ) {
-            //System.err.println(e.getMessage());
+            System.err.println(e.getMessage());
             //System.err.println("java FP [options...] arguments...");
             parser.printUsage(System.err);
             //System.err.println();
-            return;
         }
         Prov.init("testProv.log");
+        return result;
     }
 
     public void calculate() {
@@ -192,11 +199,6 @@ public class Loader {
                 return new CSVReader("/home/tianhong/Downloads/data/tt2.txt",scinValidator);
             }
         }), "reader");
-
-
-
-
-
 
 
         // start the calculation
