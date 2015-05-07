@@ -17,8 +17,9 @@ public class CSVWorkflow {
 
     public static void main(String[] args) {
         CSVWorkflow fp = new CSVWorkflow();
-        fp.setup(args);
-        fp.calculate();
+        if (fp.setup(args)) { 
+           fp.calculate();
+        }
     }
 
 
@@ -34,7 +35,8 @@ public class CSVWorkflow {
     @Option(name="-i",usage="Input CSV file")
     private String inputFilename = "/home/thsong/data/scan_data/tt.txt";
     
-    public void setup(String[] args) {
+    public boolean setup(String[] args) {
+        boolean setupOK = false;
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
         try {
@@ -49,14 +51,15 @@ public class CSVWorkflow {
             if (outputFile.exists()) { 
                 throw new CmdLineException(parser,"Output File Exists " + outputFilename );
             }
+            setupOK = true;
         } catch( CmdLineException e ) {
             //System.err.println(e.getMessage());
             //System.err.println("java FP [options...] arguments...");
             parser.printUsage(System.err);
             //System.err.println();
-            return;
         }
         //Prov.init("testProv.log");
+        return setupOK;
     }
 
     public void calculate() {
