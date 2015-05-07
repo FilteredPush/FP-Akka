@@ -6,6 +6,7 @@ package akka.fp;
 
 
 import akka.actor.*;
+import akka.fp.sciName.SciNameWorkflow;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -28,10 +29,10 @@ public class CSVWorkflow {
     //private String out = "/Users/cobalt/X31out.txt";
     //private String outputFilename = "/home/tianhong/data/akka/2011Demo_out.csv";
     //private String outputFilename = "/home/tianhong/data/akka/test.json";
-    private String outputFilename = "/home/tianhong/Downloads/data/test.json";
+    private String outputFilename = "/home/thsong/data/scan_data/test.json";
 
     @Option(name="-i",usage="Input CSV file")
-    private String inputFilename = "/home/tianhong/Downloads/data/occ.txt";
+    private String inputFilename = "/home/thsong/data/scan_data/tt.txt";
     
     public void setup(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
@@ -156,7 +157,7 @@ public class CSVWorkflow {
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new NewScientificNameValidator("fp.services.COLService",true,true,dateValidator);
+                return new SciNameWorkflow("-t",false,dateValidator);
             }
         }), "scinValidator");
 
