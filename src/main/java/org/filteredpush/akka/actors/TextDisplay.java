@@ -1,4 +1,8 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
+
+import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;

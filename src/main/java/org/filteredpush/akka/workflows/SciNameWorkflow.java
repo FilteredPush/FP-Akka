@@ -1,13 +1,18 @@
-package akka.fp.sciName;
+package org.filteredpush.akka.workflows;
 
 import akka.actor.*;
-import akka.fp.Token;
+import akka.fp.sciName.NameReconciliation;
+import akka.fp.sciName.checkNameInconsistency;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
+
 import com.sun.accessibility.internal.resources.accessibility_zh_TW;
+
 import fp.util.SpecimenRecord;
 
 import java.util.HashMap;
+
+import org.filteredpush.akka.data.Token;
 
 /**
  * Created by tianhong on 2/10/15.

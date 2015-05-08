@@ -1,18 +1,21 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.*;
+import akka.routing.Broadcast;
+import akka.routing.SmallestMailboxRouter;
 import edu.harvard.mcz.nametools.AuthorNameComparator;
 import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
-import fp.services.IScientificNameValidationService;
+import fp.services.INewScientificNameValidationService;
 import fp.util.*;
-import akka.routing.Broadcast;
-import akka.routing.SmallestMailboxRouter;
 
 import java.util.*;
 
-public class ScientificNameValidator extends UntypedActor {
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
+
+public class NewScientificNameValidator extends UntypedActor {
 
     private final ActorRef listener;
     private final ActorRef workerRouter;
@@ -20,37 +23,38 @@ public class ScientificNameValidator extends UntypedActor {
     private final boolean useCache;
     private final boolean insertLSID;
 
-    public ScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final ActorRef listener) {
 
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID,  final ActorRef listener ) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
-        this.insertLSID = insertGUID;
+        this.insertLSID = insertLSID;
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
+                return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
             }
         }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
-    public ScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final ActorRef listener, final int instances) {
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final int instances, final ActorRef listener ) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
-        this.insertLSID = insertGUID;
+        this.insertLSID = insertLSID;
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
+                return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
             }
         }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
     public void onReceive(Object message) {
-        //System.out.println("ScinRef message: "+ message+toString());
+        //System.out.println("ScinRef message: "+ message.toString());
+        //System.out.println("ScinRef message: "+ message.getClass().getName());
         if (message instanceof Token) {
             if (!getSender().equals(getSelf())) {
                 workerRouter.tell(message, getSelf());
@@ -75,6 +79,7 @@ public class ScientificNameValidator extends UntypedActor {
         } else if (message instanceof Broadcast) {
             workerRouter.tell(new Broadcast(((Broadcast) message).message()), getSender());
         } else if (message instanceof Terminated) {
+            //System.out.println("SciName termianted");
             if (((Terminated) message).getActor().equals(workerRouter))
                 this.getContext().stop(getSelf());
         } else {
@@ -93,7 +98,7 @@ public class ScientificNameValidator extends UntypedActor {
 
     @Override
     public void postStop() {
-        //System.out.println("Stopped ScinRefValidator");
+        System.out.println("Stopped ScinRefValidator");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
@@ -101,28 +106,29 @@ public class ScientificNameValidator extends UntypedActor {
 
         private String serviceClassPath = null;
         private String serviceClassQN;
-        private boolean insertGUID;
+        private boolean insertLSID;
         private boolean hasDataCache;
 
         private String scientificNameLabel;
         private String authorLabel;
-        private String GUIDLabel;
+        private String LSIDLabel;
 
-        private IScientificNameValidationService scientificNameService;
+        private INewScientificNameValidationService scientificNameService;
 
         private final Random rand;
         private int invoc;
         private final ActorRef listener;
 
-        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertGUID, ActorRef listener) {
+        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertLSID, ActorRef listener) {
             this.serviceClassQN = service;
             this.hasDataCache = useCache;
-            this.insertGUID = insertGUID;
+            this.insertLSID = insertLSID;
             this.listener = listener;
             this.rand = new Random();
 
             //initialize required label
             SpecimenRecordTypeConf specimenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
+
 
             try {
                 scientificNameLabel = specimenRecordTypeConf.getLabel("ScientificName");
@@ -137,15 +143,15 @@ public class ScientificNameValidator extends UntypedActor {
                     //throw new CurrationException("failed since the ScientificNameAuthorship label of the SpecimenRecordType is not set.");
                 }
 
-                if(insertGUID){
-                    GUIDLabel = specimenRecordTypeConf.getLabel("IdentificationTaxon");
-                    if(GUIDLabel == null){
-                        GUIDLabel = "IdentificationTaxon";
+                if(insertLSID){
+                    LSIDLabel = specimenRecordTypeConf.getLabel("IdentificationTaxon");
+                    if(LSIDLabel == null){
+                        LSIDLabel = "IdentificationTaxon";
                         //throw new CurrationException(" failed since the IdentificationTaxon label of the SpecimenRecordType is not set.");
                     }
                 }
-                scientificNameService = (IScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
-                scientificNameService.setUseCache(hasDataCache);
+
+                scientificNameService = (INewScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
             //} catch (CurrationException e) {
             //    e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -168,16 +174,17 @@ public class ScientificNameValidator extends UntypedActor {
                                         this.getClass().getSimpleName(),
                                         invoc,
                                         ((TokenWithProv) message).getTimeCreated(),
-                                        System.currentTimeMillis());   */
+                                        System.currentTimeMillis());      */
             }
 
             if (message instanceof Token) {
                 if (((Token) message).getData() instanceof SpecimenRecord) {
                     SpecimenRecord inputSpecimenRecord = (SpecimenRecord)((Token) message).getData();
-
+                    //System.err.println("scinamestart#"+inputSpecimenRecord.get("oaiid").toString() + "#" + System.currentTimeMillis());
                     //System.out.println("inputSpecimenRecord = " + inputSpecimenRecord.toString());
 
                     String scientificName = inputSpecimenRecord.get(scientificNameLabel);
+                    //System.out.println("scientificName = " + scientificName);
                     if(scientificName == null){
                         CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY, scientificNameLabel + " is missing in the incoming SpecimenRecord", "ScientificNameValidator");
                         constructOutput(new SpecimenRecord(inputSpecimenRecord),curationComment);
@@ -185,13 +192,36 @@ public class ScientificNameValidator extends UntypedActor {
                     }
 
                     String author = inputSpecimenRecord.get(authorLabel);
-                    if(author == null){
+                    //System.out.println("author = " + author);
+                    /*if(author == null){
                         CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,authorLabel+" is missing in the incoming SpecimenRecord","ScientificNameValidator");
                         constructOutput(new SpecimenRecord(inputSpecimenRecord),curationComment);
                         return;
-                    }
+                    }  */
 
-                    scientificNameService.validateScientificName(scientificName, author);
+                    String genus = inputSpecimenRecord.get("genus");
+                    String subgenus = inputSpecimenRecord.get("subgenus");
+                    String specificEpithet = inputSpecimenRecord.get("specificEpithet");
+                    String verbatimTaxonRank = inputSpecimenRecord.get("verbatimTaxonRank");
+                    String infraspecificEpithet = inputSpecimenRecord.get("infraspecificEpithet");
+                    String taxonRank = inputSpecimenRecord.get("taxonRank");
+                    String kingdom = inputSpecimenRecord.get("kingdom");
+                    String phylum = inputSpecimenRecord.get("phylum");
+                    String tclass = inputSpecimenRecord.get("tclass");
+                    String order = inputSpecimenRecord.get("order");
+                    String family = inputSpecimenRecord.get("family");
+
+
+                    /*
+                    System.out.println("taxonRank = " + taxonRank);
+                    System.out.println("infraspecificEpithet = " + infraspecificEpithet);
+                    System.out.println("verbatimTaxonRank = " + verbatimTaxonRank);
+                    System.out.println("specificEpithet = " + specificEpithet);
+                    System.out.println("subgenus = " + subgenus);
+                    System.out.println("genus = " + genus);
+                     */
+                    scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family);
+
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     
                     // TODO: Add author name comparator to IScientificNameValidator and service classes, have 
@@ -218,39 +248,27 @@ public class ScientificNameValidator extends UntypedActor {
 				    nameUsage.setAuthorshipStringEditDistance(authorSimilarity);     
 				    
 				    String authorshipSimilarity = "Authorship: " +  nameUsage.getMatchDescription() + " Similarity: " + Double.toString(nameSimilarity);
+                    
+                    
+                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+                        inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
+                        inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
+                    }
+                    //no need to put empty LSID due to empty result from the checklistbank
+                    if(!scientificNameService.getLSID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getLSID());
 
-                    SpecimenRecord cleanedSpecimenRecord = new SpecimenRecord(inputSpecimenRecord);
-                    CurationCommentType curationComment = null;
-                    String addGUIDComment = "";
-                    if(insertGUID){
-                        addGUIDComment = "Add GUID from service "+scientificNameService.getServiceName()+".";
-                    }
-                    if(curationStatus == CurationComment.CORRECT && insertGUID){
-                        cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificName,author,scientificNameService.getLSID());
-                        curationComment = CurationComment.construct(CurationComment.CURATED,addGUIDComment,getName());
-                    } else if (curationStatus == CurationComment.CURATED){
-                        if (insertGUID) {
-                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor(),scientificNameService.getLSID());
-                        } else {
-                            cleanedSpecimenRecord = constructCleanedSpecimenRecord(inputSpecimenRecord,scientificNameService.getCorrectedScientificName(),scientificNameService.getCorrectedAuthor(),null);
-                        }
-                        curationComment = CurationComment.construct(CurationComment.CURATED,scientificNameService.getComment()+addGUIDComment,getName() + authorshipSimilarity);
-                    } else if (curationStatus == CurationComment.UNABLE_CURATED){
-                        curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,scientificNameService.getComment() + authorshipSimilarity,getName());
-                    } else if (curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
-                        curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,scientificNameService.getComment(),getName());
-                    }
                     //output
-                    constructOutput(cleanedSpecimenRecord, curationComment);
-                    for (List l : scientificNameService.getLog()) {
+                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment() + authorshipSimilarity,scientificNameService.getServiceName());
+                    constructOutput(inputSpecimenRecord, curationComment);
+                    /*for (List l : scientificNameService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());
-                    }
+                    }     */
                 }
-                Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
+                //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
             }
         }
 
-        private SpecimenRecord constructCleanedSpecimenRecord(SpecimenRecord inputSpecimenRecord, String scientificName,String author, String lsid) {
+        private SpecimenRecord constructCleanedSpecimenRecord(SpecimenRecord inputSpecimenRecord, String scientificName,String author) {
             LinkedHashMap<String,String> valueMap = new LinkedHashMap<String, String>();
             Set<String> labelSet = inputSpecimenRecord.keySet();
             Iterator<String> iter = labelSet.iterator();
@@ -262,11 +280,7 @@ public class ScientificNameValidator extends UntypedActor {
                     valueMap.put(label, scientificName);
                 } else if (label.equals(authorLabel)){
                     valueMap.put(label, author);
-                    if(lsid == null){
-                        valueMap.put(GUIDLabel, "");
-                    }else{
-                        valueMap.put(GUIDLabel, lsid);
-                    }
+
                 } else {
                     valueMap.put(label, value);
                 }
@@ -280,6 +294,7 @@ public class ScientificNameValidator extends UntypedActor {
                 result.put("scinStatus", comment.getStatus());
                 result.put("scinSource", comment.getSource());
             }
+            //System.err.println("scinameend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
             listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc),getContext().parent());
         }
 

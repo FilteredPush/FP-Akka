@@ -1,14 +1,19 @@
-package akka.fp;
+package org.filteredpush.akka.actors.io;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
+
 import fp.util.CurationComment;
 import fp.util.SpecimenRecord;
 import fp.util.SpecimenRecordTypeConf;
+
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

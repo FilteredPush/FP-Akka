@@ -22,18 +22,24 @@
  * OF CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
  * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
-package akka.fp;
+package org.filteredpush.akka.actors.io;
 
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+
 import com.mongodb.*;
 import com.mongodb.util.JSON;
+
 import fp.util.SpecimenRecord;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
+
+import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 /**
  * Created with IntelliJ IDEA.

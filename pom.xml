@@ -6,7 +6,7 @@
 
     <groupId>org.filteredpush</groupId>
     <artifactId>FP-Akka</artifactId>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
 
     <dependencies>
 
@@ -230,7 +230,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>akka.fp.DwCaWorkflow</Main-Class>
+                                        <Main-Class>org.filteredpush.akka.workflows.DwCaWorkflow</Main-Class>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -289,7 +289,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>akka.fp.MongoWorkflow</Main-Class>
+                                        <Main-Class>org.filteredpush.akka.workflows.MongoWorkflow</Main-Class>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -348,7 +348,7 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>akka.fp.CSVWorkflow</Main-Class>
+                                        <Main-Class>org.filteredpush.akka.workflows.CSVWorkflow</Main-Class>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -358,7 +358,66 @@
             </plugin>              
           </plugins>
         </build>
-      </profile>      
+      </profile> 
+      <profile>
+        <id>env-sciname</id>
+        <activation>
+           <activeByDefault>false</activeByDefault>
+           <property>
+             <name>env</name>
+             <value>sciname</value>
+           </property>
+        </activation>
+        <build>
+          <plugins>
+             <!-- to build executable jar  -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>allinone-sciname</shadedClassifierName>
+                            <artifactSet>
+                                <includes>
+                                    <include>*:*</include>
+                                </includes>
+                            </artifactSet>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>reference.conf</resource>
+                                </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <manifestEntries>
+                                        <Main-Class>org.filteredpush.akka.workflows.SciNameWorkflow</Main-Class>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>              
+          </plugins>
+        </build>
+      </profile>
 </profiles>
     
 </project>

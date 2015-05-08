@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.*;
 import fp.services.GeoLocate2;
@@ -8,6 +8,9 @@ import akka.routing.SmallestMailboxRouter;
 import fp.util.SpecimenRecord;
 
 import java.util.Random;
+
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 /**
 * Created with IntelliJ IDEA.

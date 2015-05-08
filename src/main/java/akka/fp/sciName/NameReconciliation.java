@@ -2,10 +2,11 @@ package akka.fp.sciName;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.fp.Token;
 import fp.util.CurationComment;
 import fp.util.CurationStatus;
 import fp.util.SpecimenRecord;
+
+import org.filteredpush.akka.data.Token;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

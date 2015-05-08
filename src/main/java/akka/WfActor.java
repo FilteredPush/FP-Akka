@@ -3,11 +3,12 @@ package akka;
 import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.actor.UntypedActor;
-import akka.fp.Prov;
 import akka.routing.Broadcast;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import org.filteredpush.akka.data.Prov;
 
 public abstract class WfActor extends UntypedActor {
 

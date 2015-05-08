@@ -1,12 +1,17 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
+
 import com.mongodb.BasicDBObject;
 import com.viceversatech.rdfbeans.exceptions.RDFBeanException;
+
 import fp.util.CurationComment;
 import fp.util.CurationCommentType;
 import fp.util.SpecimenRecord;
+
+import org.filteredpush.akka.data.Collection;
+import org.filteredpush.akka.data.Token;
 import org.filteredpush.client.util.ClientHelperService;
 import org.filteredpush.knowledge.rdf.RdfUtil;
 import org.filteredpush.model.annotations.*;

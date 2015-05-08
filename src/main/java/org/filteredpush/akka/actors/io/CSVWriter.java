@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.actors.io;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
@@ -13,6 +13,9 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 /**
  * Actor to write output to a CSV file.  

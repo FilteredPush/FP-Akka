@@ -1,7 +1,8 @@
 package akka.fp.sciName;
 
+import org.filteredpush.akka.data.Token;
+
 import akka.actor.ActorRef;
-import akka.fp.Token;
 import fp.services.GBIFService;
 import fp.services.INewScientificNameValidationService;
 import fp.services.IPNIService;

@@ -1,9 +1,10 @@
 package akka;
 
+import org.filteredpush.akka.data.Prov;
+
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
-import akka.fp.Prov;
 import akka.routing.Broadcast;
 
 /**

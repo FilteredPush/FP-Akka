@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.data;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;

@@ -2,11 +2,12 @@ package akka.fp.sciName;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import akka.fp.Token;
 import fp.util.SpecimenRecord;
 
 import java.util.HashMap;
 import java.util.List;
+
+import org.filteredpush.akka.data.Token;
 
 /**
  * Created by tianhong on 2/9/15.

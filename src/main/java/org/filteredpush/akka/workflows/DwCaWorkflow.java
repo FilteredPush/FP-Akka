@@ -3,15 +3,19 @@
  * 
  * Copyright (C) 2015 President and Fellows of Harvard College
  */
-package akka.fp;
+package org.filteredpush.akka.workflows;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
-import akka.fp.sciName.SciNameWorkflow;
 
+import org.filteredpush.akka.actors.GEORefValidator;
+import org.filteredpush.akka.actors.InternalDateValidator;
+import org.filteredpush.akka.actors.ScientificNameValidator;
+import org.filteredpush.akka.actors.io.CSVReader;
+import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
