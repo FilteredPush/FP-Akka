@@ -24,6 +24,15 @@ public class ScientificNameValidator extends UntypedActor {
     private final boolean useCache;
     private final boolean insertLSID;
 
+    /**
+     * Replaced by NewScientificNameValidator. 
+     * 
+     * @param service
+     * @param useCache
+     * @param insertGUID
+     * @param listener
+     */
+    @Deprecated 
     public ScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final ActorRef listener) {
 
         this.listener = listener;
@@ -39,6 +48,16 @@ public class ScientificNameValidator extends UntypedActor {
         getContext().watch(workerRouter);
     }
 
+    /**
+     * Replaced by NewScientificNameValidator
+     * 
+     * @param service
+     * @param useCache
+     * @param insertGUID
+     * @param listener
+     * @param instances
+     */
+    @Deprecated 
     public ScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final ActorRef listener, final int instances) {
         this.listener = listener;
         this.service = service;

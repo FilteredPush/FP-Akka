@@ -199,9 +199,13 @@ public class DwCaWorkflow {
         
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
+            	// TODO: Need to see if this sort of picking inside create() will work 
+            	// to allow choice between CSV or MongoDB input from command line parameters 
+            	// letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
                     return new SciNameWorkflow("-t",false,dateValidator);
             	} else { 
+            		// TODO: Use NewScientificNameValidator and it's service picking instead.
                     return new ScientificNameValidator(serviceClass,true,true,dateValidator);
             	}
             }
