@@ -3,6 +3,10 @@ package akka.fp;
 import akka.actor.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
+import edu.harvard.mcz.nametools.AuthorNameComparator;
+import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
+import edu.harvard.mcz.nametools.NameComparison;
+import edu.harvard.mcz.nametools.NameUsage;
 import fp.services.INewScientificNameValidationService;
 import fp.util.*;
 
@@ -216,6 +220,33 @@ public class NewScientificNameValidator extends UntypedActor {
                     scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family);
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
+                    
+                    // TODO: Add author name comparator to IScientificNameValidator and service classes, have 
+                    // services define appropriate comparator
+                    AuthorNameComparator authorNameComparator = new ICNafpAuthorNameComparator(.70d,.5d);
+                    
+                    NameUsage nameUsage = new NameUsage();
+					nameUsage.setAuthorComparator(authorNameComparator);
+					nameUsage.setGuid(scientificNameService.getLSID());
+				    nameUsage.setScientificName(scientificNameService.getCorrectedScientificName());
+				    nameUsage.setAuthorship(scientificNameService.getCorrectedAuthor());
+				    nameUsage.setOriginalAuthorship(author);
+				    nameUsage.setOriginalScientificName(scientificName);
+				    double nameSimilarity = ICNafpAuthorNameComparator.stringSimilarity(scientificName, nameUsage.getScientificName());
+				    NameComparison comparison = authorNameComparator.compare(author, nameUsage.getAuthorship()); 
+				    double authorSimilarity = comparison.getSimilarity();
+				    String match = comparison.getMatchType();
+				    if (authorSimilarity==1d && nameSimilarity==1d) { 
+				    	nameUsage.setMatchDescription(NameComparison.MATCH_EXACT);
+				    	curationStatus = CurationComment.CORRECT;
+				    } else { 
+				    	nameUsage.setMatchDescription(match);
+				    }
+				    nameUsage.setAuthorshipStringEditDistance(authorSimilarity);     
+				    
+				    String authorshipSimilarity = "Authorship: " +  nameUsage.getMatchDescription() + " Similarity: " + Double.toString(nameSimilarity);
+                    
+                    
                     if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
                         inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
                         inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
@@ -224,7 +255,7 @@ public class NewScientificNameValidator extends UntypedActor {
                     if(!scientificNameService.getLSID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getLSID());
 
                     //output
-                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());
+                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment() + authorshipSimilarity,scientificNameService.getServiceName());
                     constructOutput(inputSpecimenRecord, curationComment);
                     /*for (List l : scientificNameService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());
