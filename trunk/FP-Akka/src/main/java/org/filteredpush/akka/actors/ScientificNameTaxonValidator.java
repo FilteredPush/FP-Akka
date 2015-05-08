@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.UntypedActor;
 

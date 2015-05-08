@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.*;
 import fp.services.GeoLocate2;
@@ -10,11 +10,13 @@ import akka.routing.SmallestMailboxRouter;
 import fp.util.CurationStatus;
 import fp.util.SpecimenRecord;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 public class GEORefValidator extends UntypedActor {
     private final ActorRef listener;

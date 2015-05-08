@@ -23,7 +23,7 @@
  * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.*;
 import fp.services.ICollectingEventIdentificationService;
@@ -33,6 +33,8 @@ import akka.routing.Broadcast;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import org.filteredpush.akka.data.Collection;
 
 /**
  * clustering on Collectors

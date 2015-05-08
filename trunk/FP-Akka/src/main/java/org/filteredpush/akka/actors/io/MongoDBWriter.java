@@ -1,17 +1,24 @@
-package akka.fp;
+package org.filteredpush.akka.actors.io;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
+
 import fp.util.CurationCommentType;
 import fp.util.SpecimenRecord;
 
 import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+
+import org.filteredpush.akka.data.Collection;
+import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 /**
 * Created with IntelliJ IDEA.

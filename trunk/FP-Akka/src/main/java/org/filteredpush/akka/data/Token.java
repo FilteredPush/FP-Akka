@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.data;
 
 /**
  * Created with IntelliJ IDEA.

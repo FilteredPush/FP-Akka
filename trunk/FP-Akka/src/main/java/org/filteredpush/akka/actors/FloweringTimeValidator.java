@@ -1,4 +1,4 @@
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.*;
 import fp.services.IFloweringTimeValidationService;
@@ -6,8 +6,11 @@ import fp.util.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
 
-
 import java.util.*;
+
+import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 /*
  * assume the flowering time information in the ReproductiveCondition is organized as: ..Flower: Jan;Feb,....

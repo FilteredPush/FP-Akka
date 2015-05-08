@@ -23,7 +23,7 @@
  * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-package akka.fp;
+package org.filteredpush.akka.actors;
 
 import akka.actor.*;
 import akka.routing.Broadcast;
@@ -35,6 +35,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TreeSet;
+
+import org.filteredpush.akka.data.Token;
+import org.filteredpush.akka.data.TokenWithProv;
 
 /**
  * clustering on Collectors
