@@ -216,7 +216,7 @@
                                 </filter>
                             </filters>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>allinone</shadedClassifierName>
+                            <shadedClassifierName>allinone-dwca</shadedClassifierName>
                             <artifactSet>
                                 <includes>
                                     <include>*:*</include>
@@ -275,7 +275,7 @@
                                 </filter>
                             </filters>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>allinone</shadedClassifierName>
+                            <shadedClassifierName>allinone-mongo</shadedClassifierName>
                             <artifactSet>
                                 <includes>
                                     <include>*:*</include>
@@ -334,7 +334,7 @@
                                 </filter>
                             </filters>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>allinone</shadedClassifierName>
+                            <shadedClassifierName>allinone-csv</shadedClassifierName>
                             <artifactSet>
                                 <includes>
                                     <include>*:*</include>
