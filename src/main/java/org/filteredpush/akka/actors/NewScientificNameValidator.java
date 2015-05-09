@@ -224,9 +224,7 @@ public class NewScientificNameValidator extends UntypedActor {
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     
-                    // TODO: Add author name comparator to IScientificNameValidator and service classes, have 
-                    // services define appropriate comparator
-                    AuthorNameComparator authorNameComparator = new ICNafpAuthorNameComparator(.70d,.5d);
+                    AuthorNameComparator authorNameComparator = scientificNameService.getAuthorNameComparator(author,kingdom);
                     
                     NameUsage nameUsage = new NameUsage();
 					nameUsage.setAuthorComparator(authorNameComparator);
