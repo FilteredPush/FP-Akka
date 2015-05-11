@@ -228,7 +228,7 @@ public class NewScientificNameValidator extends UntypedActor {
                     
                     NameUsage nameUsage = new NameUsage();
 					nameUsage.setAuthorComparator(authorNameComparator);
-					nameUsage.setGuid(scientificNameService.getLSID());
+					nameUsage.setGuid(scientificNameService.getGUID());
 				    nameUsage.setScientificName(scientificNameService.getCorrectedScientificName());
 				    nameUsage.setAuthorship(scientificNameService.getCorrectedAuthor());
 				    nameUsage.setOriginalAuthorship(author);
@@ -253,7 +253,7 @@ public class NewScientificNameValidator extends UntypedActor {
                         inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
                     }
                     //no need to put empty LSID due to empty result from the checklistbank
-                    if(!scientificNameService.getLSID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getLSID());
+                    if(!scientificNameService.getGUID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getGUID());
 
                     //output
                     CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment() + authorshipSimilarity,scientificNameService.getServiceName());
