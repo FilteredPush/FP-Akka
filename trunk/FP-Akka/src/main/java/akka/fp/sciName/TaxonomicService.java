@@ -29,9 +29,12 @@ public class TaxonomicService extends Component {
             String sciName = record.get("scientificName");
             String author = record.get("scientificNameAuthorship");
 
+            
 
             INewScientificNameValidationService scientificNameService = null;
             try {
+            	//TODO: Select a service 
+            	//TODO: Use WoRMS, IF, GBIF in taxonomic mode
                 scientificNameService = (INewScientificNameValidationService)Class.forName("fp.services.COLService").newInstance();
             } catch (InstantiationException e) {
                 e.printStackTrace();
