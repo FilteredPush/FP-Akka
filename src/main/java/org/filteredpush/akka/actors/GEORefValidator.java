@@ -1,14 +1,14 @@
 package org.filteredpush.akka.actors;
 
 import akka.actor.*;
-import fp.services.GeoLocate2;
-import fp.services.IGeoRefValidationService;
-import fp.util.CurationComment;
-import fp.util.CurationCommentType;
+import org.filteredpush.kuration.services.GeoLocate2;
+import org.filteredpush.kuration.interfaces.IGeoRefValidationService;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
-import fp.util.CurationStatus;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.CurationStatus;
+import org.filteredpush.kuration.util.SpecimenRecord;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.CurationCommentType;
 
 import java.util.HashMap;
 import java.util.List;

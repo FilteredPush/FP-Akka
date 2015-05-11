@@ -2,7 +2,7 @@ package akka.fp.sciName;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.util.HashMap;
 import java.util.HashSet;

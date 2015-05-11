@@ -1,18 +1,29 @@
 package org.filteredpush.akka.actors;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Random;
+import java.util.Set;
+import java.util.Vector;
+
 import akka.actor.*;
-import fp.services.IFloweringTimeValidationService;
-import fp.util.*;
+
+import org.filteredpush.kuration.interfaces.IFloweringTimeValidationService;
+import org.filteredpush.kuration.util.*;
+
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
-
-import java.util.*;
 
 import org.filteredpush.akka.data.Prov;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
 
-/*
+/**
+ * Compare scientific name, date collected, and phenological state for plants against known
+ * flowering/fruiting date ranges in the Flora of North America.  
+ * 
+ * TODO: FNA service needs to be set up again with data from full parse of FNA.
+ * 
  * assume the flowering time information in the ReproductiveCondition is organized as: ..Flower: Jan;Feb,....
  */
 public class FloweringTimeValidator extends UntypedActor {

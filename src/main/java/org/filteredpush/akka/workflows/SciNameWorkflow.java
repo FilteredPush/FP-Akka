@@ -6,13 +6,10 @@ import akka.fp.sciName.checkNameInconsistency;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
 
-import com.sun.accessibility.internal.resources.accessibility_zh_TW;
-
-import fp.util.SpecimenRecord;
-
 import java.util.HashMap;
 
 import org.filteredpush.akka.data.Token;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 /**
  * Created by tianhong on 2/10/15.

@@ -2,7 +2,7 @@ package org.filteredpush.akka.actors.io;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.io.FileWriter;
 import java.io.IOException;

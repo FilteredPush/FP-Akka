@@ -25,9 +25,18 @@
 
 package org.filteredpush.akka.actors;
 
-import akka.actor.*;
-import fp.services.ICollectingEventIdentificationService;
-import fp.util.*;
+import org.filteredpush.kuration.interfaces.ICollectingEventIdentificationService;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.CurationCommentType;
+import org.filteredpush.kuration.util.CurationException;
+import org.filteredpush.kuration.util.CurationStatus;
+import org.filteredpush.kuration.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecordTypeConf;
+
+import akka.actor.ActorRef;
+import akka.actor.PoisonPill;
+import akka.actor.Terminated;
+import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
 
 import java.text.ParseException;

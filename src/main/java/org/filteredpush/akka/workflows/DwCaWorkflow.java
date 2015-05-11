@@ -13,7 +13,7 @@ import akka.actor.UntypedActorFactory;
 
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.InternalDateValidator;
-import org.filteredpush.akka.actors.ScientificNameValidator;
+import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.io.CSVReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.kohsuke.args4j.CmdLineException;
@@ -52,7 +52,7 @@ public class DwCaWorkflow {
     @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default IPNI.")
     private String service = "ipni";
     
-    private String serviceClass = "fp.services.IPNIService";
+    private String serviceClass = "org.filteredpush.kuration.services.IPNIService";
     
     /**
      * Setup conditions to run the workflow.
@@ -76,20 +76,20 @@ public class DwCaWorkflow {
             
             switch(service.toUpperCase()) { 
             case "IF": 
-            	serviceClass="fp.services.IFService";
+            	serviceClass="org.filteredpush.kuration.services.IFService";
             	break;
             case "WORMS": 
-            	serviceClass="fp.services.WoRMSService";
+            	serviceClass="org.filteredpush.kuration.services.WoRMSService";
             	break;
             case "COL": 
-            	serviceClass="fp.services.COLService";
+            	serviceClass="org.filteredpush.kuration.services.COLService";
             	break;
             case "GBIF": 
-            	serviceClass="fp.services.GBIFService";
+            	serviceClass="org.filteredpush.kuration.services.GBIFService";
             	break;
             case "IPNI": 
             default: 
-            	serviceClass="fp.services.IPNIService";
+            	serviceClass="org.filteredpush.kuration.services.IPNIService";
             }
             
             setupOK = true;
@@ -114,68 +114,7 @@ public class DwCaWorkflow {
 
         // Create an Akka system
         ActorSystem system = ActorSystem.create("FpSystem");
-        /*
-        // create the result listener, which will print the result and shutdown the system
-        //final ActorRef display = system.actorOf(new Props(TextDisplay.class), "display");
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBWriter(host,db,collectionOut,"",out,enc);
-            }
-        }), "MongoDBWriter");
-
-
-        final ActorRef flwtValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new FloweringTimeValidator("fp.services.FNAFloweringTimeService",true,true,writer);
-            }
-        }), "flwtValidator");
-
-
-        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new ScientificNameValidator("fp.services.IPNIService",true,true,flwtValidator);
-            }
-        }), "scinValidator");
-
-
-        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-          public UntypedActor create() {
-           return new GEORefValidator("fp.services.GeoLocate2",true,certainty,flwtValidator);
-          }
-        }), "geoValidator");
-
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBReader(host,db,collectionIn,query,geoValidator);
-            }
-        }), "reader");
-
-         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVReader(inputFilename, scinValidator);
-            }
-        }), "reader");
-
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVWriter(outputFilename);
-            }
-        }), "writer");
-
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBWriter(host,db,collectionOut,"", enc);
-            }
-        }), "MongoDBWriter");
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVWriter(outputFilename);
-            }
-        }), "writer");    */
-
+        
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoSummaryWriter(outputFilename);
@@ -185,14 +124,14 @@ public class DwCaWorkflow {
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("fp.services.GeoLocate3",false,certainty,writer);
+                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
             }
         }), "geoValidator");
 
 
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new InternalDateValidator("fp.services.InternalDateValidationService", geoValidator);
+                return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
             }
         }), "dateValidator");
 
@@ -205,8 +144,7 @@ public class DwCaWorkflow {
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
                     return new SciNameWorkflow("-t",false,dateValidator);
             	} else { 
-            		// TODO: Use NewScientificNameValidator and it's service picking instead.
-                    return new ScientificNameValidator(serviceClass,true,true,dateValidator);
+                    return new NewScientificNameValidator(serviceClass,true,true,dateValidator);
             	}
             }
         }), "scinValidator");

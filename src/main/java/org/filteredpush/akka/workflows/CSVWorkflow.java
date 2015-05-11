@@ -156,14 +156,14 @@ public class CSVWorkflow {
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("fp.services.GeoLocate3",false,certainty,writer);
+                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
             }
         }), "geoValidator");
 
 
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new InternalDateValidator("fp.services.InternalDateValidationService", geoValidator);
+                return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
             }
         }), "dateValidator");
 

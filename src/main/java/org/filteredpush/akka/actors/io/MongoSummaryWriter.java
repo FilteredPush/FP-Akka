@@ -8,9 +8,9 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
-import fp.util.CurationComment;
-import fp.util.SpecimenRecord;
-import fp.util.SpecimenRecordTypeConf;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecordTypeConf;
 
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
