@@ -7,8 +7,8 @@ import edu.harvard.mcz.nametools.AuthorNameComparator;
 import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
-import fp.services.INewScientificNameValidationService;
-import fp.util.*;
+import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
+import org.filteredpush.kuration.util.*;
 
 import java.util.*;
 
@@ -25,17 +25,7 @@ public class NewScientificNameValidator extends UntypedActor {
 
 
     public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID,  final ActorRef listener ) {
-        this.listener = listener;
-        this.service = service;
-        this.useCache = useCache;
-        this.insertLSID = insertLSID;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
-            @Override
-            public Actor create() throws Exception {
-                return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
-            }
-        }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
-        getContext().watch(workerRouter);
+    	this(service, useCache, insertLSID, 6, listener);
     }
 
     public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final int instances, final ActorRef listener ) {
@@ -226,6 +216,7 @@ public class NewScientificNameValidator extends UntypedActor {
                     
                     AuthorNameComparator authorNameComparator = scientificNameService.getAuthorNameComparator(author,kingdom);
                     
+                    // TODO: Refactor into the scientificNameService - responsibility for making comparison lies there.
                     NameUsage nameUsage = new NameUsage();
 					nameUsage.setAuthorComparator(authorNameComparator);
 					nameUsage.setGuid(scientificNameService.getGUID());

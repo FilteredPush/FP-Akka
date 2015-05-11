@@ -6,7 +6,7 @@ import org.filteredpush.akka.data.TokenWithProv;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 /**
 * Created with IntelliJ IDEA.

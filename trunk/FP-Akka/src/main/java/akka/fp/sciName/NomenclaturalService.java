@@ -3,12 +3,13 @@ package akka.fp.sciName;
 import org.filteredpush.akka.data.Token;
 
 import akka.actor.ActorRef;
-import fp.services.GBIFService;
-import fp.services.INewScientificNameValidationService;
-import fp.services.IPNIService;
-import fp.util.CurationComment;
-import fp.util.CurationCommentType;
-import fp.util.SpecimenRecord;
+
+import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
+import org.filteredpush.kuration.services.GBIFService;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.CurationCommentType;
+import org.filteredpush.kuration.util.SpecimenRecord;
+
 import scala.languageFeature;
 
 /**

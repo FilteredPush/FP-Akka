@@ -31,7 +31,7 @@ import akka.routing.Broadcast;
 
 import com.mongodb.DBCursor;
 
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;

@@ -3,9 +3,9 @@ package akka.fp.sciName;
 import org.filteredpush.akka.data.Token;
 
 import akka.actor.ActorRef;
-import fp.services.INewScientificNameValidationService;
-import fp.util.CurationComment;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 /**
  * Created by tianhong on 2/9/15.

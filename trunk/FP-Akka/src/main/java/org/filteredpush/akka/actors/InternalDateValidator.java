@@ -28,8 +28,8 @@ package org.filteredpush.akka.actors;
 import akka.actor.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
-import fp.services.IInternalDateValidationService;
-import fp.util.*;
+import org.filteredpush.kuration.interfaces.IInternalDateValidationService;
+import org.filteredpush.kuration.util.*;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;

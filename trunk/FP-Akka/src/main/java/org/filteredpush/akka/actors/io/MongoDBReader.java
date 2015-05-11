@@ -32,7 +32,7 @@ import akka.routing.Broadcast;
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;

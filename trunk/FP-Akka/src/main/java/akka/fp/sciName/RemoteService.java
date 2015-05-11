@@ -1,16 +1,9 @@
 package akka.fp.sciName;
 
 import akka.actor.ActorRef;
-import fp.util.CurationComment;
-import fp.util.CurationStatus;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import org.filteredpush.akka.data.Token;
-import org.gbif.api.model.checklistbank.ParsedName;
-import org.gbif.nameparser.NameParser;
-import org.gbif.nameparser.UnparsableException;
-
-import java.util.HashMap;
 
 /**
  * Created by tianhong on 2/9/15.

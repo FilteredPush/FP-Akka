@@ -5,8 +5,14 @@ import edu.harvard.mcz.nametools.AuthorNameComparator;
 import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
-import fp.services.IScientificNameValidationService;
-import fp.util.*;
+
+import org.filteredpush.kuration.interfaces.IScientificNameValidationService;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.CurationCommentType;
+import org.filteredpush.kuration.util.CurationStatus;
+import org.filteredpush.kuration.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecordTypeConf;
+
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
 

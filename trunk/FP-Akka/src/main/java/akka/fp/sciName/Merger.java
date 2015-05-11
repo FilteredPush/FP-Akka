@@ -4,7 +4,7 @@ import org.filteredpush.akka.data.Token;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 /**
  * Created by tianhong on 2/9/15.

@@ -4,10 +4,10 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-import fp.util.CurationComment;
-import fp.util.CurationCommentType;
-import fp.util.CurationStatus;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.CurationComment;
+import org.filteredpush.kuration.util.CurationCommentType;
+import org.filteredpush.kuration.util.CurationStatus;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 /**
  * Created by tianhong on 2/9/15.

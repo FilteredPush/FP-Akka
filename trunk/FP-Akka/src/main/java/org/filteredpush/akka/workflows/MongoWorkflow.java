@@ -176,20 +176,20 @@ public class MongoWorkflow {
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("fp.services.GeoLocate3",false,certainty, writer);
+                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty, writer);
             }
         }), "geoValidator");
 
 
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new InternalDateValidator("fp.services.InternalDateValidationService", geoValidator);
+                return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
             }
         }), "dateValidator");
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new NewScientificNameValidator("fp.services.COLService",true,true, dateValidator);
+                return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, dateValidator);
             }
         }), "scinValidator");
 

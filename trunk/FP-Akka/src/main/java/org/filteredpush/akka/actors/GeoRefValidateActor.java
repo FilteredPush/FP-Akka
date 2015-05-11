@@ -1,11 +1,11 @@
 package org.filteredpush.akka.actors;
 
 import akka.actor.*;
-import fp.services.GeoLocate2;
-import fp.util.CurationComment;
+import org.filteredpush.kuration.services.GeoLocate2;
+import org.filteredpush.kuration.util.CurationComment;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.util.Random;
 

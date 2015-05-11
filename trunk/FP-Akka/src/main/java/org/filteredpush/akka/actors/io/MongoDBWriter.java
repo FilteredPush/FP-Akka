@@ -8,8 +8,8 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
-import fp.util.CurationCommentType;
-import fp.util.SpecimenRecord;
+import org.filteredpush.kuration.util.CurationCommentType;
+import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.io.OutputStreamWriter;
 import java.net.UnknownHostException;
