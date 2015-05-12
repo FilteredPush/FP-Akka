@@ -22,20 +22,37 @@ import org.kohsuke.args4j.Option;
 
 import java.io.File;
 
+/* 
+ * @begin DwCaWorkflow
+ * @param inputFilename
+ * @param outputFilename
+ * @param nameAuthority
+ * @in inputFile @uri {inputFilename}
+ * @out outputFile @uri {outputFilename} 
+ */
+
 /**
  * Workflow to take a tab delimited occurrence.txt file and run it through FP 
  * data QC actors for scientific name, collecting event date, and georeference validation, 
  * and to output the result as a JSON file for post processing.
  * 
  * @author mole
- *
  */
 public class DwCaWorkflow {
 
     public static void main(String[] args) {
         DwCaWorkflow fp = new DwCaWorkflow();
+        
+        /* @begin ParseOptions
+         * @call setup
+         * @param inputFilename
+         * @param outputFilename
+         * @param nameAuthority
+         * @out serviceClass @as nameService
+         */
         if (fp.setup(args)) { 
-           fp.calculate();
+        /* @end ParseOptions */
+            fp.calculate();
         }
     }
 
@@ -56,6 +73,7 @@ public class DwCaWorkflow {
     
     /**
      * Setup conditions to run the workflow.
+     * @begin setup
      * @param args command line arguments
      * @return true if setup was successful, false otherwise.
      */
@@ -99,6 +117,8 @@ public class DwCaWorkflow {
         }
         return setupOK;
     }
+    
+    /** @end setup */
 
     public void calculate() {
         this.calculate( "db", "Occurrence", 200.0);
@@ -115,27 +135,45 @@ public class DwCaWorkflow {
         // Create an Akka system
         ActorSystem system = ActorSystem.create("FpSystem");
         
+        /* @begin MongoSummaryWriter
+         * @param outputFilename
+         * @in geoRefValidatedRecords
+         * @out outputFile @uri {outputFilename}
+         */
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoSummaryWriter(outputFilename);
             }
         }), "JsonWriter");
-
-
+        /* @end MongoSummaryWriter */
+        
+        /* @begin GEORefValidator
+         * @in dateValidatedRecords
+         * @out geoRefValidatedRecords
+         */
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
             }
         }), "geoValidator");
-
-
+        /* @end GEORefValidator */
+        
+        /* @begin InternalDateValidator
+         * @in nameValidatedRecords
+         * @out dateValidatedRecords
+         */
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
             }
         }), "dateValidator");
-
+        /* @end InternalDateValidator */
         
+        /* @begin ScientificNameValidator
+         * @param service @as nameService
+         * @in inputSpecimenRecords
+         * @out nameValidatedRecords
+         */
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
             	// TODO: Need to see if this sort of picking inside create() will work 
@@ -148,14 +186,19 @@ public class DwCaWorkflow {
             	}
             }
         }), "scinValidator");
-        
+        /* @end ScientificNameValidator */
 
+        /* @begin CSVReader 
+         * @param inputFilename
+         * @in inputFile @uri {inputFilename}
+         * @out inputSpecimenRecords
+         */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new CSVReader(inputFilename, scinValidator);
             }
         }), "reader");
-
+        /* @end CSVReader */
 
         // start the calculation
         reader.tell(new Curate());
@@ -168,4 +211,6 @@ public class DwCaWorkflow {
     static class Curate {
     }
 }
+
+/* @end DwCaWorkflow */
 
