@@ -94,20 +94,20 @@ public class DwCaWorkflow {
             
             switch(service.toUpperCase()) { 
             case "IF": 
-            	serviceClass="org.filteredpush.kuration.services.IFService";
+            	serviceClass="org.filteredpush.kuration.services.sciname.IFService";
             	break;
             case "WORMS": 
-            	serviceClass="org.filteredpush.kuration.services.WoRMSService";
+            	serviceClass="org.filteredpush.kuration.services.sciname.WoRMSService";
             	break;
             case "COL": 
-            	serviceClass="org.filteredpush.kuration.services.COLService";
+            	serviceClass="org.filteredpush.kuration.services.sciname.COLService";
             	break;
             case "GBIF": 
-            	serviceClass="org.filteredpush.kuration.services.GBIFService";
+            	serviceClass="org.filteredpush.kuration.services.sciname.GBIFService";
             	break;
             case "IPNI": 
             default: 
-            	serviceClass="org.filteredpush.kuration.services.IPNIService";
+            	serviceClass="org.filteredpush.kuration.services.sciname.IPNIService";
             }
             
             setupOK = true;
