@@ -24,19 +24,37 @@ public class NewScientificNameValidator extends UntypedActor {
     private final boolean insertLSID;
 
 
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID,  final ActorRef listener ) {
-    	this(service, useCache, insertLSID, 6, listener);
+    /**
+     * Set up an akka workflow actor that wraps general scientific name validation classes, 
+     * defaults to 6 parallel instances
+     * 
+     * @param service fully qualified name of the concrete scientific name validator class to invoke.
+     * @param useCache tell the validator to use a cache file
+     * @param insertGUID add any GUID returned by the validator to the output
+     * @param listener downstream actor that will consume output from this actor 
+     */
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID,  final ActorRef listener ) {
+    	this(service, useCache, insertGUID, 6, listener);
     }
 
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertLSID, final int instances, final ActorRef listener ) {
+    /**
+     * Set up an akka workflow actor that wraps general scientific name validation classes.,
+     * 
+     * @param service fully qualified name of the concrete scientific name validator class to invoke.
+     * @param useCache tell the validator to use a cache file
+     * @param insertGUID add any GUID returned by the validator to the output
+     * @param instances number of parallel instances 
+     * @param listener downstream actor that will consume output from this actor 
+     */
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final int instances, final ActorRef listener ) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
-        this.insertLSID = insertLSID;
+        this.insertLSID = insertGUID;
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
+                return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
             }
         }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
         getContext().watch(workerRouter);
@@ -96,7 +114,7 @@ public class NewScientificNameValidator extends UntypedActor {
 
         private String serviceClassPath = null;
         private String serviceClassQN;
-        private boolean insertLSID;
+        private boolean insertGUID;
         private boolean hasDataCache;
 
         private String scientificNameLabel;
@@ -109,10 +127,10 @@ public class NewScientificNameValidator extends UntypedActor {
         private int invoc;
         private final ActorRef listener;
 
-        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertLSID, ActorRef listener) {
+        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertGUID, ActorRef listener) {
             this.serviceClassQN = service;
             this.hasDataCache = useCache;
-            this.insertLSID = insertLSID;
+            this.insertGUID = insertGUID;
             this.listener = listener;
             this.rand = new Random();
 
@@ -133,8 +151,8 @@ public class NewScientificNameValidator extends UntypedActor {
                     //throw new CurrationException("failed since the ScientificNameAuthorship label of the SpecimenRecordType is not set.");
                 }
 
-                if(insertLSID){
-                    LSIDLabel = specimenRecordTypeConf.getLabel("IdentificationTaxon");
+                if(insertGUID){
+                    LSIDLabel = specimenRecordTypeConf.getLabel("TaxonID");
                     if(LSIDLabel == null){
                         LSIDLabel = "IdentificationTaxon";
                         //throw new CurrationException(" failed since the IdentificationTaxon label of the SpecimenRecordType is not set.");
@@ -214,40 +232,15 @@ public class NewScientificNameValidator extends UntypedActor {
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     
-                    AuthorNameComparator authorNameComparator = scientificNameService.getAuthorNameComparator(author,kingdom);
-                    
-                    // TODO: Refactor into the scientificNameService - responsibility for making comparison lies there.
-                    NameUsage nameUsage = new NameUsage();
-					nameUsage.setAuthorComparator(authorNameComparator);
-					nameUsage.setGuid(scientificNameService.getGUID());
-				    nameUsage.setScientificName(scientificNameService.getCorrectedScientificName());
-				    nameUsage.setAuthorship(scientificNameService.getCorrectedAuthor());
-				    nameUsage.setOriginalAuthorship(author);
-				    nameUsage.setOriginalScientificName(scientificName);
-				    double nameSimilarity = ICNafpAuthorNameComparator.stringSimilarity(scientificName, nameUsage.getScientificName());
-				    NameComparison comparison = authorNameComparator.compare(author, nameUsage.getAuthorship()); 
-				    double authorSimilarity = comparison.getSimilarity();
-				    String match = comparison.getMatchType();
-				    if (authorSimilarity==1d && nameSimilarity==1d) { 
-				    	nameUsage.setMatchDescription(NameComparison.MATCH_EXACT);
-				    	curationStatus = CurationComment.CORRECT;
-				    } else { 
-				    	nameUsage.setMatchDescription(match);
-				    }
-				    nameUsage.setAuthorshipStringEditDistance(authorSimilarity);     
-				    
-				    String authorshipSimilarity = "Authorship: " +  nameUsage.getMatchDescription() + " Similarity: " + Double.toString(nameSimilarity);
-                    
-                    
                     if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
                         inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
                         inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
                     }
-                    //no need to put empty LSID due to empty result from the checklistbank
+                    // don't add a blank GUID if no GUID was returned
                     if(!scientificNameService.getGUID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getGUID());
 
                     //output
-                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment() + authorshipSimilarity,scientificNameService.getServiceName());
+                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());
                     constructOutput(inputSpecimenRecord, curationComment);
                     /*for (List l : scientificNameService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());

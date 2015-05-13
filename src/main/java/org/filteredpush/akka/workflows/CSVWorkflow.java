@@ -97,21 +97,21 @@ public class CSVWorkflow {
 
         final ActorRef flwtValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new FloweringTimeValidator("fp.services.FNAFloweringTimeService",true,true,writer);
+                return new FloweringTimeValidator("org.filteredpush.kuration.services.test.FNAFloweringTimeService",true,true,writer);
             }
         }), "flwtValidator");
 
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new ScientificNameValidator("fp.services.IPNIService",true,true,flwtValidator);
+                return new ScientificNameValidator("org.filteredpush.kuration.services.test.IPNIService",true,true,flwtValidator);
             }
         }), "scinValidator");
 
 
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
           public UntypedActor create() {
-           return new GEORefValidator("fp.services.GeoLocate2",true,certainty,flwtValidator);
+           return new GEORefValidator("org.filteredpush.kuration.services.test.GeoLocate2",true,certainty,flwtValidator);
           }
         }), "geoValidator");
 
