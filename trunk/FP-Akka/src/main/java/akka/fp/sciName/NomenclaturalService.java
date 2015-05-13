@@ -43,12 +43,12 @@ public class NomenclaturalService extends Component {
                 if(kingdom.toLowerCase().equals("plantae")){
                 	// Note: IPNI only covers vascular plants, but no good service for non-vascular plants
                 	// IPNI is only nomenclatural
-                    scientificNameService = (INewScientificNameValidationService)Class.forName("fp.services.IPNIService").newInstance();
+                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.IPNIService").newInstance();
                 }else if(kingdom.toLowerCase().equals("animalia")){
-                    scientificNameService = (INewScientificNameValidationService)Class.forName("fp.services.ZooBankNomenclaturalAct").newInstance();
+                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.ZooBankNomenclaturalAct").newInstance();
                 }else if(kingdom.toLowerCase().equals("fungi")){
                 	// IF can be nomenclatural or taxonomic
-                    scientificNameService = (INewScientificNameValidationService)Class.forName("fp.services.IndexFungorumService").newInstance();
+                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.IndexFungorumService").newInstance();
                 }else{
                     //todo need to handle other cases and default service
                 }

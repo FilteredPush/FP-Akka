@@ -28,7 +28,6 @@ import java.util.*;
 * User: cobalt
 * Date: 06.05.2013
 * Time: 13:06
-* To change this template use File | Settings | File Templates.
 */
 public class MongoSummaryWriter extends UntypedActor {
     int cRecords = 0;
@@ -300,6 +299,7 @@ public class MongoSummaryWriter extends UntypedActor {
                    // System.out.println("source = " + source);
                     //System.out.println("originMap = " + originMap);
                     //System.out.println("record = " + record);
+                	// TODO: Can we transport this without having to store it in the servicename?
                     if (originMap.get(label) == null || !originMap.get(label).equals(record.get(label))) {
                         detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
                     } else {

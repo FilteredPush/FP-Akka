@@ -35,7 +35,7 @@ public class TaxonomicService extends Component {
             try {
             	//TODO: Select a service 
             	//TODO: Use WoRMS, IF, GBIF in taxonomic mode
-                scientificNameService = (INewScientificNameValidationService)Class.forName("fp.services.COLService").newInstance();
+                scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.COLService").newInstance();
             } catch (InstantiationException e) {
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
