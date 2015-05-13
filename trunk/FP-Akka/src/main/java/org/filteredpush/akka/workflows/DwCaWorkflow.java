@@ -94,7 +94,7 @@ public class DwCaWorkflow {
             
             switch(service.toUpperCase()) { 
             case "IF": 
-            	serviceClass="org.filteredpush.kuration.services.sciname.IFService";
+            	serviceClass="org.filteredpush.kuration.services.sciname.IndexFungorumService";
             	break;
             case "WORMS": 
             	serviceClass="org.filteredpush.kuration.services.sciname.WoRMSService";
