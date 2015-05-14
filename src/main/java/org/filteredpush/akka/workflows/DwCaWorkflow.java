@@ -66,8 +66,8 @@ public class DwCaWorkflow {
     @Option(name="-i",usage="Input occurrence.txt (tab delimited occurrence core from a DwC archive) file.")
     private String inputFilename = "occurrence.txt";
     
-    @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default IPNI.")
-    private String service = "ipni";
+    @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
+    private String service = "GBIF";
     
     private String serviceClass = "org.filteredpush.kuration.services.IPNIService";
     
@@ -94,6 +94,7 @@ public class DwCaWorkflow {
             
             switch(service.toUpperCase()) { 
             case "IF": 
+            case "INDEXFUNGORUM": 
             	serviceClass="org.filteredpush.kuration.services.sciname.IndexFungorumService";
             	break;
             case "WORMS": 
@@ -102,12 +103,15 @@ public class DwCaWorkflow {
             case "COL": 
             	serviceClass="org.filteredpush.kuration.services.sciname.COLService";
             	break;
-            case "GBIF": 
-            	serviceClass="org.filteredpush.kuration.services.sciname.GBIFService";
-            	break;
             case "IPNI": 
-            default: 
             	serviceClass="org.filteredpush.kuration.services.sciname.IPNIService";
+            	break;
+            case "GBIF": 
+            default: 
+            	if (!service.toUpperCase().equals("GBIF")) { 
+            	    System.err.println("Unrecognized service (" + service + ") or service not specified, using GBIF.");
+            	}
+            	serviceClass="org.filteredpush.kuration.services.sciname.GBIFService";
             }
             
             setupOK = true;
