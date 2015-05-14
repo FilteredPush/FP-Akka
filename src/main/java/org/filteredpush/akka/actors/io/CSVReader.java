@@ -74,6 +74,11 @@ public class CSVReader extends UntypedActor {
     //public String filePath = null;
     public String recordClass = null;
     public String[] headers = new String[]{};
+    
+    /**
+     * Maximum number of records to process at one time. 
+     */
+    private int chunkSize = 1000;
 
 
     int invoc;
@@ -88,7 +93,21 @@ public class CSVReader extends UntypedActor {
         invoc = 0;
     }
 
-    @Override
+    /**
+	 * @return the chunkSize
+	 */
+	public int getChunkSize() {
+		return chunkSize;
+	}
+
+	/**
+	 * @param chunkSize the chunkSize to set
+	 */
+	public void setChunkSize(int chunkSize) {
+		this.chunkSize = chunkSize;
+	}
+
+	@Override
     public void onReceive(Object o) throws Exception {
         start = System.currentTimeMillis();
 
@@ -182,7 +201,7 @@ public class CSVReader extends UntypedActor {
                 ++cValidRecords;
                 listener.tell(t,getSelf());
 
-                if(cValidRecords % 1000 == 0) break;
+                if(cValidRecords % chunkSize == 0) break;
             }
         }catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -200,6 +219,7 @@ public class CSVReader extends UntypedActor {
         //listener.tell(new Broadcast(new Done()),getSel;
         //listener.tell(new Broadcast(Poiso
             //System.out.println(" DB: " + mongodbDB);nPill.getInstance()),getSelf());
+        // TODO: If we hit the end at less than chunkSize records assert that we are done reading the input.
         listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
         getContext().stop(getSelf());
         //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
@@ -216,8 +236,8 @@ java.lang.ArrayIndexOutOfBoundsException: 12
 
     @Override
     public void postStop() {
-        System.out.println("Read " + cValidRecords + " records");
-        System.out.println("Stopped Reader");
+        System.out.println("Read " + cValidRecords + " records (in sets of " + Integer.toString(chunkSize)+ " )");
+        System.out.println("Stopped Reader, processing these records.");
         //System.out.println(System.currentTimeMillis() - start);
         super.postStop();
     }
