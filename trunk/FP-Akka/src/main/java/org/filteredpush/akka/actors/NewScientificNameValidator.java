@@ -236,8 +236,11 @@ public class NewScientificNameValidator extends UntypedActor {
                         inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
                         inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
                     }
-                    // don't add a blank GUID if no GUID was returned
-                    if(!scientificNameService.getGUID().equals("")) inputSpecimenRecord.put("GUID", scientificNameService.getGUID());
+                    // add a GUID one was returned
+                    if(!scientificNameService.getGUID().equals("")) {
+                    	// TODO: We should be able to handle scientificNameID and acceptedNameUsageID
+                    	inputSpecimenRecord.put("taxonID", scientificNameService.getGUID());
+                    }
 
                     //output
                     CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());
