@@ -5,7 +5,7 @@ import org.filteredpush.akka.data.Token;
 import akka.actor.ActorRef;
 
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
-import org.filteredpush.kuration.services.GBIFService;
+//import org.filteredpush.kuration.services.GBIFService;
 import org.filteredpush.kuration.util.CurationComment;
 import org.filteredpush.kuration.util.CurationCommentType;
 import org.filteredpush.kuration.util.SpecimenRecord;
@@ -65,7 +65,7 @@ public class NomenclaturalService extends Component {
             scientificNameService.validateScientificName(sciName, author);
 
             if(scientificNameService.getCorrectedScientificName() == null){
-                scientificNameService = (INewScientificNameValidationService) new GBIFService();
+                //scientificNameService = (INewScientificNameValidationService) new GBIFService();
                 scientificNameService.validateScientificName(sciName,author);
             }
             curationComment = CurationComment.construct(scientificNameService.getCurationStatus(), scientificNameService.getComment(), scientificNameService.getServiceName());

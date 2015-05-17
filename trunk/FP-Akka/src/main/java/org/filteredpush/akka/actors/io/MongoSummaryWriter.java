@@ -129,12 +129,12 @@ public class MongoSummaryWriter extends UntypedActor {
                 actorStatusMap.put("source", record.get("geoRefSource"));
                 actorSet.add(actorStatusMap);
             }
-            if (record.get("scinStatus") != null) {
+            if (record.get(SpecimenRecord.SciName_Status_Label) != null) {
                 Map<String, String> actorStatusMap = new HashMap<String, String>();
                 actorStatusMap.put("actor", "ScientificNameValidator");
-                actorStatusMap.put("status", record.get("scinStatus"));
-                actorStatusMap.put("comment", record.get("scinComment"));
-                actorStatusMap.put("source", record.get("scinSource"));
+                actorStatusMap.put("status", record.get(SpecimenRecord.SciName_Status_Label));
+                actorStatusMap.put("comment", record.get(SpecimenRecord.SciName_Comment_Label));
+                actorStatusMap.put("source", record.get(SpecimenRecord.SciName_Source_Label));
                 actorSet.add(actorStatusMap);
             }
             if (record.get("flwtStatus") != null) {
@@ -157,7 +157,7 @@ public class MongoSummaryWriter extends UntypedActor {
             //remove a set of added fields in the record which have been read before
             HashSet<String> removeLables = new HashSet<String>();
             removeLables.add("geoRefStatus");removeLables.add("geoRefComment");removeLables.add("geoRefSource");
-            removeLables.add("scinStatus");removeLables.add("scinComment");removeLables.add("scinSource");
+            removeLables.add(SpecimenRecord.SciName_Status_Label);removeLables.add(SpecimenRecord.SciName_Comment_Label);removeLables.add(SpecimenRecord.SciName_Source_Label);
             removeLables.add("flwtStatus");removeLables.add("flwtComment");removeLables.add("flwtSource");
             removeLables.add("dateStatus");removeLables.add("dateComment");removeLables.add("dateSource");
             for (String label:removeLables){
@@ -265,7 +265,7 @@ public class MongoSummaryWriter extends UntypedActor {
         //get the original value
         HashMap<String, String> originMap = new HashMap<String, String>();
 
-        String source =  actorDetail.get("source");
+        /*//old code that put old valud in the source field
         if(source != null && source.contains("#")){
             //not sure how to handle the case source = "...:...#", i.e., no source case
             if(source.substring(source.length()-1,source.length()).equals("#"))  source += " ";
@@ -283,8 +283,12 @@ public class MongoSummaryWriter extends UntypedActor {
             detailRecord.put("Source", sub[sub.length-1]);
         }else{
             detailRecord.put("Source", actorDetail.get("source"));
-        }
+        }*/
 
+        if(record.containsKey(SpecimenRecord.Original_SciName_Label)) originMap.put("scientificName", record.get(SpecimenRecord.Original_SciName_Label));
+        if(record.containsKey(SpecimenRecord.Original_Authorship_Label)) originMap.put("scientificNameAuthorship", record.get(SpecimenRecord.Original_Authorship_Label));
+
+        detailRecord.put("Source", actorDetail.get("source"));
         detailRecord.put("Actor Result", marker);
 
 
@@ -299,8 +303,7 @@ public class MongoSummaryWriter extends UntypedActor {
                    // System.out.println("source = " + source);
                     //System.out.println("originMap = " + originMap);
                     //System.out.println("record = " + record);
-                	// TODO: Can we transport this without having to store it in the servicename?
-                    if (originMap.get(label) == null || !originMap.get(label).equals(record.get(label))) {
+                    if (originMap.containsKey(label) && !originMap.get(label).equals(record.get(label))) {
                         detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
                     } else {
                         detailRecord.put(label, "CORRECT: " + record.get(label));

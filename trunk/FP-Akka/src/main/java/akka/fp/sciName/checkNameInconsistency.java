@@ -1,6 +1,9 @@
 package akka.fp.sciName;
 
 import akka.actor.ActorRef;
+import akka.actor.PoisonPill;
+import akka.actor.Terminated;
+import akka.routing.Broadcast;
 import org.filteredpush.kuration.util.CurationComment;
 import org.filteredpush.kuration.util.CurationStatus;
 import org.filteredpush.kuration.util.SpecimenRecord;
@@ -44,10 +47,20 @@ public class checkNameInconsistency extends Component {
             String locality = record.get("locality");
             */
 
+            System.out.println("receive consistency:" + count++);
+
             //todo: need to change to parsing a configuration
             checkConsistencyToAtomicField(record.get("sciName"), record.get("genus"), record.get("subgenus"), record.get("specificEpithet"), record.get("verbatimTaxonRank"), record.get("taxonRank"), record.get("infraspecificEpithet"));
 
             listener.tell(constructOutput(record), getSelf());
+        }else if (message instanceof Broadcast) {
+            listener.tell(new Broadcast(((Broadcast) message).message()), getSender());
+        } else if (message instanceof Terminated) {
+            //System.out.println("SciName termianted");
+            if (((Terminated) message).getActor().equals(listener))
+                this.getContext().stop(getSelf());
+        } else {
+            unhandled(message);
         }
     }
 
@@ -150,7 +163,7 @@ public class checkNameInconsistency extends Component {
         }
 
 
-
+        validName = name;
         curationComment = CurationComment.construct(curationStatus,comment,null);
 
         /*
@@ -162,5 +175,11 @@ public class checkNameInconsistency extends Component {
         */
         //return constructOutput(record, name, curationStatus.toString(), comment, null );
         return resultMap;
+    }
+
+    @Override
+    public void postStop() {
+        System.out.println("Stopped consistency");
+        listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 }

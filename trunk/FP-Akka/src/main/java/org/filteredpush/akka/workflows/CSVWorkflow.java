@@ -9,7 +9,9 @@ import akka.actor.*;
 
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.InternalDateValidator;
+import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.io.CSVReader;
+import org.filteredpush.akka.actors.io.CSVWriter;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -17,7 +19,7 @@ import org.kohsuke.args4j.Option;
 
 import java.io.File;
 
-public class CSVWorkflow {
+public class CSVWorkflow implements AkkaWorkflow{
 
     public static void main(String[] args) {
         CSVWorkflow fp = new CSVWorkflow();
@@ -25,7 +27,6 @@ public class CSVWorkflow {
            fp.calculate();
         }
     }
-
 
     /*@Option(name="-e",usage="encoding for output file")
     private String enc = "UTF-8";          */
@@ -38,7 +39,18 @@ public class CSVWorkflow {
 
     @Option(name="-i",usage="Input CSV file")
     private String inputFilename = "/home/thsong/data/scan_data/tt.txt";
-    
+
+    @Option(name="-s",usage="Only with SciNameValidator")
+    private boolean sciNameOnly = false;
+
+    @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
+    private String service = "GBIF";
+
+    @Option(name="-t",usage="SciNameValidator Taxonomic Mode")
+    private boolean Taxonomic = false;
+
+    final Double certainty = 200.0;
+
     /**
      * Setup conditions to run the workflow.
      * @param args command line arguments
@@ -49,8 +61,11 @@ public class CSVWorkflow {
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
         try {
-            if(args==null || args.length==0)
-                throw new CmdLineException(parser,"No arguments were provided, you must specify -i and -o.");
+
+            //if(args==null || args.length==0)
+                //throw new CmdLineException(parser,"No arguments were provided, you must specify -i and -o.");
+
+
             parser.parseArgument(args);
             File inputFile = new File(inputFilename);
             if (!inputFile.canRead()) { 
@@ -72,14 +87,6 @@ public class CSVWorkflow {
     }
 
     public void calculate() {
-        this.calculate( "db", "Occurrence", 200.0);
-    }
-
-    public void calculate(
-            final String fileIn,
-            final String fileOut,
-            //final String query,
-            final Double certainty) {
 
         long starttime = System.currentTimeMillis();
 
@@ -145,33 +152,55 @@ public class CSVWorkflow {
             public UntypedActor create() {
                 return new CSVWriter(outputFilename);
             }
-        }), "writer");    */
+        }), "writer");
 
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoSummaryWriter(outputFilename);
-            }
-        }), "JsonWriter");
+            scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new SciNameWorkflow("-t",false,writer);
+                }
+            }), "scinValidator");*/
+
+        final ActorRef scinValidator;
+
+        if(!sciNameOnly){
+            final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new MongoSummaryWriter(outputFilename);
+                }
+            }), "JsonWriter");
+
+            final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
+                }
+            }), "geoValidator");
 
 
-        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
-            }
-        }), "geoValidator");
+            final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
+                }
+            }), "dateValidator");
 
+            scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, service, Taxonomic, dateValidator);
+                }
+            }), "scinValidator");
 
-        final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
-            }
-        }), "dateValidator");
+        }else{
+            final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new CSVWriter(outputFilename, true);
+                }
+            }), "CSVWriter");
 
-        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new SciNameWorkflow("-t",false,dateValidator);
-            }
-        }), "scinValidator");
+            scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
+                public UntypedActor create() {
+                    return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, service, false, writer);
+                }
+            }), "scinValidator");
+        }
 
 
 

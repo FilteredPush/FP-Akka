@@ -1,6 +1,8 @@
 package akka.fp.sciName;
 
 import akka.actor.ActorRef;
+import akka.actor.PoisonPill;
+import akka.routing.Broadcast;
 import org.filteredpush.kuration.util.CurationComment;
 import org.filteredpush.kuration.util.CurationStatus;
 import org.filteredpush.kuration.util.SpecimenRecord;
@@ -24,6 +26,7 @@ public class NameReconciliation extends Component {
 
     //SpecimenRecord inputData = new SpecimenRecord();
     String validName;
+    private static int count = 0;
 
     public NameReconciliation(final ActorRef listener) {
         super(listener);
@@ -36,6 +39,8 @@ public class NameReconciliation extends Component {
             //SpecimenRecord record = (SpecimenRecord) ((Token) message).getData();
             SpecimenRecord record = (SpecimenRecord) message;
             //System.err.println("georefstart#"+record.get("oaiid").toString() + "#" + System.currentTimeMillis());
+
+            System.out.println("receive conciliation:" + count++);
 
             String sciName = record.get("scientificName");
             if(sciName == null || sciName.length() == 0){
@@ -133,6 +138,7 @@ public class NameReconciliation extends Component {
         validName = resolvedName;
 
         curationComment = CurationComment.construct(curationStatus,comment,"Global Name Resolver");
+
     }
 
     public static String getValFromKey(JSONObject json, String key) {
@@ -141,5 +147,11 @@ public class NameReconciliation extends Component {
         } else {
             return json.get(key).toString();
         }
+    }
+
+    @Override
+    public void postStop() {
+        System.out.println("Stopped reconciliation");
+        listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 }

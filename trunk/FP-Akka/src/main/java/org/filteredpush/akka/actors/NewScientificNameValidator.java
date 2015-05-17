@@ -8,8 +8,13 @@ import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
+import org.filteredpush.kuration.services.sciname.COLService;
+import org.filteredpush.kuration.services.sciname.GBIFService;
+import org.filteredpush.kuration.services.sciname.IPNIService;
+import org.filteredpush.kuration.services.sciname.IndexFungorumService;
 import org.filteredpush.kuration.util.*;
 
+import java.io.IOException;
 import java.util.*;
 
 import org.filteredpush.akka.data.Token;
@@ -33,8 +38,8 @@ public class NewScientificNameValidator extends UntypedActor {
      * @param insertGUID add any GUID returned by the validator to the output
      * @param listener downstream actor that will consume output from this actor 
      */
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID,  final ActorRef listener ) {
-    	this(service, useCache, insertGUID, 6, listener);
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final String authorityName, final boolean taxonomicMode,  final ActorRef listener ) {
+    	this(service, useCache, insertGUID, 6, authorityName, taxonomicMode, listener);
     }
 
     /**
@@ -46,7 +51,7 @@ public class NewScientificNameValidator extends UntypedActor {
      * @param instances number of parallel instances 
      * @param listener downstream actor that will consume output from this actor 
      */
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final int instances, final ActorRef listener ) {
+    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final int instances, final String authorityName, final boolean taxonomicMode, final ActorRef listener ) {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
@@ -54,7 +59,7 @@ public class NewScientificNameValidator extends UntypedActor {
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
+                return new ScientificNameValidatorInvocation(service, useCache, insertGUID, authorityName, taxonomicMode, listener);
             }
         }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
         getContext().watch(workerRouter);
@@ -127,7 +132,7 @@ public class NewScientificNameValidator extends UntypedActor {
         private int invoc;
         private final ActorRef listener;
 
-        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertGUID, ActorRef listener) {
+        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertGUID, String authorityName, boolean taxonomicMode, ActorRef listener) {
             this.serviceClassQN = service;
             this.hasDataCache = useCache;
             this.insertGUID = insertGUID;
@@ -159,14 +164,21 @@ public class NewScientificNameValidator extends UntypedActor {
                     }
                 }
 
-                scientificNameService = (INewScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
+                 //scientificNameService = (INewScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
+                //use the authority argument to select which service to use
+                if(authorityName.equals("GBIF")) scientificNameService = new GBIFService();
+                else if(authorityName.equals("IPNI")) scientificNameService = new IPNIService();
+                else if(authorityName.equals("IndexFungorum")) scientificNameService = new IndexFungorumService();
+                else if(authorityName.equals("COL")) scientificNameService = new COLService();
+                else System.out.println("Unknown authority name: " + authorityName);
+
+                //set validation mode
+                if(!taxonomicMode) scientificNameService.setValidationMode(INewScientificNameValidationService.MODE_NOMENCLATURAL);
+                else scientificNameService.setValidationMode(INewScientificNameValidationService.MODE_TAXONOMIC);
+
             //} catch (CurrationException e) {
             //    e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
@@ -233,8 +245,20 @@ public class NewScientificNameValidator extends UntypedActor {
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     
                     if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
-                        inputSpecimenRecord.put("scientificName", scientificNameService.getCorrectedScientificName());
-                        inputSpecimenRecord.put("scientificNameAuthorship", scientificNameService.getCorrectedAuthor());
+                        //put in original value first
+                        String originalSciName =  inputSpecimenRecord.get("scientificName");
+                        String originalAuthor = inputSpecimenRecord.get("scientificNameAuthorship");
+                        String newSciName = scientificNameService.getCorrectedScientificName();
+                        String newAuthor = scientificNameService.getCorrectedAuthor();
+
+                        if(originalSciName != null && originalSciName.length() != 0 &&  !originalSciName.equals(newSciName)){
+                            inputSpecimenRecord.put(SpecimenRecord.Original_SciName_Label, originalSciName);
+                            inputSpecimenRecord.put("scientificName", newSciName);
+                        }
+                        if(originalAuthor != null && originalAuthor.length() != 0 && !originalAuthor.equals(newAuthor)){
+                            inputSpecimenRecord.put(SpecimenRecord.Original_Authorship_Label, originalAuthor);
+                            inputSpecimenRecord.put("scientificNameAuthorship", newAuthor);
+                        }
                     }
                     // add a GUID one was returned
                     if(!scientificNameService.getGUID().equals("")) {
@@ -275,9 +299,9 @@ public class NewScientificNameValidator extends UntypedActor {
 
         private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
             if(comment!=null){
-                result.put("scinComment", comment.getDetails());
-                result.put("scinStatus", comment.getStatus());
-                result.put("scinSource", comment.getSource());
+                result.put(SpecimenRecord.SciName_Comment_Label, comment.getDetails());
+                result.put(SpecimenRecord.SciName_Status_Label, comment.getStatus());
+                result.put(SpecimenRecord.SciName_Source_Label, comment.getSource());
             }
             //System.err.println("scinameend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
             listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc),getContext().parent());

@@ -27,17 +27,17 @@ public abstract class Component extends UntypedActor{
     public SpecimenRecord constructOutput(SpecimenRecord record){
         String status = curationComment.getStatus();
         //if it's the first component in the subworkflow
-        if(!record.containsKey("scinStatus")){
-            record.put("scinStatus", status);
-            record.put("scinComment", curationComment.getDetails());
-            record.put("scinSource", curationComment.getSource());
+        if(!record.containsKey(SpecimenRecord.SciName_Status_Label)){
+            record.put(SpecimenRecord.SciName_Status_Label, status);
+            record.put(SpecimenRecord.SciName_Comment_Label, curationComment.getDetails());
+            record.put(SpecimenRecord.SciName_Source_Label, curationComment.getSource());
         }else{
 
             // overwrite previous status if the current one is worse
-            if(getRank(status) > getRank(record.get("scinStatus"))) record.put("scinStatus", status);
+            if(getRank(status) > getRank(record.get(SpecimenRecord.SciName_Status_Label))) record.put(SpecimenRecord.SciName_Status_Label, status);
 
-            record.put("scinComment", record.get("scinComment") + " | " + curationComment.getDetails());
-            record.put("scinSource", record.get("scinSource") + " | " + curationComment.getSource());
+            record.put(SpecimenRecord.SciName_Comment_Label, record.get(SpecimenRecord.SciName_Comment_Label) + " | " + curationComment.getDetails());
+            record.put(SpecimenRecord.SciName_Source_Label, record.get(SpecimenRecord.SciName_Source_Label) + " | " + curationComment.getSource());
         }
 
         if(status.equals(CurationComment.CURATED.toString()) || status.equals(CurationComment.Filled_in.toString())){
@@ -68,11 +68,6 @@ public abstract class Component extends UntypedActor{
 
     public SpecimenRecord getOutput(){
         return dataRecord;
-    }
-
-    public void postStop() {
-        System.out.println("Stopped SciNameValidator");
-        listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
 }
