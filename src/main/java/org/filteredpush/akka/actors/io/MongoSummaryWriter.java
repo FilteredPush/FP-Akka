@@ -285,8 +285,11 @@ public class MongoSummaryWriter extends UntypedActor {
             detailRecord.put("Source", actorDetail.get("source"));
         }*/
 
-        if(record.containsKey(SpecimenRecord.Original_SciName_Label)) originMap.put("scientificName", record.get(SpecimenRecord.Original_SciName_Label));
-        if(record.containsKey(SpecimenRecord.Original_Authorship_Label)) originMap.put("scientificNameAuthorship", record.get(SpecimenRecord.Original_Authorship_Label));
+        if(record.containsKey(SpecimenRecord.Original_SciName_Label)) originMap.put(SpecimenRecord.dwc_scientificName, record.get(SpecimenRecord.Original_SciName_Label));
+        if(record.containsKey(SpecimenRecord.Original_Authorship_Label)) originMap.put(SpecimenRecord.dwc_scientificNameAuthorship, record.get(SpecimenRecord.Original_Authorship_Label));
+        if(record.containsKey(SpecimenRecord.Original_EventDate_Label)) originMap.put(SpecimenRecord.dwc_eventDate, record.get(SpecimenRecord.Original_EventDate_Label));
+        if(record.containsKey(SpecimenRecord.Original_Latitude_Label)) originMap.put(SpecimenRecord.dwc_decimalLatitude, record.get(SpecimenRecord.Original_Latitude_Label));
+        if(record.containsKey(SpecimenRecord.Original_Longitude_Label)) originMap.put(SpecimenRecord.dwc_decimalLongitude, record.get(SpecimenRecord.Original_Longitude_Label));
 
         detailRecord.put("Source", actorDetail.get("source"));
         detailRecord.put("Actor Result", marker);

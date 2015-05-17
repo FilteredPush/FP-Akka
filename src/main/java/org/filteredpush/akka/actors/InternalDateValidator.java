@@ -234,7 +234,13 @@ public class InternalDateValidator extends UntypedActor {
 
                 if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in) {
                     //replace the old value if curated
-                    inputSpecimenRecord.put("eventDate", String.valueOf(singleDateValidationService.getCorrectedDate()));
+                    //inputSpecimenRecord.put("eventDate", String.valueOf(singleDateValidationService.getCorrectedDate()));
+                    String originalDate = inputSpecimenRecord.get(SpecimenRecord.dwc_eventDate);
+                    String newDate = singleDateValidationService.getCorrectedDate();
+                    if(originalDate != null && originalDate.length() != 0 &&  !originalDate.equals(newDate)){
+                        inputSpecimenRecord.put(SpecimenRecord.Original_EventDate_Label, originalDate);
+                        inputSpecimenRecord.put(SpecimenRecord.dwc_eventDate, newDate);
+                    }
                 }
 
                 curationComment = CurationComment.construct(curationStatus, singleDateValidationService.getComment(), singleDateValidationService.getServiceName());
@@ -255,13 +261,13 @@ public class InternalDateValidator extends UntypedActor {
 
         private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
             if (comment != null) {
-                result.put("dateComment", comment.getDetails());
-                result.put("dateStatus", comment.getStatus());
-                result.put("dateSource", comment.getSource());
+                result.put(SpecimenRecord.date_Comment_Label, comment.getDetails());
+                result.put(SpecimenRecord.date_Status_Label, comment.getStatus());
+                result.put(SpecimenRecord.date_Source_Label, comment.getSource());
             } else {
-                result.put("dateComment", "None");
-                result.put("dateStatus", CurationComment.CORRECT.toString());
-                result.put("dateSource", comment.getSource());
+                result.put(SpecimenRecord.date_Comment_Label, "None");
+                result.put(SpecimenRecord.date_Status_Label, CurationComment.CORRECT.toString());
+                result.put(SpecimenRecord.date_Source_Label, comment.getSource());
             }
             //System.err.println("dateend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
             listener.tell(new TokenWithProv<SpecimenRecord>(result, getClass().getSimpleName(), invoc), getContext().parent());

@@ -8,10 +8,7 @@ import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
-import org.filteredpush.kuration.services.sciname.COLService;
-import org.filteredpush.kuration.services.sciname.GBIFService;
-import org.filteredpush.kuration.services.sciname.IPNIService;
-import org.filteredpush.kuration.services.sciname.IndexFungorumService;
+import org.filteredpush.kuration.services.sciname.*;
 import org.filteredpush.kuration.util.*;
 
 import java.io.IOException;
@@ -146,13 +143,13 @@ public class NewScientificNameValidator extends UntypedActor {
             try {
                 scientificNameLabel = specimenRecordTypeConf.getLabel("ScientificName");
                 if(scientificNameLabel == null){
-                    scientificNameLabel = "scientificName";
+                    scientificNameLabel = SpecimenRecord.dwc_scientificName;
                     //throw new CurrationException(" failed since the ScientificName label of the SpecimenRecordType is not set.");
                 }
 
                 authorLabel = specimenRecordTypeConf.getLabel("ScientificNameAuthorship");
                 if(authorLabel == null){
-                    authorLabel = "scientificNameAuthorship";
+                    authorLabel = SpecimenRecord.dwc_scientificNameAuthorship;
                     //throw new CurrationException("failed since the ScientificNameAuthorship label of the SpecimenRecordType is not set.");
                 }
 
@@ -170,6 +167,7 @@ public class NewScientificNameValidator extends UntypedActor {
                 else if(authorityName.equals("IPNI")) scientificNameService = new IPNIService();
                 else if(authorityName.equals("IndexFungorum")) scientificNameService = new IndexFungorumService();
                 else if(authorityName.equals("COL")) scientificNameService = new COLService();
+                else if(authorityName.equals("WoRMS")) scientificNameService = new WoRMSService();
                 else System.out.println("Unknown authority name: " + authorityName);
 
                 //set validation mode
@@ -246,18 +244,18 @@ public class NewScientificNameValidator extends UntypedActor {
                     
                     if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
                         //put in original value first
-                        String originalSciName =  inputSpecimenRecord.get("scientificName");
-                        String originalAuthor = inputSpecimenRecord.get("scientificNameAuthorship");
+                        String originalSciName =  inputSpecimenRecord.get(SpecimenRecord.dwc_scientificName);
+                        String originalAuthor = inputSpecimenRecord.get(SpecimenRecord.dwc_scientificNameAuthorship);
                         String newSciName = scientificNameService.getCorrectedScientificName();
                         String newAuthor = scientificNameService.getCorrectedAuthor();
 
                         if(originalSciName != null && originalSciName.length() != 0 &&  !originalSciName.equals(newSciName)){
                             inputSpecimenRecord.put(SpecimenRecord.Original_SciName_Label, originalSciName);
-                            inputSpecimenRecord.put("scientificName", newSciName);
+                            inputSpecimenRecord.put(SpecimenRecord.dwc_scientificName, newSciName);
                         }
                         if(originalAuthor != null && originalAuthor.length() != 0 && !originalAuthor.equals(newAuthor)){
                             inputSpecimenRecord.put(SpecimenRecord.Original_Authorship_Label, originalAuthor);
-                            inputSpecimenRecord.put("scientificNameAuthorship", newAuthor);
+                            inputSpecimenRecord.put(SpecimenRecord.dwc_scientificNameAuthorship, newAuthor);
                         }
                     }
                     // add a GUID one was returned
