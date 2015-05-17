@@ -226,22 +226,26 @@ public class GEORefValidator extends UntypedActor {
                         geoRefValidationService.validateGeoRef(country, stateProvince, county, locality,String.valueOf(latitude),String.valueOf(longitude),certainty);
                     }
 
-                    CurationCommentType curationComment = null;
                     CurationStatus curationStatus = geoRefValidationService.getCurationStatus();
-                    if(curationStatus == CurationComment.CURATED){
-                        curationComment = CurationComment.construct(CurationComment.CURATED,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
-                        fields.put("decimalLatitude", String.valueOf(geoRefValidationService.getCorrectedLatitude()));
-                        fields.put("decimalLongitude", String.valueOf(geoRefValidationService.getCorrectedLongitude()));
-                    }else if(curationStatus == CurationComment.UNABLE_CURATED){
-                        curationComment = CurationComment.construct(CurationComment.UNABLE_CURATED,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
-                    }else if(curationStatus == CurationComment.UNABLE_DETERMINE_VALIDITY){
-                        curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
-                    }else if(curationStatus == CurationComment.CORRECT){
-                        curationComment = CurationComment.construct(CurationComment.CORRECT,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
+                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+                        String originalLat = fields.get(SpecimenRecord.dwc_decimalLatitude);
+                        String originalLng = fields.get(SpecimenRecord.dwc_decimalLongitude);
+                        String newLat = String.valueOf(geoRefValidationService.getCorrectedLatitude());
+                        String newLng = String.valueOf(geoRefValidationService.getCorrectedLongitude());
+
+                        if(originalLat != null && originalLat.length() != 0 &&  !originalLat.equals(newLat)){
+                            fields.put(SpecimenRecord.Original_Latitude_Label, originalLat);
+                            fields.put(SpecimenRecord.dwc_decimalLatitude, newLat);
+                        }
+                        if(originalLng != null && originalLng.length() != 0 && !originalLng.equals(newLng)){
+                            fields.put(SpecimenRecord.Original_Longitude_Label, originalLng);
+                            fields.put(SpecimenRecord.dwc_decimalLongitude, newLng);
+                        }
                     }
                     //output
                     //System.out.println("curationStatus = " + curationStatus.toString());
                     //System.out.println("curationComment = " + curationComment.toString());
+                    CurationCommentType curationComment = CurationComment.construct(curationStatus,geoRefValidationService.getComment(),geoRefValidationService.getServiceName());
                     constructOutput(fields, curationComment);
                     for (List l : geoRefValidationService.getLog()) {
                         //Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, (String)l.get(0), (Long)l.get(1), (Long)l.get(2),l.get(3),curationStatus.toString());
@@ -253,14 +257,12 @@ public class GEORefValidator extends UntypedActor {
 
         private void constructOutput(Map<String, String> result, CurationCommentType comment) {
             if (comment != null) {
-                result.put("geoRefComment",comment.getDetails());
-                result.put("geoRefStatus",comment.getStatus());
-                result.put("geoRefSource",comment.getSource());
+                result.put(SpecimenRecord.geoRef_Status_Label,comment.getStatus());
             } else {
-                result.put("geoRefStatus",CurationComment.CORRECT.toString());
-                result.put("geoRefComment",comment.getDetails());
-                result.put("geoRefSource",comment.getSource());
+                result.put(SpecimenRecord.geoRef_Status_Label,CurationComment.CORRECT.toString());
             }
+            result.put(SpecimenRecord.geoRef_Comment_Label,comment.getDetails());
+            result.put(SpecimenRecord.geoRef_Source_Label,comment.getSource());
             SpecimenRecord r = new SpecimenRecord(result);
             Token token = new TokenWithProv<SpecimenRecord>(r,getName(),invoc);
             //System.err.println("georefend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
