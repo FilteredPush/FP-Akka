@@ -2,12 +2,12 @@ package org.filteredpush.akka.actors.io;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+import org.filteredpush.akka.workflows.CSVWorkflow;
 import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -38,9 +38,11 @@ public class CSVWriter extends UntypedActor {
     CSVPrinter csvPrinter;
     Boolean headerWritten = false;
     List<String> headers = new ArrayList<String>();
+    boolean taxonOnlyMode = false;
     //todo: make it more flexible
 
-    public CSVWriter(String filePath) {
+    public CSVWriter(String filePath, boolean taxonOnlyMode) {
+        this.taxonOnlyMode = taxonOnlyMode;
         if (filePath != null) this._filePath = filePath;
         try {
             //System.out.println("filePath = " + filePath);
@@ -55,13 +57,13 @@ public class CSVWriter extends UntypedActor {
     public void onReceive(Object message) {
         long start = System.currentTimeMillis();
         if (message instanceof TokenWithProv) {
-            Prov.log().printf("datadep\t%s\t%d\t%s\t%d\t%d\t%d\n",
+           /* Prov.log().printf("datadep\t%s\t%d\t%s\t%d\t%d\t%d\n",
                     ((TokenWithProv) message).getActorCreated(),
                     ((TokenWithProv) message).getInvocCreated(),
                     this.getClass().getSimpleName(),
                     invoc,
                     ((TokenWithProv) message).getTimeCreated(),
-                    System.currentTimeMillis());
+                    System.currentTimeMillis());  */
         }
         if (message instanceof Token) {
             Object o = ((Token) message).getData();
@@ -70,12 +72,23 @@ public class CSVWriter extends UntypedActor {
                 if (!headerWritten) {
                     //write header first
                     //use headers list to keep track of the order
-                    for (String label  : ((SpecimenRecord)o).keySet()) {
 
-                        csvPrinter.print(label);
-                        headers.add(label);
+                    Set<String> headerLabels;
+                    if(!taxonOnlyMode){
+                        for (String label  : ((SpecimenRecord)o).keySet()) {
+                            csvPrinter.print(label);
+                            headers.add(label);
+                        }
+
+                    }else{
+                        Map<String, String> taxonHeaderLabels = constructTaxonOnlyLabels();
+                        for (String label  : taxonHeaderLabels.keySet()) {
+                            csvPrinter.print(taxonHeaderLabels.get(label));
+                            headers.add(label);
+                        }
                     }
                     csvPrinter.println();
+                    headerWritten = true;
                 }
 
                 //write the values
@@ -98,13 +111,13 @@ public class CSVWriter extends UntypedActor {
         } else {
             unhandled(message);
         }
-        Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
+        //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
         invoc++;
     }
 
     @Override
     public void postStop() {
-        System.out.println("Stopped Display");
+        System.out.println("Stopped CSVWriter");
         //System.out.println("Wrote " + cRecords + " records.");
         try { 
             csvPrinter.close();
@@ -116,6 +129,20 @@ public class CSVWriter extends UntypedActor {
 		}
         getContext().system().shutdown();
         super.postStop();
+    }
+
+    public Map<String, String> constructTaxonOnlyLabels(){
+
+        //key is the label in the record, value is the label in the csv file
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("dbpk", "dbpk");
+        result.put("scientificName", "scientificName");
+        result.put("scientificNameAuthorship", "authorship");
+        result.put("taxonID", "guid");
+        result.put(SpecimenRecord.SciName_Status_Label, "match");
+        result.put(SpecimenRecord.Original_SciName_Label, "sciNameWas");
+        result.put(SpecimenRecord.Original_Authorship_Label, "sciNameAuthorshipWas");
+        return result;
     }
 
 }

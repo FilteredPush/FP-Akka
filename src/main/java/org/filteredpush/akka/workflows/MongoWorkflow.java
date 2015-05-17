@@ -19,7 +19,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-public class MongoWorkflow {
+public class MongoWorkflow implements AkkaWorkflow {
 
     public static void main(String[] args) {
         MongoWorkflow fp = new MongoWorkflow();
@@ -189,7 +189,7 @@ public class MongoWorkflow {
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, dateValidator);
+                return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, "COL", true, dateValidator);
             }
         }), "scinValidator");
 

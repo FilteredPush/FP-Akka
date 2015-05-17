@@ -81,7 +81,7 @@ public class SciNameWorkflow extends UntypedActor {
     @Override
     public void postStop() {
         System.out.println("Stopped SciNameValidator");
-        workerRouter.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
+        listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
 
@@ -179,12 +179,10 @@ public class SciNameWorkflow extends UntypedActor {
             sp1Ports.put(me1, nrInputs);
             Spliter sp1=new Spliter(sp1Ports);
             */
+
+            //system.awaitTermination();
         }
 
-        @Override
-        public void postStop() {
-            System.out.println("Stopped SciNameValidator");
-            starter.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
-        }
+
     }
 }

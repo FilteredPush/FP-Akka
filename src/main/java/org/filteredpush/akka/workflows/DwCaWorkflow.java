@@ -38,7 +38,7 @@ import java.io.File;
  * 
  * @author mole
  */
-public class DwCaWorkflow {
+public class DwCaWorkflow implements AkkaWorkflow{
 
     public static void main(String[] args) {
         DwCaWorkflow fp = new DwCaWorkflow();
@@ -186,7 +186,7 @@ public class DwCaWorkflow {
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
                     return new SciNameWorkflow("-t",false,dateValidator);
             	} else { 
-                    return new NewScientificNameValidator(serviceClass,true,true,dateValidator);
+                    return new NewScientificNameValidator(serviceClass,true,true,service, true, dateValidator);
             	}
             }
         }), "scinValidator");
