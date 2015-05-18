@@ -5,12 +5,9 @@ import org.filteredpush.akka.data.Token;
 import akka.actor.ActorRef;
 
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
-//import org.filteredpush.kuration.services.GBIFService;
+//import org.filteredpush.kuration.services.sciname.GBIFService;
 import org.filteredpush.kuration.util.CurationComment;
-import org.filteredpush.kuration.util.CurationCommentType;
 import org.filteredpush.kuration.util.SpecimenRecord;
-
-import scala.languageFeature;
 
 /**
  * Created by tianhong on 2/9/15.
@@ -43,12 +40,12 @@ public class NomenclaturalService extends Component {
                 if(kingdom.toLowerCase().equals("plantae")){
                 	// Note: IPNI only covers vascular plants, but no good service for non-vascular plants
                 	// IPNI is only nomenclatural
-                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.IPNIService").newInstance();
+                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.sciname.IPNIService").newInstance();
                 }else if(kingdom.toLowerCase().equals("animalia")){
-                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.ZooBankNomenclaturalAct").newInstance();
+                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.sciname.ZooBankNomenclaturalAct").newInstance();
                 }else if(kingdom.toLowerCase().equals("fungi")){
                 	// IF can be nomenclatural or taxonomic
-                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.test.IndexFungorumService").newInstance();
+                    scientificNameService = (INewScientificNameValidationService)Class.forName("org.filteredpush.kuration.services.sciname.IndexFungorumService").newInstance();
                 }else{
                     //todo need to handle other cases and default service
                 }
@@ -65,7 +62,6 @@ public class NomenclaturalService extends Component {
             scientificNameService.validateScientificName(sciName, author);
 
             if(scientificNameService.getCorrectedScientificName() == null){
-                //scientificNameService = (INewScientificNameValidationService) new GBIFService();
                 scientificNameService.validateScientificName(sciName,author);
             }
             curationComment = CurationComment.construct(scientificNameService.getCurationStatus(), scientificNameService.getComment(), scientificNameService.getServiceName());

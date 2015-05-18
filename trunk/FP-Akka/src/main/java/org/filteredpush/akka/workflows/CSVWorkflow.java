@@ -1,7 +1,20 @@
-/**
- * Copyright (C) 2009-2012 Typesafe Inc. <http://www.typesafe.com>
+/** 
+ * AkkaWorkflow.java 
+ * 
+ * Copyright 2013 President and Fellows of Harvard College
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.filteredpush.akka.workflows;
 
 
@@ -19,6 +32,16 @@ import org.kohsuke.args4j.Option;
 
 import java.io.File;
 
+/**
+ * Read DarwinCore data from a csv file, and execute one of two workflows on it
+ * one workflow checks scientific name, georeference, and date collected, and then 
+ * writes out as json.  Other workflow checks scientific name and writes out as csv.
+ * 
+ * @author bluecobalt
+ * @author swanskysong
+ * @author chicoreus
+ *
+ */
 public class CSVWorkflow implements AkkaWorkflow{
 
     public static void main(String[] args) {

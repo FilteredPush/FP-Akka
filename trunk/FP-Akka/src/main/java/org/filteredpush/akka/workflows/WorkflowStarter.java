@@ -1,25 +1,36 @@
-/**
- * Copyright (C) 2009-2012 Typesafe Inc. <http://www.typesafe.com>
+/** 
+ * WorkflowStarter.java 
+ * 
+ * Copyright 2015 President and Fellows of Harvard College
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package org.filteredpush.akka.workflows;
 
 
-import akka.actor.*;
-import org.filteredpush.akka.actors.GEORefValidator;
-import org.filteredpush.akka.actors.InternalDateValidator;
-import org.filteredpush.akka.actors.NewScientificNameValidator;
-import org.filteredpush.akka.actors.io.CSVReader;
-import org.filteredpush.akka.actors.io.MongoSummaryWriter;
-import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.File;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Pick a FP-Akka workflow to execute, pass on command line parameters to it,
+ * set it up, and if successfull, execute it. 
+ * 
+ * @author Tianhong Song
+ *
+ */
 public class WorkflowStarter{
 
     public static void main(String[] args) {
@@ -35,7 +46,7 @@ public class WorkflowStarter{
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
 
-        //split the args array in order to accomerdate with -w to select workflow
+        //split the args array in order to accommodate -w switch to select workflow
         List<String> remaining = new ArrayList<String>();
         int count = 0;
         while(count < args.length){
