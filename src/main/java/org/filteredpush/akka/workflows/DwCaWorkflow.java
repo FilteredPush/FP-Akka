@@ -42,7 +42,6 @@ import java.io.File;
  * @in inputFile @uri {inputFilename}
  * @out outputFile @uri {outputFilename} 
  */
-
 /**
  * Workflow to take a tab delimited occurrence.txt file and run it through FP 
  * data QC actors for scientific name, collecting event date, and georeference validation, 
@@ -81,7 +80,8 @@ public class DwCaWorkflow implements AkkaWorkflow{
     @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
     private String service = "GBIF";
     
-    private String serviceClass = "org.filteredpush.kuration.services.IPNIService";
+    @Option(name="-t",usage="Run scientific name validator in taxonomic mode (look up name in current use).")
+    private boolean taxonomicMode = false;
     
     /**
      * Setup conditions to run the workflow.
@@ -104,6 +104,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
                 throw new CmdLineException(parser,"Output File Exists " + outputFilename );
             }
             
+            /**
             switch(service.toUpperCase()) { 
             case "IF": 
             case "INDEXFUNGORUM": 
@@ -125,6 +126,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
             	}
             	serviceClass="org.filteredpush.kuration.services.sciname.GBIFService";
             }
+            **/
             
             setupOK = true;
         } catch( CmdLineException e ) {
@@ -198,7 +200,9 @@ public class DwCaWorkflow implements AkkaWorkflow{
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
                     return new SciNameWorkflow("-t",false,dateValidator);
             	} else { 
-                    return new NewScientificNameValidator(serviceClass,true,true,service, true, dateValidator);
+            		boolean useCache = true;
+            		boolean insertGuid = true;
+                    return new NewScientificNameValidator(useCache,insertGuid,service, taxonomicMode, dateValidator);
             	}
             }
         }), "scinValidator");
