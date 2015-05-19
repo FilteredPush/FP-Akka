@@ -204,7 +204,9 @@ public class MongoWorkflow implements AkkaWorkflow {
 
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, "COL", true, dateValidator);
+            	// TODO: For NEVP we'll want to use IPNI by default instead of COL (which we'll want to use for SCAN)
+            	// while for InvertEBase we'll probably want to use WoRMS as the default.
+                return new NewScientificNameValidator(true,true, "COL", true, dateValidator);
             }
         }), "scinValidator");
 

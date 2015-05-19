@@ -69,8 +69,8 @@ public class CSVWorkflow implements AkkaWorkflow{
     @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
     private String service = "GBIF";
 
-    @Option(name="-t",usage="SciNameValidator Taxonomic Mode")
-    private boolean Taxonomic = false;
+    @Option(name="-t",usage="SciNameValidator taxonomicMode Mode (look up name in current use).")
+    private boolean taxonomicMode = false;
 
     final Double certainty = 200.0;
 
@@ -207,7 +207,7 @@ public class CSVWorkflow implements AkkaWorkflow{
 
             scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
                 public UntypedActor create() {
-                    return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, service, Taxonomic, dateValidator);
+                    return new NewScientificNameValidator(true,true, service, taxonomicMode, dateValidator);
                 }
             }), "scinValidator");
 
@@ -220,7 +220,7 @@ public class CSVWorkflow implements AkkaWorkflow{
 
             scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
                 public UntypedActor create() {
-                    return new NewScientificNameValidator("org.filteredpush.kuration.services.sciname.COLService",true,true, service, false, writer);
+                    return new NewScientificNameValidator(true,true, service, false, writer);
                 }
             }), "scinValidator");
         }

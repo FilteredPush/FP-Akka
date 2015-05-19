@@ -7,6 +7,7 @@ import edu.harvard.mcz.nametools.AuthorNameComparator;
 import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
+
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
 import org.filteredpush.kuration.services.sciname.*;
 import org.filteredpush.kuration.util.*;
@@ -21,7 +22,6 @@ public class NewScientificNameValidator extends UntypedActor {
 
     private final ActorRef listener;
     private final ActorRef workerRouter;
-    private final String service;
     private final boolean useCache;
     private final boolean insertLSID;
 
@@ -30,33 +30,33 @@ public class NewScientificNameValidator extends UntypedActor {
      * Set up an akka workflow actor that wraps general scientific name validation classes, 
      * defaults to 6 parallel instances
      * 
-     * @param service fully qualified name of the concrete scientific name validator class to invoke.
      * @param useCache tell the validator to use a cache file
      * @param insertGUID add any GUID returned by the validator to the output
+     * @param authorityName switch to select the scientific name validator class to invoke.
      * @param listener downstream actor that will consume output from this actor 
      */
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final String authorityName, final boolean taxonomicMode,  final ActorRef listener ) {
-    	this(service, useCache, insertGUID, 6, authorityName, taxonomicMode, listener);
+    public NewScientificNameValidator(final boolean useCache, final boolean insertGUID, final String authorityName, final boolean taxonomicMode,  final ActorRef listener ) {
+    	this(useCache, insertGUID, 6, authorityName, taxonomicMode, listener);
     }
 
     /**
      * Set up an akka workflow actor that wraps general scientific name validation classes.,
      * 
-     * @param service fully qualified name of the concrete scientific name validator class to invoke.
      * @param useCache tell the validator to use a cache file
      * @param insertGUID add any GUID returned by the validator to the output
      * @param instances number of parallel instances 
+     * @param authorityName switch to select the scientific name validator class to invoke.
+     * @param taxonomicMode 
      * @param listener downstream actor that will consume output from this actor 
      */
-    public NewScientificNameValidator(final String service, final boolean useCache, final boolean insertGUID, final int instances, final String authorityName, final boolean taxonomicMode, final ActorRef listener ) {
+    public NewScientificNameValidator(final boolean useCache, final boolean insertGUID, final int instances, final String authorityName, final boolean taxonomicMode, final ActorRef listener ) {
         this.listener = listener;
-        this.service = service;
         this.useCache = useCache;
         this.insertLSID = insertGUID;
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
             @Override
             public Actor create() throws Exception {
-                return new ScientificNameValidatorInvocation(service, useCache, insertGUID, authorityName, taxonomicMode, listener);
+                return new ScientificNameValidatorInvocation(useCache, insertGUID, authorityName, taxonomicMode, listener);
             }
         }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
         getContext().watch(workerRouter);
@@ -115,7 +115,6 @@ public class NewScientificNameValidator extends UntypedActor {
     public class ScientificNameValidatorInvocation extends UntypedActor {
 
         private String serviceClassPath = null;
-        private String serviceClassQN;
         private boolean insertGUID;
         private boolean hasDataCache;
 
@@ -129,8 +128,7 @@ public class NewScientificNameValidator extends UntypedActor {
         private int invoc;
         private final ActorRef listener;
 
-        public ScientificNameValidatorInvocation(String service, boolean useCache, boolean insertGUID, String authorityName, boolean taxonomicMode, ActorRef listener) {
-            this.serviceClassQN = service;
+        public ScientificNameValidatorInvocation(boolean useCache, boolean insertGUID, String authorityName, boolean taxonomicMode, ActorRef listener) {
             this.hasDataCache = useCache;
             this.insertGUID = insertGUID;
             this.listener = listener;
@@ -163,13 +161,28 @@ public class NewScientificNameValidator extends UntypedActor {
 
                  //scientificNameService = (INewScientificNameValidationService)Class.forName(serviceClassQN).newInstance();
                 //use the authority argument to select which service to use
-                if(authorityName.equals("GBIF")) scientificNameService = new GBIFService();
-                else if(authorityName.equals("IPNI")) scientificNameService = new IPNIService();
-                else if(authorityName.equals("IndexFungorum")) scientificNameService = new IndexFungorumService();
-                else if(authorityName.equals("COL")) scientificNameService = new COLService();
-                else if(authorityName.equals("WoRMS")) scientificNameService = new WoRMSService();
-                else System.out.println("Unknown authority name: " + authorityName);
-
+                switch(authorityName.toUpperCase()) { 
+                case "IF": 
+                case "INDEXFUNGORUM": 
+                	scientificNameService = new IndexFungorumService();
+                	break;
+                case "WORMS": 
+                	scientificNameService = new WoRMSService();
+                	break;
+                case "COL": 
+                	scientificNameService = new COLService();
+                	break;
+                case "IPNI": 
+                	scientificNameService = new IPNIService();
+                	break;
+                case "GBIF": 
+                default: 
+                	if (!authorityName.toUpperCase().equals("GBIF")) { 
+                	    System.err.println("Unrecognized service (" + authorityName + ") or service not specified, using GBIF.");
+                	}
+                	scientificNameService = new GBIFService();
+                }                
+                
                 //set validation mode
                 if(!taxonomicMode) scientificNameService.setValidationMode(INewScientificNameValidationService.MODE_NOMENCLATURAL);
                 else scientificNameService.setValidationMode(INewScientificNameValidationService.MODE_TAXONOMIC);
