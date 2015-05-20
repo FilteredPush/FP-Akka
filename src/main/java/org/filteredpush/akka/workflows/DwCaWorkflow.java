@@ -226,6 +226,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);
         System.err.printf("%d",stoptime-starttime);
+        System.err.println();
     }
 
     static class Curate {

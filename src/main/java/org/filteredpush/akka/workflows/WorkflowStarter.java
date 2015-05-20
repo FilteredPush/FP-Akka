@@ -83,9 +83,9 @@ public class WorkflowStarter{
         System.out.println("Selected Workflow: " + workflowName);
 
         AkkaWorkflow fp = null;
-        if(workflowName.equals("CSV")) fp = new CSVWorkflow();
-        else if(workflowName.equals("Mongo")) fp = new MongoWorkflow();
-        else if(workflowName.equals("DwCa")) fp = new DwCaWorkflow();
+        if(workflowName.toUpperCase().equals("CSV")) fp = new CSVWorkflow();
+        else if(workflowName.toUpperCase().equals("MONGO")) fp = new MongoWorkflow();
+        else if(workflowName.toUpperCase().equals("DWCA")) fp = new DwCaWorkflow();
         else System.out.println("Unknown workflow name: " + workflowName);
 
 
