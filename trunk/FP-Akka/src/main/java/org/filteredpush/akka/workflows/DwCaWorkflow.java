@@ -23,6 +23,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
 
+import org.filteredpush.akka.actors.BasisOfRecordValidator;
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.InternalDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
@@ -177,7 +178,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
         /* @end GEORefValidator */
         
         /* @begin InternalDateValidator
-         * @in nameValidatedRecords
+         * @in borValidatedRecords
          * @out dateValidatedRecords
          */
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
@@ -186,6 +187,17 @@ public class DwCaWorkflow implements AkkaWorkflow{
             }
         }), "dateValidator");
         /* @end InternalDateValidator */
+        
+        /* @begin BasisOfRecordValidator
+         * @in nameValidatedRecords
+         * @out borValidatedRecords
+         */
+        final ActorRef basisOfRecordValidator = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new BasisOfRecordValidator("org.filteredpush.kuration.services.BasisOfRecordValidationService", dateValidator);
+            }
+        }), "basisOfRecordValidator");
+        /* @end BasisOfRecordValidator */        
         
         /* @begin ScientificNameValidator
          * @param service @as nameService
@@ -198,11 +210,11 @@ public class DwCaWorkflow implements AkkaWorkflow{
             	// to allow choice between CSV or MongoDB input from command line parameters 
             	// letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
-                    return new SciNameWorkflow("-t",false,dateValidator);
+                    return new SciNameWorkflow("-t",false,basisOfRecordValidator);
             	} else { 
             		boolean useCache = true;
             		boolean insertGuid = true;
-                    return new NewScientificNameValidator(useCache,insertGuid,service, taxonomicMode, dateValidator);
+                    return new NewScientificNameValidator(useCache,insertGuid,service, taxonomicMode, basisOfRecordValidator);
             	}
             }
         }), "scinValidator");
