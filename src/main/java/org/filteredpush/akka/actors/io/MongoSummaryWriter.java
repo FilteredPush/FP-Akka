@@ -119,6 +119,8 @@ public class MongoSummaryWriter extends UntypedActor {
             Set<Map<String, String>> actorSet = new HashSet<Map<String, String>>();
 
             //System.out.println("inputSpecimenRecord = " + record.toString());
+            
+            // TODO: Add BasisOfRecord
 
             //detect what actor has modified the record, check condition is temp now
             if (record.get("geoRefStatus") != null) {
