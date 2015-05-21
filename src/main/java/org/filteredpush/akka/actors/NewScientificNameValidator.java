@@ -50,6 +50,9 @@ public class NewScientificNameValidator extends UntypedActor {
      * @param listener downstream actor that will consume output from this actor 
      */
     public NewScientificNameValidator(final boolean useCache, final boolean insertGUID, final int instances, final String authorityName, final boolean taxonomicMode, final ActorRef listener ) {
+        System.out.println("NewScientificNameValidator authority: "+ authorityName);
+        System.out.println("NewScientificNameValidator taxonomicMode: "+ taxonomicMode);
+        System.out.println("NewScientificNameValidator insertGUID: "+ insertGUID);
         this.listener = listener;
         this.useCache = useCache;
         this.insertLSID = insertGUID;
