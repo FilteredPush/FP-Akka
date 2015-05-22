@@ -198,13 +198,13 @@ public class BasisOfRecordValidator extends UntypedActor {
 
         private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
             if (comment != null) {
-                result.put(SpecimenRecord.date_Comment_Label, comment.getDetails());
-                result.put(SpecimenRecord.date_Status_Label, comment.getStatus());
-                result.put(SpecimenRecord.date_Source_Label, comment.getSource());
+                result.put(SpecimenRecord.borRef_Comment_Label, comment.getDetails());
+                result.put(SpecimenRecord.borRef_Status_Label, comment.getStatus());
+                result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
             } else {
-                result.put(SpecimenRecord.date_Comment_Label, "None");
-                result.put(SpecimenRecord.date_Status_Label, CurationComment.CORRECT.toString());
-                result.put(SpecimenRecord.date_Source_Label, comment.getSource());
+                result.put(SpecimenRecord.borRef_Comment_Label, "None");
+                result.put(SpecimenRecord.borRef_Status_Label, CurationComment.CORRECT.toString());
+                result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
             }
             //System.err.println("dateend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
             listener.tell(new TokenWithProv<SpecimenRecord>(result, getClass().getSimpleName(), invoc), getContext().parent());

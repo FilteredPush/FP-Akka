@@ -155,6 +155,14 @@ public class MongoSummaryWriter extends UntypedActor {
                 actorStatusMap.put("source", record.get("dateSource"));
                 actorSet.add(actorStatusMap);
             }
+            if (record.get("borStatus") != null) {
+                Map<String, String> actorStatusMap = new HashMap<String, String>();
+                actorStatusMap.put("actor", "BasisOfRecordValidator");
+                actorStatusMap.put("status", record.get("borStatus"));
+                actorStatusMap.put("comment", record.get("borComment"));
+                actorStatusMap.put("source", record.get("borSource"));
+                actorSet.add(actorStatusMap);
+            }            
 
             //remove a set of added fields in the record which have been read before
             HashSet<String> removeLables = new HashSet<String>();
@@ -162,6 +170,7 @@ public class MongoSummaryWriter extends UntypedActor {
             removeLables.add(SpecimenRecord.SciName_Status_Label);removeLables.add(SpecimenRecord.SciName_Comment_Label);removeLables.add(SpecimenRecord.SciName_Source_Label);
             removeLables.add("flwtStatus");removeLables.add("flwtComment");removeLables.add("flwtSource");
             removeLables.add("dateStatus");removeLables.add("dateComment");removeLables.add("dateSource");
+            removeLables.add("borStatus");removeLables.add("borComment");removeLables.add("borSource");
             for (String label:removeLables){
                 if (record.keySet().contains(label)) record.remove(label);
             }
@@ -194,7 +203,7 @@ public class MongoSummaryWriter extends UntypedActor {
                 HashSet<String> highlightLabels = highlightedLabelsMap.get(eachActorStatusMap.get("actor"));
 
 
-                //todo: may have problem if original record arrives late
+                //TODO: may have problem if original record arrives late
                 detailSet.add(constructDetail(record, eachActorStatusMap, marker, highlightLabels));
                 //highlights.put(record.get("actor"),highlight);
             }
@@ -292,6 +301,7 @@ public class MongoSummaryWriter extends UntypedActor {
         if(record.containsKey(SpecimenRecord.Original_EventDate_Label)) originMap.put(SpecimenRecord.dwc_eventDate, record.get(SpecimenRecord.Original_EventDate_Label));
         if(record.containsKey(SpecimenRecord.Original_Latitude_Label)) originMap.put(SpecimenRecord.dwc_decimalLatitude, record.get(SpecimenRecord.Original_Latitude_Label));
         if(record.containsKey(SpecimenRecord.Original_Longitude_Label)) originMap.put(SpecimenRecord.dwc_decimalLongitude, record.get(SpecimenRecord.Original_Longitude_Label));
+        if(record.containsKey(SpecimenRecord.Original_BasisOfRecord_Label)) originMap.put(SpecimenRecord.dwc_basisOfRecord, record.get(SpecimenRecord.Original_BasisOfRecord_Label));
 
         detailRecord.put("Source", actorDetail.get("source"));
         detailRecord.put("Actor Result", marker);
@@ -400,12 +410,14 @@ public class MongoSummaryWriter extends UntypedActor {
         String scientificNameLabel;
         String scientificNameAuthorLabel;
         String eventDateLabel;
+        String basisOfRecordLabel;
 
         SpecimenRecordTypeConf specimenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
 
         scientificNameLabel = specimenRecordTypeConf.getLabel("ScientificName");
         if(scientificNameLabel == null) scientificNameLabel = "scientificName";
 
+        // TODO: The repeated scientificNameLabel = ... statements below feel like a copy/paste error.
         scientificNameAuthorLabel = specimenRecordTypeConf.getLabel("ScientificNameAuthorship");
         if(scientificNameAuthorLabel == null) scientificNameLabel = "scientificNameAuthorship";
 
@@ -420,6 +432,9 @@ public class MongoSummaryWriter extends UntypedActor {
 
         eventDateLabel = specimenRecordTypeConf.getLabel("EventDate");
         if(eventDateLabel == null) scientificNameLabel = "eventDate";
+
+        basisOfRecordLabel = specimenRecordTypeConf.getLabel("BasisOfRecord");
+        if(basisOfRecordLabel == null) scientificNameLabel = "basisOfRecord";
 
 
         HashSet<String> fset = new HashSet<String>();
@@ -439,6 +454,11 @@ public class MongoSummaryWriter extends UntypedActor {
         HashSet<String> dset = new HashSet<String>();
         dset.add(eventDateLabel);
         highlightedLabelsMap.put("DateValidator", dset);
+        
+        HashSet<String> borset = new HashSet<String>();
+        borset.add(basisOfRecordLabel);
+        highlightedLabelsMap.put("BasisOfRecordValidator", borset);        
+        
     }
 
     private int validCount = 0;
