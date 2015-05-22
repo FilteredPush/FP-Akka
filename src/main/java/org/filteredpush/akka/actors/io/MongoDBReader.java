@@ -73,6 +73,11 @@ public class MongoDBReader extends UntypedActor {
         if (mongodbDB != null) this._mongodbDB = mongodbDB;
         if (mongodbCollection != null) this._mongodbCollection = mongodbCollection;
         if (mongodbQuery != null) this._mongodbQuery = mongodbQuery;
+        System.out.println("MongoDB Reader");
+        System.out.println("Host: " + mongodbHost);
+        System.out.println("DB: " + mongodbDB);
+        System.out.println("Collection: " + mongodbCollection);
+        System.out.println("Query: " + mongodbQuery);
         invoc = 0;
     }
 

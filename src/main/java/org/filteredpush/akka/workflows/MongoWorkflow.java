@@ -72,7 +72,7 @@ public class MongoWorkflow implements AkkaWorkflow {
     @Option(name="-co",usage="Output Collection in mongo into which to write results.")
     private String outputCollection = "test";
 
-    @Option(name="-q",usage="Query on Mongo collection to select records to process, e.g. {\"institutionCode\" : \"NMSU\"} ")
+    @Option(name="-q",usage="Query on Mongo collection to select records to process, e.g. {institutionCode:\\\"NMSU\\\"} ")
     private String query = "{month:\"12\"}";
     //private String query = "{\"institutionCode\" : \"NAU\", \"year\" : \"1966\"}";
     //private String query = "{\"institutionCode\" : \"NMSU\"}";
