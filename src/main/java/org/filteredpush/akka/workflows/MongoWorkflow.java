@@ -24,22 +24,39 @@ package org.filteredpush.akka.workflows;
 
 import akka.actor.*;
 
+import org.filteredpush.akka.actors.BasisOfRecordValidator;
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.InternalDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
-import org.filteredpush.akka.actors.io.CSVReader;
+import org.filteredpush.akka.actors.io.MongoDBReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.filteredpush.akka.data.Prov;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+/*
+* @begin MongoWorkflow
+* @param inputFilename
+* @param outputFilename
+* @param nameAuthority
+* @in inputFile @uri {mongoHost}{db}{inputCollection}
+* @out outputFile @uri {mongoHost}{db}{outputCollection} 
+*/
 public class MongoWorkflow implements AkkaWorkflow {
 
     public static void main(String[] args) {
         MongoWorkflow fp = new MongoWorkflow();
+        /* @begin ParseOptions
+         * @call setup
+         * @param inputFilename
+         * @param outputFilename
+         * @param nameAuthority
+         * @out serviceClass @as nameService
+         */
         if (fp.setup(args)) { 
-        fp.calculate();
+           /* @end ParseOptions */
+           fp.calculate();
         }
     }
 
@@ -64,6 +81,12 @@ public class MongoWorkflow implements AkkaWorkflow {
     //private String query = "{collectionCode: \"ASUHIC\" }";
     //private String query = "{catalogNumber: \"NAUF4A0038275\" }";
     //private String query = "";
+    
+    @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
+    private String service = "GBIF";
+    
+    @Option(name="-t",usage="Run scientific name validator in taxonomic mode (look up name in current use).")
+    private boolean taxonomicMode = false;
     
     /**
      * Setup conditions for the workflow to execute
@@ -182,47 +205,91 @@ public class MongoWorkflow implements AkkaWorkflow {
         }), "MongoDBWriter");
         */
 
-         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
+        /* @begin MongoSummaryWriter
+         * @param outputFilename
+         * @in geoRefValidatedRecords
+         * @out outputFile @uri {host}{db}{collectionOut}
+         */
+        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new MongoSummaryWriter("/home/tianhong/Downloads/data/test.json");
+                return new MongoSummaryWriter(host,db,collectionOut,null);
             }
         }), "MongoDBWriter");
+        /* @end MongoSummaryWriter */
 
-
+        /* @begin GEORefValidator
+         * @in dateValidatedRecords
+         * @out geoRefValidatedRecords
+         */
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty, writer);
             }
         }), "geoValidator");
-
-
+        /* @end GEORefValidator */
+        
+        /* @begin InternalDateValidator
+         * @in borValidatedRecords
+         * @out dateValidatedRecords
+         */
         final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
             }
         }), "dateValidator");
-
+        /* @end InternalDateValidator */
+        
+        /* @begin BasisOfRecordValidator
+         * @in nameValidatedRecords
+         * @out borValidatedRecords
+         */
+        final ActorRef basisOfRecordValidator = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new BasisOfRecordValidator("org.filteredpush.kuration.services.BasisOfRecordValidationService", dateValidator);
+            }
+        }), "basisOfRecordValidator");
+        /* @end BasisOfRecordValidator */        
+        
+        /* @begin ScientificNameValidator
+         * @param service @as nameService
+         * @in inputSpecimenRecords
+         * @out nameValidatedRecords
+         */
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-            	// TODO: For NEVP we'll want to use IPNI by default instead of COL (which we'll want to use for SCAN)
-            	// while for InvertEBase we'll probably want to use WoRMS as the default.
-                return new NewScientificNameValidator(true,true, "COL", true, dateValidator);
+            	// TODO: Need to see if this sort of picking inside create() will work 
+            	// to allow choice between CSV or MongoDB input from command line parameters 
+            	// letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
+            	if (service.toUpperCase().equals("GLOBALNAMES")) { 
+                    return new SciNameWorkflow("-t",false,basisOfRecordValidator);
+            	} else { 
+            		boolean useCache = true;
+            		boolean insertGuid = true;
+                    return new NewScientificNameValidator(useCache,insertGuid,service, taxonomicMode, basisOfRecordValidator);
+            	}
             }
         }), "scinValidator");
+        /* @end ScientificNameValidator */
 
-        /*
+        /* @begin MongoDbReader 
+         * @param inputFilename
+         * @in inputFile @uri {host}{db}{collectionIn}{query}
+         * @out inputSpecimenRecords
+         */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new MongoDBReader(host,db,collectionIn,query,scinValidator);
             }
         }), "reader");
-        */
+        /* @end CSVReader */
 
+        /*
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new CSVReader("/home/tianhong/Downloads/data/tt2.txt",scinValidator);
             }
         }), "reader");
+        */
 
 
         // start the calculation
@@ -238,4 +305,4 @@ public class MongoWorkflow implements AkkaWorkflow {
     static class Curate {
     }
 }
-
+/* @end MongoWorkflow */

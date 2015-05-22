@@ -33,7 +33,15 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 /* 
  * @begin DwCaWorkflow
@@ -105,6 +113,40 @@ public class DwCaWorkflow implements AkkaWorkflow{
                 throw new CmdLineException(parser,"Output File Exists " + outputFilename );
             }
             
+            // TODO: Test to see if input filename is a .zip file, if so, 
+            // look for an occurrence.txt file within it and process that file.
+            // First cut, extract and shift to that file:
+			try {
+				ZipFile zipfile = new ZipFile(inputFilename);
+                Enumeration e = zipfile.entries();
+                boolean found = false;
+                while(e.hasMoreElements() && !found) { 
+                	ZipEntry entry = (ZipEntry) e.nextElement();
+                    if (entry.getName().equals("occurrence.txt")) {
+                        BufferedInputStream zipInputStream = new BufferedInputStream(zipfile.getInputStream(entry));
+                        int count;
+                        byte data[] = new byte[2048];
+                        FileOutputStream fileOutputStream = new FileOutputStream(entry.getName());
+                        BufferedOutputStream destination = new BufferedOutputStream(fileOutputStream, 2048);
+                        while ((count = zipInputStream.read(data, 0, 2048)) != -1) {
+                             destination.write(data, 0, count);
+                        }
+                        destination.flush();
+                        destination.close();
+                        zipInputStream.close();
+                        found = true;
+                        inputFilename = "occurrence.txt";
+                        inputFile = new File(inputFilename);
+                        if (!inputFile.canRead()) { 
+                             throw new CmdLineException(parser,"Can't read Input File (extracted from zip file) " + inputFilename );
+                        }
+                    }
+                }
+			} catch (ZipException e1) {
+				// not a zip file.
+			}
+            
+            
             /**
             switch(service.toUpperCase()) { 
             case "IF": 
@@ -130,6 +172,9 @@ public class DwCaWorkflow implements AkkaWorkflow{
             **/
             
             setupOK = true;
+        } catch (IOException e) { 
+            System.err.println(e.getMessage());
+            parser.printUsage(System.err);
         } catch( CmdLineException e ) {
             System.err.println(e.getMessage());
             parser.printUsage(System.err);
