@@ -159,17 +159,31 @@ public class CSVReader extends UntypedActor {
             }
         }
 
-        CSVFormat csvFormat = CSVFormat.newFormat(fieldDelimiter)
+        CSVFormat tabFormat = CSVFormat.newFormat(fieldDelimiter)
                 .withIgnoreSurroundingSpaces(trimWhitespace)
                 .withHeader(headers);
                 //.withQuote(quote)
+        
+        CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader(headers);
 
 
         Object debug = new Object();
 
         try{
 
-            CSVParser csvParser = new CSVParser(inputReader, csvFormat);
+            CSVParser csvParser = new CSVParser(inputReader, tabFormat);
+            
+            if (csvParser.getHeaderMap().size()==1)  {
+            	System.out.println("Read header line of input file as tab separated, found only one field, trying again as comma separated.");
+            	try {
+                    inputReader = new FileReader(_filePath);
+                } catch (FileNotFoundException e) {
+                    System.out.println("file not found");
+                    throw new FileNotFoundException("Input CSV file not found: " + _filePath);
+
+                }
+            	csvParser = new CSVParser(inputReader, csvFormat);
+            }
 
             Map<String,Integer> csvHeader = csvParser.getHeaderMap();
             headers = new String[csvHeader.size()];
@@ -192,6 +206,10 @@ public class CSVReader extends UntypedActor {
 
                 for (String header : headers) {
                     String value = csvRecord.get(header);
+                    // TODO: Need to handle header elements in the form vocabulary:term
+                    if (header.contains(":")) { 
+                    	header  = header.substring(header.indexOf(":") + 1);
+                    }
                     record.put(header, value);
                 }
                // broadcast(record);
