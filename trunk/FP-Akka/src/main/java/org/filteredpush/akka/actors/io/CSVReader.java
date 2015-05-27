@@ -77,8 +77,10 @@ public class CSVReader extends UntypedActor {
     
     /**
      * Maximum number of records to process at one time. 
+     * TODO: Fix code so that this comment is correct, currently this is absolute limit
+     * to number of processed records, not a chunk size.
      */
-    private int chunkSize = 1000;
+    private int chunkSize = 100000;
 
 
     int invoc;
@@ -192,7 +194,8 @@ public class CSVReader extends UntypedActor {
                 headers[i++] = header;
             }
 
-            for (Iterator<CSVRecord> iterator = csvParser.iterator();iterator.hasNext();) {
+            Iterator<CSVRecord> iterator = csvParser.iterator();
+            while (iterator.hasNext()) {
 
                 CSVRecord csvRecord = iterator.next();
                 debug = csvRecord;
@@ -254,7 +257,7 @@ java.lang.ArrayIndexOutOfBoundsException: 12
 
     @Override
     public void postStop() {
-        System.out.println("Read " + cValidRecords + " records (in sets of " + Integer.toString(chunkSize)+ " )");
+        System.out.println("Read " + cValidRecords + " records (out of limit of " + Integer.toString(chunkSize)+ ")");
         System.out.println("Stopped Reader, processing these records.");
         //System.out.println(System.currentTimeMillis() - start);
         super.postStop();
