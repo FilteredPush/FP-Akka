@@ -76,11 +76,9 @@ public class CSVReader extends UntypedActor {
     public String[] headers = new String[]{};
     
     /**
-     * Maximum number of records to process at one time. 
-     * TODO: Fix code so that this comment is correct, currently this is absolute limit
-     * to number of processed records, not a chunk size.
+     * Report reading records in this increment. 
      */
-    private int chunkSize = 100000;
+    private int chunkSize = 1000;
 
 
     int invoc;
@@ -222,7 +220,9 @@ public class CSVReader extends UntypedActor {
                 ++cValidRecords;
                 listener.tell(t,getSelf());
 
-                if(cValidRecords % chunkSize == 0) break;
+                if(cValidRecords % chunkSize == 0) { 
+                     System.out.println("Read " + chunkSize + " records.");
+                }
             }
         }catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -257,7 +257,7 @@ java.lang.ArrayIndexOutOfBoundsException: 12
 
     @Override
     public void postStop() {
-        System.out.println("Read " + cValidRecords + " records (out of limit of " + Integer.toString(chunkSize)+ ")");
+        System.out.println("Read a total of " + cValidRecords + " records.");
         System.out.println("Stopped Reader, processing these records.");
         //System.out.println(System.currentTimeMillis() - start);
         super.postStop();
