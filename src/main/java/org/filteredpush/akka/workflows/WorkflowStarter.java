@@ -18,11 +18,17 @@
 package org.filteredpush.akka.workflows;
 
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Pick a FP-Akka workflow to execute, pass on command line parameters to it,
@@ -32,6 +38,12 @@ import java.util.List;
  *
  */
 public class WorkflowStarter{
+    private final String WORKFLOW_PROPERTY = "analysis.workflow";
+    private final String INPUT_PROPERTY = "analysis.input";
+    private final String OUTPUT_PROPERTY = "analysis.output";
+    private final String AUTHORITY_PROPERTY = "analysis.authority";
+    private final String TAXONOMIC_MODE_PROPERTY = "analysis.taxonomicMode";
+    private final String SCI_NAME_VALIDATOR_ONLY_PROPERTY = "analysis.sciNameValidatorOnly";
 
     public static void main(String[] args) {
         WorkflowStarter ws = new WorkflowStarter();
@@ -46,26 +58,29 @@ public class WorkflowStarter{
         CmdLineParser parser = new CmdLineParser(this);
         parser.setUsageWidth(4096);
 
-        //split the args array in order to accommodate -w switch to select workflow
-        List<String> remaining = new ArrayList<String>();
-        int count = 0;
-        while(count < args.length){
-            if(args[count].equals("-w")){
-                if((count + 1 < args.length && !args[count+1].contains("-"))){
-                    workflowName = args[count+1];
-                    count++;
+        if (args.length > 0) {
+            //split the args array in order to accommodate -w switch to select workflow
+            List<String> remaining = new ArrayList<String>();
+            int count = 0;
+            while (count < args.length) {
+                if (args[count].equals("-w")) {
+                    if ((count + 1 < args.length && !args[count + 1].contains("-"))) {
+                        workflowName = args[count + 1];
+                        count++;
+                    } else System.out.println("-w option is not valid");
+                } else {
+                    remaining.add(args[count]);
                 }
-                else System.out.println("-w option is not valid");
-            }else{
-                remaining.add(args[count]);
+                count++;
             }
-            count++;
-        }
-        args = new String[remaining.size()];
-        count = 0;
-        for(String item : remaining){
-            args[count] = item;
-            count++;
+            args = new String[remaining.size()];
+            count = 0;
+            for (String item : remaining) {
+                args[count] = item;
+                count++;
+            }
+        } else {
+            args = loadOptionsFromPropertiesFile();
         }
 
         /*
@@ -93,8 +108,63 @@ public class WorkflowStarter{
         if (fp.setup(args)) fp.calculate();
     }
 
+    private String[] loadOptionsFromPropertiesFile() {
+        Properties properties = new Properties();
+        InputStream in = WorkflowStarter.class.getResourceAsStream("/analysis.properties");
+        if (in == null) {
+            properties = createDefaultPropertiesFile();
+        }
 
+        workflowName = properties.getProperty(WORKFLOW_PROPERTY);
 
+        List<String> argsList = new ArrayList<String>();
+        if (properties.containsKey(INPUT_PROPERTY)) {
+            argsList.add("-i");
+            argsList.add(properties.getProperty(INPUT_PROPERTY));
+        }
+        if (properties.containsKey(OUTPUT_PROPERTY)) {
+            argsList.add("-o");
+            argsList.add(properties.getProperty(OUTPUT_PROPERTY));
+        }
+        if (properties.containsKey(AUTHORITY_PROPERTY)) {
+            argsList.add("-a");
+            argsList.add(properties.getProperty(AUTHORITY_PROPERTY));
+        }
+        if (properties.containsKey(TAXONOMIC_MODE_PROPERTY) &&
+                Boolean.parseBoolean(properties.getProperty(AUTHORITY_PROPERTY))) {
+            argsList.add("-t");
+        }
+        if (properties.containsKey(SCI_NAME_VALIDATOR_ONLY_PROPERTY) &&
+                Boolean.parseBoolean(properties.getProperty(SCI_NAME_VALIDATOR_ONLY_PROPERTY))) {
+            argsList.add("-s");
+        }
+
+        String[] args = new String[argsList.size()];
+        argsList.toArray(args);
+        return args;
+    }
+
+    private Properties createDefaultPropertiesFile() {
+
+        Properties properties = new Properties();
+        properties.setProperty(WORKFLOW_PROPERTY, "DwCa");
+        properties.setProperty(INPUT_PROPERTY, "occurrence.txt");
+        properties.setProperty(OUTPUT_PROPERTY, "occurrence_qc.json");
+        properties.setProperty(AUTHORITY_PROPERTY, "COL");
+        properties.setProperty(TAXONOMIC_MODE_PROPERTY, "false");
+        properties.setProperty(SCI_NAME_VALIDATOR_ONLY_PROPERTY, "false");
+
+        try {
+            FileOutputStream output = new FileOutputStream("analysis.properties");
+            properties.store(output, null);
+            return properties;
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        return properties;
+    }
 
 
 }
