@@ -113,6 +113,13 @@ public class WorkflowStarter{
         InputStream in = WorkflowStarter.class.getResourceAsStream("/analysis.properties");
         if (in == null) {
             properties = createDefaultPropertiesFile();
+        } else {
+            try {
+                properties.load(in);
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
         }
 
         workflowName = properties.getProperty(WORKFLOW_PROPERTY);
