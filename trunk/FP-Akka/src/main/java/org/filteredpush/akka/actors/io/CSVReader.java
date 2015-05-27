@@ -1,35 +1,9 @@
-/** A coactor that import collections represented in an XML file.
- *
- * Copyright (c) 2008 The Regents of the University of California.
- * All rights reserved.
- *
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
- *
- * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
- * FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
- * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
- * IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE
- * PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY
- * OF CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
- * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
- */
 package org.filteredpush.akka.actors.io;
 
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-
-import com.mongodb.DBCursor;
 
 import org.filteredpush.kuration.util.SpecimenRecord;
 import org.apache.commons.csv.CSVFormat;
@@ -48,23 +22,31 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
+ * Actor to read data from a CSV (tab delimited or comma delimited) input
+ * file, and then send to a downstream consuming actor as specimen records.
+ * Reads the first few records from the file, then expects the downstream
+ * actor to send ReadMore messages to pull data from the file. 
+ * 
+ * @see org.filteredpush.akka.data.ReadMore
+ * 
+ * 
+ * @author cobalt
+ * @author Tianhong Song
+ * @author mole
+ * 
  * Created with IntelliJ IDEA.
  * User: cobalt
  * Date: 26.04.2013
  * Time: 16:41
- * To change this template use File | Settings | File Templates.
+ * 
  */
-
 public class CSVReader extends UntypedActor {
 
     private final ActorRef listener;
 
     private String _filePath = "/home/tianhong/test/data/1000.csv";
     
-    private DBCursor cursor = null;
-    private int cRecords = 0;
     private int cValidRecords = 0;
-    private int totalRecords = 0;
     String[] labelList;
 
     public char fieldDelimiter = '\t';
@@ -174,7 +156,7 @@ public class CSVReader extends UntypedActor {
 
 				iterator = csvParser.iterator();
 				int initialLoad = 30;
-				while (iterator.hasNext() && cValidRecords <= initialLoad) {
+				while (iterator.hasNext() && cValidRecords < initialLoad) {
 					readRecord();
 				}
                 System.out.println("Read initial " + cValidRecords + " records.") ;
@@ -200,12 +182,6 @@ public class CSVReader extends UntypedActor {
 			}
 		}
 
-		//listener.tell(new Done(),getSelf());
-		//listener.tell(new Broadcast(new Done()),getSel;
-		//listener.tell(new Broadcast(Poiso
-		//System.out.println(" DB: " + mongodbDB);nPill.getInstance()),getSelf());
-		// TODO: If we hit the end at less than reportSize records assert that we are done reading the input.
-
 		if (!iterator.hasNext()) { 
 			listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
 			getContext().stop(getSelf());
@@ -214,14 +190,6 @@ public class CSVReader extends UntypedActor {
 		invoc++;
 	}
 
-        /* Fails here on lines that contain " to enclose strings that contain the comma delimiter. 
-         strLine = "106497",,,,,"Parmeliaceae","Melanohalea ","Melanohalea subolivacea","(Nylander) O. Blanco, A. Crespo, P. K. Divakar, Esslinger, D. Hawksworth & Lumbsch",,,
-[ERROR] [12/06/2013 10:55:36.856] [FpSystem-akka.actor.default-dispatcher-6] [akka://FpSystem/user/reader] 12
-java.lang.ArrayIndexOutOfBoundsException: 12
-	at akka.fp.CSVReader.readData(CSVReader.java:132)
-         */
-
-	
 	protected void readRecord() throws Exception { 
         CSVRecord csvRecord = iterator.next();
         debug = csvRecord;
@@ -256,7 +224,7 @@ java.lang.ArrayIndexOutOfBoundsException: 12
     @Override
     public void postStop() {
         System.out.println("Read a total of " + cValidRecords + " records.");
-        System.out.println("Stopped Reader, processing these records.");
+        System.out.println("Stopped Reader, processing remaining records.");
         //System.out.println(System.currentTimeMillis() - start);
         super.postStop();
     }

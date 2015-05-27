@@ -275,7 +275,7 @@ public class NewScientificNameValidator extends UntypedActor {
                             inputSpecimenRecord.put(SpecimenRecord.Original_SciName_Label, originalSciName);
                             inputSpecimenRecord.put(SpecimenRecord.dwc_scientificName, newSciName);
                         }
-                        if(originalAuthor != null && originalAuthor.length() != 0 && !originalAuthor.equals(newAuthor)){
+                        if(originalAuthor != null && !originalAuthor.equals(newAuthor)){
                             inputSpecimenRecord.put(SpecimenRecord.Original_Authorship_Label, originalAuthor);
                             inputSpecimenRecord.put(SpecimenRecord.dwc_scientificNameAuthorship, newAuthor);
                         }
@@ -348,6 +348,6 @@ public class NewScientificNameValidator extends UntypedActor {
 	 */
 	public void setUpstreamListener(ActorRef upstreamListener) {
 		this.upstreamListener = upstreamListener;
-		System.out.println(this.getClass().toString() + " will make pull requests to " + upstreamListener.getClass().toString());
+		System.out.println(this.getClass().getSimpleName() + " will make pull requests to " + upstreamListener.getClass().getSimpleName());
 	}
 }
