@@ -221,7 +221,7 @@ public class CSVReader extends UntypedActor {
                 listener.tell(t,getSelf());
 
                 if(cValidRecords % chunkSize == 0) { 
-                     System.out.println("Read " + chunkSize + " records.");
+                     System.out.println("Read " + chunkSize + " records, total " + cValidRecords);
                 }
             }
         }catch (FileNotFoundException e) {
