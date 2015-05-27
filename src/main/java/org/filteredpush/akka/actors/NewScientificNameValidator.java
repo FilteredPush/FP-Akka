@@ -15,17 +15,20 @@ import org.filteredpush.kuration.util.*;
 import java.io.IOException;
 import java.util.*;
 
+import org.filteredpush.akka.data.ReadMore;
+import org.filteredpush.akka.data.SetUpstreamListener;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
 
 public class NewScientificNameValidator extends UntypedActor {
 
+	private ActorRef upstreamListener;
     private final ActorRef listener;
     private final ActorRef workerRouter;
     private final boolean useCache;
     private final boolean insertLSID;
 
-
+    
     /**
      * Set up an akka workflow actor that wraps general scientific name validation classes, 
      * defaults to 6 parallel instances
@@ -53,6 +56,7 @@ public class NewScientificNameValidator extends UntypedActor {
         System.out.println("NewScientificNameValidator authority: "+ authorityName);
         System.out.println("NewScientificNameValidator taxonomicMode: "+ taxonomicMode);
         System.out.println("NewScientificNameValidator insertGUID: "+ insertGUID);
+        this.upstreamListener = null;
         this.listener = listener;
         this.useCache = useCache;
         this.insertLSID = insertGUID;
@@ -68,7 +72,9 @@ public class NewScientificNameValidator extends UntypedActor {
     public void onReceive(Object message) {
         //System.out.println("ScinRef message: "+ message.toString());
         //System.out.println("ScinRef message: "+ message.getClass().getName());
-        if (message instanceof Token) {
+    	if (message instanceof SetUpstreamListener) { 
+    		this.setUpstreamListener(getSender());
+    	} else if (message instanceof Token) {
             if (!getSender().equals(getSelf())) {
                 workerRouter.tell(message, getSelf());
             } else {
@@ -288,6 +294,10 @@ public class NewScientificNameValidator extends UntypedActor {
                     }     */
                 }
                 //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
+                
+                if (upstreamListener!=null) { 
+                	upstreamListener.tell(new ReadMore(), getSelf());
+                }
             }
         }
 
@@ -325,4 +335,19 @@ public class NewScientificNameValidator extends UntypedActor {
             return "ScientificNameValidator";
         }
     }
+
+	/**
+	 * @return the upstreamListener
+	 */
+	public ActorRef getUpstreamListener() {
+		return upstreamListener;
+	}
+
+	/**
+	 * @param upstreamListener the upstreamListener to set
+	 */
+	public void setUpstreamListener(ActorRef upstreamListener) {
+		this.upstreamListener = upstreamListener;
+		System.out.println(this.getClass().toString() + " will make pull requests to " + upstreamListener.getClass().toString());
+	}
 }

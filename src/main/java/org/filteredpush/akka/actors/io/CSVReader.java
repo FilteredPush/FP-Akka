@@ -32,12 +32,13 @@ import akka.routing.Broadcast;
 import com.mongodb.DBCursor;
 
 import org.filteredpush.kuration.util.SpecimenRecord;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.filteredpush.akka.data.ReadMore;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
+import org.filteredpush.akka.workflows.DwCaWorkflow.Curate;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -78,7 +79,10 @@ public class CSVReader extends UntypedActor {
     /**
      * Report reading records in this increment. 
      */
-    private int chunkSize = 1000;
+    private int reportSize = 1000;
+    
+    Iterator<CSVRecord> iterator;
+    Object debug;
 
 
     int invoc;
@@ -94,158 +98,121 @@ public class CSVReader extends UntypedActor {
     }
 
     /**
-	 * @return the chunkSize
+	 * @return the reportSize
 	 */
 	public int getChunkSize() {
-		return chunkSize;
+		return reportSize;
 	}
 
 	/**
-	 * @param chunkSize the chunkSize to set
+	 * @param reportSize the reportSize to set
 	 */
 	public void setChunkSize(int chunkSize) {
-		this.chunkSize = chunkSize;
+		this.reportSize = chunkSize;
 	}
 
 	@Override
-    public void onReceive(Object o) throws Exception {
-        start = System.currentTimeMillis();
+	public void onReceive(Object message) throws Exception {
 
-        /* use apache common CSV library instead
-        try {
-            CsvReader reader = new CsvReader(_filePath);
-            reader.readHeaders();
-            while (reader.readRecord())
-            {
-                cRecords++;
-                SpecimenRecord out = new SpecimenRecord();
-                //reader through the whole record
-                for (String header : reader.getHeaders()){
-                    out.put(header.replace("\"", ""), reader.get(header));
-                    //System.out.println("header = " + header + ": " + reader.get(header));
-                    //todo: may need validation steps here, some errors are ignored
-                }
-                Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(out,this.getClass().getSimpleName(),invoc);
-                //System.out.println("out = " + out.prettyPrint());
+		// System.out.println(message.getClass().toString());
 
-                ++cValidRecords;
-                listener.tell(t,getSelf());
-            }
-            reader.close();
+		if (message instanceof Curate) { 
+			// startup 
+			start = System.currentTimeMillis();
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
+			if (inputReader == null) {
+				if (_filePath != null) {
 
-        if (inputReader == null) {
-            if (_filePath != null) {
+					Reader reader = null;
 
-                Reader reader = null;
+					try {
+						reader = new FileReader(_filePath);
+					} catch (FileNotFoundException e) {
+						System.out.println("file not found");
+						throw new FileNotFoundException("Input CSV file not found: " + _filePath);
 
-                try {
-                    reader = new FileReader(_filePath);
-                } catch (FileNotFoundException e) {
-                    System.out.println("file not found");
-                    throw new FileNotFoundException("Input CSV file not found: " + _filePath);
+					}
 
-                }
+					inputReader = reader;
+				} else {
+					System.out.println("filePath is null");
+				}
+			}
 
-                inputReader = reader;
-            } else {
-                System.out.println("filePath is null");
-            }
-        }
+			CSVFormat tabFormat = CSVFormat.newFormat(fieldDelimiter)
+					.withIgnoreSurroundingSpaces(trimWhitespace)
+					.withHeader(headers);
+			//.withQuote(quote)
 
-        CSVFormat tabFormat = CSVFormat.newFormat(fieldDelimiter)
-                .withIgnoreSurroundingSpaces(trimWhitespace)
-                .withHeader(headers);
-                //.withQuote(quote)
-        
-        CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader(headers);
+			CSVFormat csvFormat = CSVFormat.DEFAULT.withHeader(headers);
 
 
-        Object debug = new Object();
+			debug = new Object();
 
-        try{
+			try{
 
-            CSVParser csvParser = new CSVParser(inputReader, tabFormat);
-            
-            if (csvParser.getHeaderMap().size()==1)  {
-            	System.out.println("Read header line of input file as tab separated, found only one field, trying again as comma separated.");
-            	try {
-                    inputReader = new FileReader(_filePath);
-                } catch (FileNotFoundException e) {
-                    System.out.println("file not found");
-                    throw new FileNotFoundException("Input CSV file not found: " + _filePath);
+				CSVParser csvParser = new CSVParser(inputReader, tabFormat);
 
-                }
-            	csvParser = new CSVParser(inputReader, csvFormat);
-            }
+				if (csvParser.getHeaderMap().size()==1)  {
+					System.out.println("Read header line of input file as tab separated, found only one field, trying again as comma separated.");
+					try {
+						inputReader = new FileReader(_filePath);
+					} catch (FileNotFoundException e) {
+						System.out.println("file not found");
+						throw new FileNotFoundException("Input CSV file not found: " + _filePath);
 
-            Map<String,Integer> csvHeader = csvParser.getHeaderMap();
-            headers = new String[csvHeader.size()];
-            int i = 0;
-            for (String header: csvHeader.keySet()) {
-                headers[i++] = header;
-            }
+					}
+					csvParser = new CSVParser(inputReader, csvFormat);
+				}
 
-            Iterator<CSVRecord> iterator = csvParser.iterator();
-            while (iterator.hasNext()) {
+				Map<String,Integer> csvHeader = csvParser.getHeaderMap();
+				headers = new String[csvHeader.size()];
+				int i = 0;
+				for (String header: csvHeader.keySet()) {
+					headers[i++] = header;
+				}
 
-                CSVRecord csvRecord = iterator.next();
-                debug = csvRecord;
+				iterator = csvParser.iterator();
+				int initialLoad = 30;
+				while (iterator.hasNext() && cValidRecords <= initialLoad) {
+					readRecord();
+				}
+                System.out.println("Read initial " + cValidRecords + " records.") ;
+			}catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}catch (IOException e) {
+				System.out.println("1wrongcValidRecords = " + cValidRecords);
+				e.printStackTrace();
+			} catch (RuntimeException e) {
+				System.out.println("2wrongcValidRecords = " + cValidRecords);
+				System.out.println("debug = " + debug);
+				e.printStackTrace();
+			}
+		} else if (message instanceof ReadMore) { 
+			if (iterator.hasNext()) { 
+				try { 
+					readRecord();
+				} catch (RuntimeException e) {
+					System.out.println("3wrongcValidRecords = " + cValidRecords);
+					System.out.println("debug = " + debug);
+					e.printStackTrace();
+				}
+			}
+		}
 
-                if (!csvRecord.isConsistent()) {
-                    throw new Exception("Wrong number of fields in record " + csvRecord.getRecordNumber());
-                }
+		//listener.tell(new Done(),getSelf());
+		//listener.tell(new Broadcast(new Done()),getSel;
+		//listener.tell(new Broadcast(Poiso
+		//System.out.println(" DB: " + mongodbDB);nPill.getInstance()),getSelf());
+		// TODO: If we hit the end at less than reportSize records assert that we are done reading the input.
 
-                //Map<String, String> record = _recordClass.newInstance();
-                SpecimenRecord record = new SpecimenRecord();
-
-                for (String header : headers) {
-                    String value = csvRecord.get(header);
-                    // TODO: Need to handle header elements in the form vocabulary:term
-                    if (header.contains(":")) { 
-                    	header  = header.substring(header.indexOf(":") + 1);
-                    }
-                    record.put(header, value);
-                }
-               // broadcast(record);
-
-                Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(record,this.getClass().getSimpleName(),invoc);
-
-                ++cValidRecords;
-                listener.tell(t,getSelf());
-
-                if(cValidRecords % chunkSize == 0) { 
-                     System.out.println("Read " + chunkSize + " records, total " + cValidRecords);
-                }
-            }
-        }catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }catch (IOException e) {
-            System.out.println("1wrongcValidRecords = " + cValidRecords);
-            e.printStackTrace();
-        } catch (RuntimeException e) {
-            System.out.println("2wrongcValidRecords = " + cValidRecords);
-            System.out.println("debug = " + debug);
-
-            e.printStackTrace();
-        }
-
-        //listener.tell(new Done(),getSelf());
-        //listener.tell(new Broadcast(new Done()),getSel;
-        //listener.tell(new Broadcast(Poiso
-            //System.out.println(" DB: " + mongodbDB);nPill.getInstance()),getSelf());
-        // TODO: If we hit the end at less than chunkSize records assert that we are done reading the input.
-        listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
-        getContext().stop(getSelf());
-        //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
-        invoc++;
-    }
+		if (!iterator.hasNext()) { 
+			listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
+			getContext().stop(getSelf());
+			//Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
+		}
+		invoc++;
+	}
 
         /* Fails here on lines that contain " to enclose strings that contain the comma delimiter. 
          strLine = "106497",,,,,"Parmeliaceae","Melanohalea ","Melanohalea subolivacea","(Nylander) O. Blanco, A. Crespo, P. K. Divakar, Esslinger, D. Hawksworth & Lumbsch",,,
@@ -254,6 +221,37 @@ java.lang.ArrayIndexOutOfBoundsException: 12
 	at akka.fp.CSVReader.readData(CSVReader.java:132)
          */
 
+	
+	protected void readRecord() throws Exception { 
+        CSVRecord csvRecord = iterator.next();
+        debug = csvRecord;
+
+        if (!csvRecord.isConsistent()) {
+            throw new Exception("Wrong number of fields in record " + csvRecord.getRecordNumber());
+        }
+
+        //Map<String, String> record = _recordClass.newInstance();
+        SpecimenRecord record = new SpecimenRecord();
+
+        for (String header : headers) {
+            String value = csvRecord.get(header);
+            // TODO: Need to handle header elements in the form vocabulary:term
+            if (header.contains(":")) { 
+            	header  = header.substring(header.indexOf(":") + 1);
+            }
+            record.put(header, value);
+        }
+       // broadcast(record);
+
+        Token<SpecimenRecord> t = new TokenWithProv<SpecimenRecord>(record,this.getClass().getSimpleName(),invoc);
+
+        ++cValidRecords;
+        listener.tell(t,getSelf());
+
+        if(cValidRecords % reportSize == 0) { 
+             System.out.println("Read " + reportSize + " records, total " + cValidRecords);
+        }
+	}
 
     @Override
     public void postStop() {
