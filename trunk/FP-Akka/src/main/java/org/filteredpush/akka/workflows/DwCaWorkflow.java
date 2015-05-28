@@ -29,6 +29,7 @@ import org.filteredpush.akka.actors.InternalDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.io.CSVReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
+import org.filteredpush.akka.data.Curate;
 import org.filteredpush.akka.data.SetUpstreamListener;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -289,9 +290,6 @@ public class DwCaWorkflow implements AkkaWorkflow{
         System.err.println();
     }
 
-    public static class Curate {
-    }
-    
 }
 
 /* @end DwCaWorkflow */
