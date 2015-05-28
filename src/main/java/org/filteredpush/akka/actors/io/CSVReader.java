@@ -96,7 +96,7 @@ public class CSVReader extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 
-		System.out.println(message.getClass().toString());
+		// System.out.println(message.getClass().toString());
 
 		if (message instanceof Curate) { 
 			// startup 
