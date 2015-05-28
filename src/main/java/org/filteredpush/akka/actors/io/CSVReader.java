@@ -12,7 +12,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.filteredpush.akka.data.ReadMore;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
-import org.filteredpush.akka.workflows.DwCaWorkflow.Curate;
+import org.filteredpush.akka.data.Curate;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -96,7 +96,7 @@ public class CSVReader extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 
-		// System.out.println(message.getClass().toString());
+		System.out.println(message.getClass().toString());
 
 		if (message instanceof Curate) { 
 			// startup 
@@ -182,7 +182,7 @@ public class CSVReader extends UntypedActor {
 			}
 		}
 
-		if (!iterator.hasNext()) { 
+		if (iterator!=null && !iterator.hasNext()) { 
 			listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
 			getContext().stop(getSelf());
 			//Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());

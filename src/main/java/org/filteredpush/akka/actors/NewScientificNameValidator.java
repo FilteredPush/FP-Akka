@@ -260,7 +260,16 @@ public class NewScientificNameValidator extends UntypedActor {
                     System.out.println("subgenus = " + subgenus);
                     System.out.println("genus = " + genus);
                      */
-                    scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family);
+                    try { 
+                        scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family);
+                    } catch (Exception e) { 
+                    	// If we don't catch a exception that will stop this actor here, we can starve the
+                    	// the workflow by blocking the upstream reader that is waiting for completion.
+                        if (upstreamListener!=null) { 
+                	        upstreamListener.tell(new ReadMore(), getSelf());
+                        }
+                        // TODO: Should we throw the exception again, or keep running? 
+                    }
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     

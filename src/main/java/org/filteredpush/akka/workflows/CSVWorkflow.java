@@ -26,6 +26,8 @@ import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.io.CSVReader;
 import org.filteredpush.akka.actors.io.CSVWriter;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
+import org.filteredpush.akka.data.Curate;
+import org.filteredpush.akka.data.SetUpstreamListener;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -233,7 +235,8 @@ public class CSVWorkflow implements AkkaWorkflow{
             }
         }), "reader");
 
-
+        
+        scinValidator.tell(new SetUpstreamListener(), reader);
         // start the calculation
         reader.tell(new Curate());
         system.awaitTermination();
@@ -243,7 +246,4 @@ public class CSVWorkflow implements AkkaWorkflow{
         System.err.println();
     }
 
-    static class Curate {
-    }
 }
-
