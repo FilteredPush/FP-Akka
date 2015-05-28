@@ -5,7 +5,7 @@
 
 	<groupId>org.filteredpush</groupId>
 	<artifactId>FP-Akka</artifactId>
-	<version>1.4.0</version>
+	<version>1.4.1-SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
@@ -16,7 +16,7 @@
 		<dependency>
 			<groupId>org.filteredpush</groupId>
 			<artifactId>FP-KurationServices</artifactId>
-			<version>1.0.4</version>
+			<version>1.0.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
