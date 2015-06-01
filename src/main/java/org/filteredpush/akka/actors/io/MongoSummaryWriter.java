@@ -17,8 +17,7 @@ import org.filteredpush.akka.data.TokenWithProv;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -82,7 +81,7 @@ public class MongoSummaryWriter extends UntypedActor {
 
         try {
             //FileWriter file = new FileWriter("/home/tianhong/data/akka/test.json");
-            _outputFile = new FileWriter(filePath);
+            _outputFile = new OutputStreamWriter(new FileOutputStream(new File(filePath)), "UTF-8");
             _outputFile.write("[");
         } catch (IOException e) {
             e.printStackTrace();
@@ -465,7 +464,7 @@ public class MongoSummaryWriter extends UntypedActor {
     private MongoClient _mongoClient;
     private DB _db;
     private DBCollection _collection;
-    private FileWriter _outputFile;
+    private OutputStreamWriter _outputFile;
     private boolean outputToFile;
     private boolean firstRecord = true;
 
