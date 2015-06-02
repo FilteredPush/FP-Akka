@@ -81,6 +81,9 @@ public class FloweringTimeValidator extends UntypedActor {
 
     public class FloweringTimeValidatorInvocation extends UntypedActor {
 
+        private String scientificNameLabel;
+        private String ReproductiveConditionLabel;
+        private String eventDateLabel;
         private final String serviceClassQN;
         private final IFloweringTimeValidationService floweringTimeValidationService;
         private int invoc;
@@ -91,21 +94,27 @@ public class FloweringTimeValidator extends UntypedActor {
             //initialize required label
             SpecimenRecordTypeConf speicmenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
 
-            //try {
+            try {
                 scientificNameLabel = speicmenRecordTypeConf.getLabel("ScientificName");
                 if(scientificNameLabel == null){
                     scientificNameLabel = "scientificName";
-                    //throw new CurrationException(getName()+" failed since the ScientificName label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName()+" failed since the ScientificName label of the SpecimenRecordType is not set.");
                 }
 
                 ReproductiveConditionLabel = speicmenRecordTypeConf.getLabel("ReproductiveCondition");
                 if(ReproductiveConditionLabel == null){
                     ReproductiveConditionLabel = "reproductiveCondition";
-                    //throw new CurrationException(getName()+" failed since the ReproductiveCondition label of the SpecimenRecordType is not set.");
+                    throw new CurationException(getName()+" failed since the ReproductiveCondition label of the SpecimenRecordType is not set.");
                 }
-            //} catch (CurrationException e) {
-            //e.printStackTrace();
-            //}
+                
+                eventDateLabel = speicmenRecordTypeConf.getLabel("EventDate");
+                if (eventDateLabel == null) {
+                    throw new CurationException(getName() + " failed since the eventDate label of the SpecimenRecordType is not set.");
+                }   
+                
+            } catch (CurationException e) {
+                e.printStackTrace();
+            }
 
             //resolve service
             serviceClassQN = service;
@@ -159,11 +168,24 @@ public class FloweringTimeValidator extends UntypedActor {
                         constructOutput(inputSpecimenRecord, curationComment);
                         return;
                     }
+                    
+                    String eventDate = inputSpecimenRecord.get(eventDateLabel);
+                    if(eventDate == null){
+                        CurationCommentType curationComment = CurationComment.construct(CurationComment.UNABLE_DETERMINE_VALIDITY,eventDateLabel+" is missing in the incoming SpecimenRecord",getName());
+                        constructOutput(inputSpecimenRecord, curationComment);
+                        return;
+                    }
 
+                    String country = inputSpecimenRecord.get("country");
+                    String kingdom = inputSpecimenRecord.get("kingdom");
+                    
                     Vector<String> floweringMonthVector = parseReproductiveCondition(reproductiveCondtion);
 
                     //invoke the service
-                    floweringTimeValidationService.validateFloweringTime(scientificName,floweringMonthVector);
+                    // floweringTimeValidationService.validateFloweringTime(scientificName,floweringMonthVector);
+                    // TODO: obtain data and run against serivice
+                   
+                    floweringTimeValidationService.validateFloweringTime(scientificName, eventDate, reproductiveCondtion, country, kingdom);
 
                     //construct the reproductive condition and construct curation comment
                     SpecimenRecord cleanedSpecimenRecord = null;
@@ -190,6 +212,9 @@ public class FloweringTimeValidator extends UntypedActor {
         }
 	
         //assume the flowering time information in the ReproductiveCondition is organized as: ..Flower: Jan;Feb,....
+        
+        // TODO: Fix this to follow DarwinCore expectations, reproductiveCondition contains values such as "Flowering", "Fruiting"
+        // and needs to be combined with event date.  
         private Vector<String> parseReproductiveCondition(String reproductiveCondtion){
             String floweringTime = "";
             int startIdx = reproductiveCondtion.indexOf("Flower:");
@@ -267,8 +292,5 @@ public class FloweringTimeValidator extends UntypedActor {
             }
             listener.tell(new TokenWithProv<SpecimenRecord>(result,getClass().getSimpleName(),invoc), getContext().parent());
         }
-
-        private String scientificNameLabel;
-        private String ReproductiveConditionLabel;
     }
 }
