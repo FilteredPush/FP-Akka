@@ -27,8 +27,18 @@ import org.filteredpush.kuration.util.SpecimenRecord;
  * with low throughput rates, causing mailboxes to overflow or causing memory
  * consumption issues.  The PullRequestor can be placed downstream of the slow
  * throughput actors, and can make requests to the high throughput rate actor to
- * send data down the chain at a rate controlled by the throughput of the slow \
- * rate actors.
+ * send data down the chain at a rate controlled by the throughput of the slow 
+ * rate actors.  The PullRequestor will throttle the throughput to the rate of 
+ * the slowest actor between the upstream listener and the PullRequestor.
+ * 
+ * To use, connect a pull requestor to the last of a chain of slow throughput
+ * actors in a workflow, then send it a SetUpstreamListener message pointing
+ * at the upstream listener. 
+ * 
+ * pullRequestor.tell(new SetUpstreamListener(), upstreamListeningActor);
+ * 
+ * on each message the PullRequestor receives which is a token, it will send
+ * a ReadMore message to the upstream listener. 
  * 
  * @author mole
  *
