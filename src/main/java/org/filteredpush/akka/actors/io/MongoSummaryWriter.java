@@ -11,7 +11,6 @@ import com.mongodb.MongoClient;
 import org.filteredpush.kuration.util.CurationComment;
 import org.filteredpush.kuration.util.SpecimenRecord;
 import org.filteredpush.kuration.util.SpecimenRecordTypeConf;
-
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
 import org.json.simple.JSONArray;
@@ -29,10 +28,27 @@ import java.util.*;
 * Time: 13:06
 */
 public class MongoSummaryWriter extends UntypedActor {
-    int cRecords = 0;
+	
     int invoc = 0;
+    private int reportSize = 1000;
     //private final OutputStreamWriter ost;
 
+    private int validCount = 0;
+    private MongoClient _mongoClient;
+    private DB _db;
+    private DBCollection _collection;
+    private OutputStreamWriter _outputFile;
+    private boolean outputToFile;
+    private boolean firstRecord = true;
+
+    //private Map<String, SpecimenRecord> _OriginalRecordMap = new HashMap<String, SpecimenRecord>();
+    //private Map<String, SpecimenRecord> _validatedRecordMap = new HashMap<String, SpecimenRecord>();
+    //private Map<String, HashMap> _recordMarkersMap = new HashMap<String, HashMap>();
+    private HashMap<String, HashSet<String>> highlightedLabelsMap = new HashMap<String, HashSet<String>>();
+    //private HashMap<String, HashSet> _recordDetailsMap = new HashMap<String, HashSet>();
+
+    private String overallLabel = "Kuration Workflow";    
+    
     public MongoSummaryWriter(String mongodbHost, String mongodbDB, String mongodbCollection, String fileEncoding) {
         //System.out.println("MongoSummaryWriter created!!!!!!!!!!!");
         outputToFile = false;
@@ -119,8 +135,6 @@ public class MongoSummaryWriter extends UntypedActor {
 
             //System.out.println("inputSpecimenRecord = " + record.toString());
             
-            // TODO: Add BasisOfRecord
-
             //detect what actor has modified the record, check condition is temp now
             if (record.get("geoRefStatus") != null) {
                 Map<String, String> actorStatusMap = new HashMap<String, String>();
@@ -173,7 +187,6 @@ public class MongoSummaryWriter extends UntypedActor {
             for (String label:removeLables){
                 if (record.keySet().contains(label)) record.remove(label);
             }
-
 
             //start
             HashMap<String, String> markers = new HashMap<String, String>();    //Construct the appended field (markers) of summary
@@ -240,6 +253,10 @@ public class MongoSummaryWriter extends UntypedActor {
         }
         //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n", this.getClass().getSimpleName(), invoc, start, System.currentTimeMillis());
         invoc++;
+        
+        if(validCount % reportSize == 0) { 
+            System.out.println("Wrote " + reportSize + " records, total " + validCount);
+       }
     }
 
     @Override
@@ -460,19 +477,5 @@ public class MongoSummaryWriter extends UntypedActor {
         
     }
 
-    private int validCount = 0;
-    private MongoClient _mongoClient;
-    private DB _db;
-    private DBCollection _collection;
-    private OutputStreamWriter _outputFile;
-    private boolean outputToFile;
-    private boolean firstRecord = true;
 
-    //private Map<String, SpecimenRecord> _OriginalRecordMap = new HashMap<String, SpecimenRecord>();
-    //private Map<String, SpecimenRecord> _validatedRecordMap = new HashMap<String, SpecimenRecord>();
-    //private Map<String, HashMap> _recordMarkersMap = new HashMap<String, HashMap>();
-    private HashMap<String, HashSet<String>> highlightedLabelsMap = new HashMap<String, HashSet<String>>();
-    //private HashMap<String, HashSet> _recordDetailsMap = new HashMap<String, HashSet>();
-
-    private String overallLabel = "Kuration Workflow";
 }

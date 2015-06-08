@@ -18,13 +18,13 @@
 package org.filteredpush.akka.workflows;
 
 import akka.actor.*;
-import akka.fp.sciName.NameReconciliation;
-import akka.fp.sciName.checkNameInconsistency;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
 
 import java.util.HashMap;
 
+import org.filteredpush.akka.actors.sciName.NameReconciliation;
+import org.filteredpush.akka.actors.sciName.checkNameInconsistency;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.kuration.util.SpecimenRecord;
 

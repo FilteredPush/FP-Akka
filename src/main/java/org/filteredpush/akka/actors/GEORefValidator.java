@@ -76,6 +76,8 @@ public class GEORefValidator extends UntypedActor {
         System.out.println("Stopped GeoRefValidator");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
+    
+    public final static double DEFAULT_CERTAINTY = 20; 
 
     private class GEORefValidatorInvocation extends UntypedActor {
 
@@ -84,7 +86,6 @@ public class GEORefValidator extends UntypedActor {
         private String serviceClassQN;
        	private IGeoRefValidationService geoRefValidationService;
        	private double certainty; 	//the unit is km
-       	private double defaultCertainty = 200;
         private int invoc;
         private final Random rand;
 

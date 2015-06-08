@@ -98,7 +98,7 @@ public class NewScientificNameValidator extends UntypedActor {
         } else if (message instanceof Broadcast) {
             workerRouter.tell(new Broadcast(((Broadcast) message).message()), getSender());
         } else if (message instanceof Terminated) {
-            //System.out.println("SciName termianted");
+            //System.out.println("SciName terminated");
             if (((Terminated) message).getActor().equals(workerRouter))
                 this.getContext().stop(getSelf());
         } else {
@@ -357,6 +357,8 @@ public class NewScientificNameValidator extends UntypedActor {
 	 */
 	public void setUpstreamListener(ActorRef upstreamListener) {
 		this.upstreamListener = upstreamListener;
-		System.out.println(this.getClass().getSimpleName() + " will make pull requests to " + upstreamListener.getClass().getSimpleName());
+		if (upstreamListener!=null) { 
+		     System.out.println(this.getClass().getSimpleName() + " will make pull requests to " + upstreamListener.getClass().getCanonicalName());
+		}
 	}
 }
