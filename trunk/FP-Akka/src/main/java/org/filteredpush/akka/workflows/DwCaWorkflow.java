@@ -27,6 +27,7 @@ import org.filteredpush.akka.actors.BasisOfRecordValidator;
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.InternalDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
+import org.filteredpush.akka.actors.PullRequestor;
 import org.filteredpush.akka.actors.io.CSVReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.filteredpush.akka.data.Curate;
@@ -115,6 +116,9 @@ public class DwCaWorkflow implements AkkaWorkflow{
                 throw new CmdLineException(parser,"Output File Exists " + outputFilename );
             }
             
+            // TODO: REad data from a darwin core archive, looking at meta.xml for
+            // (1) an occurrence core, (2) default values, and (3) field mappings.
+            
             // TODO: Test to see if input filename is a .zip file, if so, 
             // look for an occurrence.txt file within it and process that file.
             // First cut, extract and shift to that file:
@@ -187,7 +191,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
     /** @end setup */
 
     public void calculate() {
-        this.calculate( "db", "Occurrence", 200.0);
+        this.calculate( "db", "Occurrence", GEORefValidator.DEFAULT_CERTAINTY);
     }
 
     public void calculate(
@@ -203,7 +207,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
         
         /* @begin MongoSummaryWriter
          * @param outputFilename
-         * @in geoRefValidatedRecords
+         * @in passThroughRecords
          * @out outputFile @uri {outputFilename}
          */
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
@@ -213,13 +217,26 @@ public class DwCaWorkflow implements AkkaWorkflow{
         }), "JsonWriter");
         /* @end MongoSummaryWriter */
         
+        /* @begin PullRequestor
+         * @in geoRefValidatedRecords
+         * @out passThroughRecords
+         * @out loadMore
+         */
+        final ActorRef pullTap = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new PullRequestor(writer);
+            }
+        }), "pullRequestor");
+        /* @end PullRequestor */
+        
+        
         /* @begin GEORefValidator
          * @in dateValidatedRecords
          * @out geoRefValidatedRecords
          */
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
+                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,pullTap);
             }
         }), "geoValidator");
         /* @end GEORefValidator */
@@ -253,9 +270,6 @@ public class DwCaWorkflow implements AkkaWorkflow{
          */
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-            	// TODO: Need to see if this sort of picking inside create() will work 
-            	// to allow choice between CSV or MongoDB input from command line parameters 
-            	// letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
                     return new SciNameWorkflow("-t",false,basisOfRecordValidator);
             	} else { 
@@ -270,6 +284,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
         /* @begin CSVReader 
          * @param inputFilename
          * @in inputFile @uri {inputFilename}
+         * @in loadMore
          * @out inputSpecimenRecords
          */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
@@ -279,10 +294,13 @@ public class DwCaWorkflow implements AkkaWorkflow{
         }), "reader");
         /* @end CSVReader */
 
+        // Notify the pull requestor that it should tell the reader to load more
+        // records when records reach it.
+        pullTap.tell(new SetUpstreamListener(), reader);
         
-        scinValidator.tell(new SetUpstreamListener(), reader);
-        // start the calculation
-        reader.tell(new Curate());
+        // start the calculation 
+        reader.tell(new Curate(),null);
+        
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);
