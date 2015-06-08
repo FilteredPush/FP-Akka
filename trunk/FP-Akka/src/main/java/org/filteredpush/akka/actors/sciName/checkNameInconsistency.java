@@ -1,18 +1,17 @@
-package akka.fp.sciName;
+package org.filteredpush.akka.actors.sciName;
 
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.Terminated;
 import akka.routing.Broadcast;
+
+import org.filteredpush.akka.actors.sciName.Component;
 import org.filteredpush.kuration.util.CurationComment;
 import org.filteredpush.kuration.util.CurationStatus;
 import org.filteredpush.kuration.util.SpecimenRecord;
-
 import org.gbif.api.model.checklistbank.ParsedName;
 import org.gbif.nameparser.NameParser;
 import org.gbif.nameparser.UnparsableException;
-
-import akka.fp.sciName.Component;
 
 import java.util.HashMap;
 

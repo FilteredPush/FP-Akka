@@ -1,4 +1,4 @@
-package akka.fp.sciName;
+package org.filteredpush.akka.actors.sciName;
 
 import akka.actor.ActorRef;
 import akka.actor.UntypedActor;

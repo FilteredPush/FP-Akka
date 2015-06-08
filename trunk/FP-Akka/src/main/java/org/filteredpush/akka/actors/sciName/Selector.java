@@ -1,23 +1,24 @@
-package akka.fp.sciName;
+package org.filteredpush.akka.actors.sciName;
 
 import akka.actor.ActorRef;
+import akka.actor.UntypedActor;
 import org.filteredpush.kuration.util.SpecimenRecord;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 import org.filteredpush.akka.data.Token;
 
 /**
  * Created by tianhong on 2/9/15.
  */
+public abstract class Selector extends UntypedActor {
 
-//todo not in use right now
+    final HashMap<String, ActorRef> listeners;
 
-public class RemoteService extends Component {
-
-    //SpecimenRecord inputData = new SpecimenRecord();
-    String validName;
-
-    public RemoteService(final ActorRef listener){
-        super(listener);
+    public Selector( HashMap<String, ActorRef> listeners){
+        this.listeners = listeners;
     }
 
     @Override
@@ -35,12 +36,10 @@ public class RemoteService extends Component {
             String locality = record.get("locality");
             */
 
-            //todo: need to change to parsing a configuration
-           // checkConsistencyToAtomicField(record.get("sciName"), record.get("genus"), record.get("subgenus"), record.get("specificEpithet"), record.get("verbatimTaxonRank"), record.get("taxonRank"), record.get("infraspecificEpithet"));
-            SpecimenRecord result = new SpecimenRecord();
-            result.put("sciName", validName);
-            listener.tell(result, getSelf());
+            ActorRef listener = selectListener(listeners);
+            listener.tell(record, getSelf());
         }
     }
 
+    public abstract ActorRef selectListener(HashMap<String, ActorRef> listeners);
 }
