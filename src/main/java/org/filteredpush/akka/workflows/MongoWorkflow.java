@@ -28,9 +28,11 @@ import org.filteredpush.akka.actors.BasisOfRecordValidator;
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.InternalDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
+import org.filteredpush.akka.actors.PullRequestor;
 import org.filteredpush.akka.actors.io.MongoDBReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.SetUpstreamListener;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -92,7 +94,7 @@ public class MongoWorkflow implements AkkaWorkflow {
      * Setup conditions for the workflow to execute
      * 
      * @param args command line arguments
-     * @return true if setup was successfull, false otherwise
+     * @return true if setup was successful, false otherwise
      */
     public boolean setup(String[] args) {
     	boolean result = false;
@@ -131,83 +133,10 @@ public class MongoWorkflow implements AkkaWorkflow {
 
         // Create an Akka system
         ActorSystem system = ActorSystem.create("FpSystem");
-        /*
-        // create the result listener, which will print the result and shutdown the system
-        //final ActorRef display = system.actorOf(new Props(TextDisplay.class), "display");
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBWriter(host,db,collectionOut,"",out,enc);
-            }
-        }), "MongoDBWriter");
-
-
-        final ActorRef flwtValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new FloweringTimeValidator("org.filteredpush.kuration.services.test.FNAFloweringTimeService",true,true,writer);
-            }
-        }), "flwtValidator");
-
-
-        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new ScientificNameValidator("org.filteredpush.kuration.services.test.IPNIService",true,true,flwtValidator);
-            }
-        }), "scinValidator");
-
-
-        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-          public UntypedActor create() {
-           return new GEORefValidator("org.filteredpush.kuration.services.test.GeoLocate2",true,certainty,flwtValidator);
-          }
-        }), "geoValidator");
-
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBReader(host,db,collectionIn,query,geoValidator);
-            }
-        }), "reader");
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVWriter(outputFilename);
-            }
-        }), "MongoDBWriter");
-
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVReader(inputFilename, scinValidator);
-            }
-        }), "reader");
-
-        final ActorRef starter = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new Starter(reader);
-            }
-        }), "starter");
-
-          final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new InternalDateValidator("org.filteredpush.kuration.services.test.InternalDateValidationService", writer);
-            }
-        }), "geoValidator");
-
-        final ActorRef annotationInserter = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new AnnotationInserter(writer);
-            }
-        }), "annotationInserter");
-
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoSummaryWriter(host,db,collectionOut,null);
-            }
-        }), "MongoDBWriter");
-        */
 
         /* @begin MongoSummaryWriter
          * @param outputFilename
-         * @in geoRefValidatedRecords
+         * @in passThroughRecords
          * @out outputFile @uri {host}{db}{collectionOut}
          */
         final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
@@ -216,6 +145,19 @@ public class MongoWorkflow implements AkkaWorkflow {
             }
         }), "MongoDBWriter");
         /* @end MongoSummaryWriter */
+        
+        /* @begin PullRequestor
+         * @in geoRefValidatedRecords
+         * @out passThroughRecords
+         * @out loadMore
+         */
+        final ActorRef pullTap = system.actorOf(new Props(new UntypedActorFactory() {
+            public UntypedActor create() {
+                return new PullRequestor(writer);
+            }
+        }), "pullRequestor");
+        /* @end PullRequestor */
+                
 
         /* @begin GEORefValidator
          * @in dateValidatedRecords
@@ -223,7 +165,7 @@ public class MongoWorkflow implements AkkaWorkflow {
          */
         final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty, writer);
+                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty, pullTap);
             }
         }), "geoValidator");
         /* @end GEORefValidator */
@@ -281,20 +223,17 @@ public class MongoWorkflow implements AkkaWorkflow {
                 return new MongoDBReader(host,db,collectionIn,query,scinValidator);
             }
         }), "reader");
-        /* @end CSVReader */
-
-        /*
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVReader("/home/tianhong/Downloads/data/tt2.txt",scinValidator);
-            }
-        }), "reader");
-        */
+        /* @end MongoDbReader */
 
 
         // start the calculation
         System.err.println("systemstart#"+" " + "#" + System.currentTimeMillis());
-        reader.tell(new Curate());
+        
+        // Notify the pull requestor that it should tell the reader to load more
+        // records when records reach it.
+        pullTap.tell(new SetUpstreamListener(), reader);
+        
+        reader.tell(new Curate(), null);
         //system.shutdown();
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
