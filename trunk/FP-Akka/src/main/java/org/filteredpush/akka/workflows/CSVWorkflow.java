@@ -238,7 +238,7 @@ public class CSVWorkflow implements AkkaWorkflow{
         
         scinValidator.tell(new SetUpstreamListener(), reader);
         // start the calculation
-        reader.tell(new Curate());
+        reader.tell(new Curate(),null);
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
         //System.out.printf("\nTime: %f s\n",(stoptime-starttime)/1000.0);

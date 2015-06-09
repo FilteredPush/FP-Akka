@@ -1,4 +1,4 @@
-/** A coactor that import collections represented in an XML file.
+/** 
  *
  * Copyright (c) 2008 The Regents of the University of California.
  * All rights reserved.
@@ -32,36 +32,52 @@ import akka.routing.Broadcast;
 import com.mongodb.*;
 import com.mongodb.util.JSON;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import org.filteredpush.akka.data.Curate;
 import org.filteredpush.akka.data.Prov;
+import org.filteredpush.akka.data.ReadMore;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
 
 /**
+ * Actor to read data from a mongodb database 
+ * 
  * Created with IntelliJ IDEA.
  * User: cobalt
  * Date: 26.04.2013
  * Time: 16:41
- * To change this template use File | Settings | File Templates.
+ * 
+ * @author cobalt
+ * @author mole 
+ *   
  */
-
 public class MongoDBReader extends UntypedActor {
 
+	private static final Log logger = LogFactory.getLog(MongoDBReader.class);
+	
     private final ActorRef listener;
 
-    private String _mongodbHost = "fp2.acis.ufl.edu";
-    private String _mongodbDB = "db";
-    private String _mongodbCollection = "Occurrence";
-    private String _mongodbQuery = "{year:\"1898\"}";
+    private String mongoHost = "localhost";
+    private String mongoDB = "db";
+    private String mongoCollection = "Occurrence";
+    private String mongoQuery = "{year:\"1898\"}";
 
     private DBCursor cursor = null;
     private int cRecords = 0;
     private int cValidRecords = 0;
-    private int totalRecords = 0;
+    private int seen = 0;
+    private long start; 
+    
+    /**
+     * Report on load progress every reportSize records.
+     */
+    private int reportSize = 1000;
     int invoc;
 
     private static final long serialVersionUID = 1L;
@@ -69,10 +85,10 @@ public class MongoDBReader extends UntypedActor {
 
     public MongoDBReader(String mongodbHost, String mongodbDB, String mongodbCollection, String mongodbQuery, ActorRef listener) {
         this.listener = listener;
-        if (mongodbHost != null) this._mongodbHost = mongodbHost;
-        if (mongodbDB != null) this._mongodbDB = mongodbDB;
-        if (mongodbCollection != null) this._mongodbCollection = mongodbCollection;
-        if (mongodbQuery != null) this._mongodbQuery = mongodbQuery;
+        if (mongodbHost != null) this.mongoHost = mongodbHost;
+        if (mongodbDB != null) this.mongoDB = mongodbDB;
+        if (mongodbCollection != null) this.mongoCollection = mongodbCollection;
+        if (mongodbQuery != null) this.mongoQuery = mongodbQuery;
         System.out.println("MongoDB Reader");
         System.out.println("Host: " + mongodbHost);
         System.out.println("DB: " + mongodbDB);
@@ -81,87 +97,102 @@ public class MongoDBReader extends UntypedActor {
         invoc = 0;
     }
 
+    /**
+	 * @return the reportSize
+	 */
+	public int getChunkSize() {
+		return reportSize;
+	}
+
+	/**
+	 * @param reportSize the reportSize to set
+	 */
+	public void setChunkSize(int chunkSize) {
+		this.reportSize = chunkSize;
+	}
+
     @Override
-    public void onReceive(Object o) throws Exception {
-         /*
-        Boolean test = true;
-        while (test) {
-            if (o instanceof String) {
-                System.out.println("o = " + o.toString());
-                test = false;
-            }
-        }
-        */
+    public void onReceive(Object message) throws Exception {
 
-        long start = System.currentTimeMillis();
-        //System.out.println("Accessing MongoDB ...");
-        try {
-            //System.out.println(" Host: " + _mongodbHost);
-            MongoClient mongoClient = new MongoClient(_mongodbHost);
-            //for (String dbn : mongoClient.getDatabaseNames()) {
-            //    System.out.println("   DB: " + dbn);
-            //}
-            //System.out.println(" DB: " + _mongodbDB);
-            DB db = mongoClient.getDB(_mongodbDB);
-            //for (String dbn : db.getCollectionNames()) {
-            //    System.out.println("   Collection: " + dbn);
-            //}
-            //System.out.println(" Collection: " + _mongodbCollection);
-            DBCollection coll = db.getCollection(_mongodbCollection);
+    	logger.debug("MongoDBReader.onReceive()");
+    	
+    	if (message instanceof Curate) { 
+    		start = System.currentTimeMillis();
+    		System.out.println("Loading data from MongoDB ...");
+    		try {
+    			MongoClient mongoClient = new MongoClient(mongoHost);
+    			//for (String dbn : mongoClient.getDatabaseNames()) {
+    			//    System.out.println("   DB: " + dbn);
+    			//}
+    			DB db = mongoClient.getDB(mongoDB);
+    			//for (String dbn : db.getCollectionNames()) {
+    			//    System.out.println("   Collection: " + dbn);
+    			//}
+    			DBCollection coll = db.getCollection(mongoCollection);
 
-            //BasicDBObject query = new BasicDBObject("_id", new ObjectId("511bf6a6e4b04106ea7e979b"));
-            //DBCursor cursor = coll.find(query);
-            totalRecords = 0;
-            if (!_mongodbQuery.isEmpty()) {
-                //System.out.println(" With query: "+ _mongodbQuery);
-                Object query = JSON.parse(_mongodbQuery);
-                cursor = coll.find((DBObject)query);
-                //totalRecords = cursor.count();
-            } else {
-                //System.out.println(" Without query");
-                cursor = coll.find();
-                //totalRecords = cursor.count();
-            }
-            //System.out.println(" Records: "+ totalRecords);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+    			if (!mongoQuery.isEmpty()) {
+    				Object query = JSON.parse(mongoQuery);
+    				cursor = coll.find((DBObject)query);
+    			} else {
+    				cursor = coll.find();
+    			}
+    			System.out.println(" Records to load: "+ cursor.count());
+    		} catch (UnknownHostException e) {
+    			e.printStackTrace();
+    		}
+    		int initialLoad = 30;
+    		while (cursor.hasNext() && cValidRecords < initialLoad) {
+    			seen = cursor.numSeen();
+    			try {
+    				readData();
+    			} catch (SocketException se) {
+    				System.out.println("Recovering...");
+    				MongoClient mongoClient = new MongoClient(mongoHost);
+    				DB db = mongoClient.getDB(mongoDB);
+    				DBCollection coll = db.getCollection(mongoCollection);
+    				if (!mongoQuery.isEmpty()) {
+    					Object query = JSON.parse(mongoQuery);
+    					cursor = coll.find((DBObject)query);
+    				} else {
+    					cursor = coll.find();
+    				}
+    				cursor.skip(seen);
+    			}
+    			if (cRecords % 100 == 0) {
+    				//System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
+    			}
+    		} 
 
-        int seen;
-        do {
-            //System.out.println(" Starting ");
-            seen = cursor.numSeen();
-            try {
-                readData();
-            } catch (SocketException se) {
-                System.out.println("Recovering...");
-                MongoClient mongoClient = new MongoClient(_mongodbHost);
-                DB db = mongoClient.getDB(_mongodbDB);
-                DBCollection coll = db.getCollection(_mongodbCollection);
-                if (!_mongodbQuery.isEmpty()) {
-                    Object query = JSON.parse(_mongodbQuery);
-                    cursor = coll.find((DBObject)query);
-                } else {
-                    cursor = coll.find();
-                }
-                cursor.skip(seen);
-            }
-            if (cRecords % 100 == 0) {
-                //System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
-            }
-        } while (cursor.hasNext());// && cValidRecords < 10000);
-        //System.out.println(" End ");
-        //System.out.println("Read " + cValidRecords + " compatible from " + cRecords + " / " + totalRecords + " records.");
+    	} else if (message instanceof ReadMore) { 
+    		if (cursor.hasNext()) { 
+    			boolean gotOne = false;
+    			while (!gotOne) { 
+    				try { 
+    					readData();
+    					gotOne = true;
+    				} catch (SocketException se) {
+    					System.out.println("Recovering...");
+    					MongoClient mongoClient = new MongoClient(mongoHost);
+    					DB db = mongoClient.getDB(mongoDB);
+    					DBCollection coll = db.getCollection(mongoCollection);
+    					if (!mongoQuery.isEmpty()) {
+    						Object query = JSON.parse(mongoQuery);
+    						cursor = coll.find((DBObject)query);
+    					} else {
+    						cursor = coll.find();
+    					}
+    					cursor.skip(seen);
+    				}
+    			}
+    		}
+    	}
+    	if (cursor != null && !cursor.hasNext()) { 
+    		cursor.close(); 
+    		getContext().stop(getSelf());
+    		Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
+    	} 
 
-        if (cursor != null)
-            cursor.close();
-        //listener.tell(new Done(),getSelf());
-        //listener.tell(new Broadcast(new Done()),getSelf());
-        //listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
-        //listener.tell(PoisonPill.getInstance(),getSelf());
-        getContext().stop(getSelf());
-        Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
-        invoc++;
+    	invoc++;
     }
 
     private void readData() throws SocketException {
@@ -185,17 +216,20 @@ public class MongoDBReader extends UntypedActor {
         ++cValidRecords;
         //System.err.println("read#"+out.get("oaiid").toString() + "#" + System.currentTimeMillis());
         //System.out.println("record:" + out.prettyPrint());
-        if(cValidRecords%10000 == 0) System.out.println("cValidRecords = " + cValidRecords);
+        if(cValidRecords % this.reportSize == 0) { 
+        	System.out.println("cValidRecords = " + cValidRecords);
+        }
         listener.tell(t,getSelf());
     }
 
     @Override
     public void postStop() {
         System.out.println("Read " + cValidRecords + " records");
-        System.out.println("Stopped Reader");
+        System.out.println("Stopped MongoDB Reader");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
         super.postStop();
     }
+        
 }
 
 

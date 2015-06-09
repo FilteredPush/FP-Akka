@@ -62,6 +62,8 @@ import java.util.zip.ZipFile;
  * @author mole
  */
 public class DwCaWorkflow implements AkkaWorkflow{
+	
+	public static final String rev = "$Id$";
 
     public static void main(String[] args) {
         DwCaWorkflow fp = new DwCaWorkflow();
