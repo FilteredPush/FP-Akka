@@ -1,5 +1,5 @@
 /** 
- * SciNameWorkflow.java 
+ * SciNameSubWorkflow.java 
  * 
  * Copyright 2015 President and Fellows of Harvard College
  *
@@ -31,15 +31,13 @@ import org.filteredpush.kuration.util.SpecimenRecord;
 /**
  * Created by tianhong on 2/10/15.
  */
-
-
-public class SciNameWorkflow extends UntypedActor {
+public class SciNameSubWorkflow extends UntypedActor {
 
     private final ActorRef listener;
     private final ActorRef workerRouter;
 
 
-    public SciNameWorkflow(final String serviceSwitch, final boolean writeToFile, final ActorRef listener) {
+    public SciNameSubWorkflow(final String serviceSwitch, final boolean writeToFile, final ActorRef listener) {
         this.listener = listener;
         workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
             @Override
@@ -120,7 +118,7 @@ public class SciNameWorkflow extends UntypedActor {
         HashMap<Integer, SpecimenRecord> dataStore = new HashMap<Integer, SpecimenRecord>();
         public SciNameWorkflowInvocation (final String serviceSwitch, final boolean writeToFile, final ActorRef listener){
 
-            ActorSystem system = ActorSystem.create("SciNameWorkflow");
+            ActorSystem system = ActorSystem.create("SciNameSubWorkflow");
             this.listener = listener;
 
             /*

@@ -181,7 +181,7 @@ public class CSVWorkflow implements AkkaWorkflow{
 
             scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
                 public UntypedActor create() {
-                    return new SciNameWorkflow("-t",false,writer);
+                    return new SciNameSubWorkflow("-t",false,writer);
                 }
             }), "scinValidator");*/
 

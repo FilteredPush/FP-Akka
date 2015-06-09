@@ -63,7 +63,7 @@ import java.util.zip.ZipFile;
  */
 public class DwCaWorkflow implements AkkaWorkflow{
 	
-	public static final String rev = "$Id$";
+	public static final String REV = "$Id$";
 
     public static void main(String[] args) {
         DwCaWorkflow fp = new DwCaWorkflow();
@@ -273,7 +273,7 @@ public class DwCaWorkflow implements AkkaWorkflow{
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
-                    return new SciNameWorkflow("-t",false,basisOfRecordValidator);
+                    return new SciNameSubWorkflow("-t",false,basisOfRecordValidator);
             	} else { 
             		boolean useCache = true;
             		boolean insertGuid = true;

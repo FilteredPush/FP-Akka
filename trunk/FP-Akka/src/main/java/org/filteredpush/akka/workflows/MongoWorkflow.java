@@ -47,6 +47,8 @@ import org.kohsuke.args4j.Option;
 * @out outputFile @uri {mongoHost}{db}{outputCollection} 
 */
 public class MongoWorkflow implements AkkaWorkflow {
+	
+	public static final String REV = "$Id$";
 
     public static void main(String[] args) {
         MongoWorkflow fp = new MongoWorkflow();
@@ -64,7 +66,7 @@ public class MongoWorkflow implements AkkaWorkflow {
     }
 
     @Option(name="-h",usage="MongoDB Host")
-    private String mongoHost = "fp2.acis.ufl.edu";
+    private String mongoHost = "localhost";
 
     @Option(name="-d",usage="db")
     private String db = "db";
@@ -201,7 +203,7 @@ public class MongoWorkflow implements AkkaWorkflow {
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
-                    return new SciNameWorkflow("-t",false,basisOfRecordValidator);
+                    return new SciNameSubWorkflow("-t",false,basisOfRecordValidator);
             	} else { 
             		boolean useCache = true;
             		boolean insertGuid = true;
