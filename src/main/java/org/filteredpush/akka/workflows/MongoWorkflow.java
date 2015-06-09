@@ -31,6 +31,7 @@ import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.PullRequestor;
 import org.filteredpush.akka.actors.io.MongoDBReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
+import org.filteredpush.akka.data.Curate;
 import org.filteredpush.akka.data.Prov;
 import org.filteredpush.akka.data.SetUpstreamListener;
 import org.kohsuke.args4j.CmdLineException;
@@ -199,9 +200,6 @@ public class MongoWorkflow implements AkkaWorkflow {
          */
         final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-            	// TODO: Need to see if this sort of picking inside create() will work 
-            	// to allow choice between CSV or MongoDB input from command line parameters 
-            	// letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
             	if (service.toUpperCase().equals("GLOBALNAMES")) { 
                     return new SciNameWorkflow("-t",false,basisOfRecordValidator);
             	} else { 
@@ -241,7 +239,5 @@ public class MongoWorkflow implements AkkaWorkflow {
         System.err.printf("runtime: %d\n",stoptime-starttime);
     }
 
-    static class Curate {
-    }
 }
 /* @end MongoWorkflow */

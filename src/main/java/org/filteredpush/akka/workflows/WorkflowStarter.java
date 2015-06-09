@@ -18,11 +18,9 @@
 package org.filteredpush.akka.workflows;
 
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +30,7 @@ import java.util.Properties;
 
 /**
  * Pick a FP-Akka workflow to execute, pass on command line parameters to it,
- * set it up, and if successfull, execute it. 
+ * set it up, and if successful, execute it. 
  * 
  * @author Tianhong Song
  *
