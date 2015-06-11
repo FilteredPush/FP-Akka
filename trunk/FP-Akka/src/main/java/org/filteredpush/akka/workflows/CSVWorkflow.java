@@ -58,12 +58,12 @@ public class CSVWorkflow implements AkkaWorkflow{
 
     @Option(name="-o",usage="output JSON file")
     //private String out = "/Users/cobalt/X31out.txt";
-    //private String outputFilename = "/home/tianhong/data/akka/2011Demo_out.csv";
-    //private String outputFilename = "/home/tianhong/data/akka/test.json";
     private String outputFilename = "/home/thsong/data/scan_data/test.json";
+    //private String outputFilename = "output.json";
 
     @Option(name="-i",usage="Input CSV file")
-    private String inputFilename = "/home/thsong/data/scan_data/tt.txt";
+    private String inputFilename = "/home/thsong/data/scan_data/occurrenceproblem2.txt";
+    //private String inputFilename = "input.txt";
 
     @Option(name="-s",usage="Only with SciNameValidator")
     private boolean sciNameOnly = false;

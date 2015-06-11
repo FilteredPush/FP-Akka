@@ -86,10 +86,12 @@ public class DwCaWorkflow implements AkkaWorkflow{
     private String enc = "UTF-8";          */
 
     @Option(name="-o",usage="output JSON file")
-    private String outputFilename = "output.json";
+    private String outputFilename = "/home/thsong/data/scan_data/test.json";
+    //private String outputFilename = "output.json";
 
     @Option(name="-i",usage="Input occurrence.txt (tab delimited occurrence core from a DwC archive) file.")
-    private String inputFilename = "occurrence.txt";
+    private String inputFilename = "/home/thsong/data/scan_data/hy.txt";
+    //private String inputFilename = "input.txt";
     
     @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
     private String service = "GBIF";
