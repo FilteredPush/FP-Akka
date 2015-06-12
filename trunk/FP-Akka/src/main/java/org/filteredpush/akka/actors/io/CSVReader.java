@@ -41,8 +41,8 @@ import java.util.Map;
  * 
  */
 public class CSVReader extends UntypedActor {
-
-    private final ActorRef listener;
+	
+	private final ActorRef listener;
 
     private String _filePath = "/home/tianhong/test/data/1000.csv";
     
@@ -70,9 +70,6 @@ public class CSVReader extends UntypedActor {
     int invoc;
     long start;
 
-    private static final long serialVersionUID = 1L;
-
-
     public CSVReader(String filePath, ActorRef listener) {
         this.listener = listener;
         if (filePath != null) this._filePath = filePath;
@@ -80,17 +77,19 @@ public class CSVReader extends UntypedActor {
     }
 
     /**
-	 * @return the reportSize
+	 * @return the reportSize, that is the number of records loaded
+	 * before reporting on the progress of the load.
 	 */
-	public int getChunkSize() {
+	public int getReportChunkSize() {
 		return reportSize;
 	}
 
 	/**
-	 * @param reportSize the reportSize to set
+	 * @param reportSize set the number of records that will be loaded
+	 * before reporting on the progress of the load.
 	 */
-	public void setChunkSize(int chunkSize) {
-		this.reportSize = chunkSize;
+	public void setReportChunkSize(int reportSize) {
+		this.reportSize = reportSize;
 	}
 
 	@Override
@@ -230,5 +229,3 @@ public class CSVReader extends UntypedActor {
     }
 
 }
-
-

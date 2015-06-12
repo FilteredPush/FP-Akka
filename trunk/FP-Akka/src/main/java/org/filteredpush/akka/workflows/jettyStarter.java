@@ -185,7 +185,7 @@ public class jettyStarter  {
                 // to allow choice between CSV or MongoDB input from command line parameters
                 // letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
                 if (authority.toUpperCase().equals("GLOBALNAMES")) {
-                    return new SciNameWorkflow("-t",false,basisOfRecordValidator);
+                    return new SciNameSubWorkflow("-t",false,basisOfRecordValidator);
                 } else {
                     boolean useCache = true;
                     boolean insertGuid = true;
