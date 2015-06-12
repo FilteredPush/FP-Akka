@@ -29,6 +29,7 @@ import org.filteredpush.akka.actors.InternalDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.PullRequestor;
 import org.filteredpush.akka.actors.io.CSVReader;
+import org.filteredpush.akka.actors.io.DwCaReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.filteredpush.akka.data.Curate;
 import org.filteredpush.akka.data.SetUpstreamListener;
@@ -36,15 +37,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 /* 
  * @begin DwCaWorkflow
@@ -65,6 +58,8 @@ public class DwCaWorkflow implements AkkaWorkflow{
 	
 	public static final String REV = "$Id$";
 
+	private boolean inputIsDwCarchive = false;
+	
     public static void main(String[] args) {
         DwCaWorkflow fp = new DwCaWorkflow();
         
@@ -114,77 +109,21 @@ public class DwCaWorkflow implements AkkaWorkflow{
             File inputFile = new File(inputFilename);
             if (!inputFile.canRead()) { 
                 throw new CmdLineException(parser,"Can't read Input File " + inputFilename );
+            } else { 
+            	if (inputFile.isDirectory()) { 
+            		inputIsDwCarchive = true;
+            	} else { 
+            		if (inputFile.getName().endsWith(".zip")) { 
+            		    inputIsDwCarchive = true;
+            		}
+            	}
             }
             File outputFile = new File(outputFilename);
             if (outputFile.exists()) { 
                 throw new CmdLineException(parser,"Output File Exists " + outputFilename );
             }
             
-            // TODO: REad data from a darwin core archive, looking at meta.xml for
-            // (1) an occurrence core, (2) default values, and (3) field mappings.
-            
-            // TODO: Test to see if input filename is a .zip file, if so, 
-            // look for an occurrence.txt file within it and process that file.
-            // First cut, extract and shift to that file:
-			try {
-				ZipFile zipfile = new ZipFile(inputFilename);
-                Enumeration e = zipfile.entries();
-                boolean found = false;
-                while(e.hasMoreElements() && !found) { 
-                	ZipEntry entry = (ZipEntry) e.nextElement();
-                    if (entry.getName().equals("occurrence.txt")) {
-                        BufferedInputStream zipInputStream = new BufferedInputStream(zipfile.getInputStream(entry));
-                        int count;
-                        byte data[] = new byte[2048];
-                        FileOutputStream fileOutputStream = new FileOutputStream(entry.getName());
-                        BufferedOutputStream destination = new BufferedOutputStream(fileOutputStream, 2048);
-                        while ((count = zipInputStream.read(data, 0, 2048)) != -1) {
-                             destination.write(data, 0, count);
-                        }
-                        destination.flush();
-                        destination.close();
-                        zipInputStream.close();
-                        found = true;
-                        inputFilename = "occurrence.txt";
-                        inputFile = new File(inputFilename);
-                        if (!inputFile.canRead()) { 
-                             throw new CmdLineException(parser,"Can't read Input File (extracted from zip file) " + inputFilename );
-                        }
-                    }
-                }
-			} catch (ZipException e1) {
-				// not a zip file.
-			}
-            
-            
-            /**
-            switch(service.toUpperCase()) { 
-            case "IF": 
-            case "INDEXFUNGORUM": 
-            	serviceClass="org.filteredpush.kuration.services.sciname.IndexFungorumService";
-            	break;
-            case "WORMS": 
-            	serviceClass="org.filteredpush.kuration.services.sciname.WoRMSService";
-            	break;
-            case "COL": 
-            	serviceClass="org.filteredpush.kuration.services.sciname.COLService";
-            	break;
-            case "IPNI": 
-            	serviceClass="org.filteredpush.kuration.services.sciname.IPNIService";
-            	break;
-            case "GBIF": 
-            default: 
-            	if (!service.toUpperCase().equals("GBIF")) { 
-            	    System.err.println("Unrecognized service (" + service + ") or service not specified, using GBIF.");
-            	}
-            	serviceClass="org.filteredpush.kuration.services.sciname.GBIFService";
-            }
-            **/
-            
             setupOK = true;
-        } catch (IOException e) { 
-            System.err.println(e.getMessage());
-            parser.printUsage(System.err);
         } catch( CmdLineException e ) {
             System.err.println(e.getMessage());
             parser.printUsage(System.err);
@@ -293,7 +232,11 @@ public class DwCaWorkflow implements AkkaWorkflow{
          */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new CSVReader(inputFilename, scinValidator);
+            	if (inputIsDwCarchive) { 
+                    return new DwCaReader(inputFilename, scinValidator);
+            	} else { 
+                    return new CSVReader(inputFilename, scinValidator);
+            	}
             }
         }), "reader");
         /* @end CSVReader */
