@@ -200,8 +200,9 @@ public class MongoSummaryWriter extends UntypedActor {
                 String marker = null;
                 if(eachActorStatusMap.get("status").equals(CurationComment.CORRECT.toString())){
                     marker = "CORRECT";
-                }else if(eachActorStatusMap.get("status").equals(CurationComment.CURATED.toString()) ||
-                        eachActorStatusMap.get("status").equals(CurationComment.FILLED_IN.toString())){
+                }else if(eachActorStatusMap.get("status").equals(CurationComment.CURATED.toString())) {
+                    marker = "CURATED";
+                }else if(eachActorStatusMap.get("status").equals(CurationComment.FILLED_IN.toString())){
                     marker = "FILLED_IN";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.UNABLE_CURATED.toString())){
                     marker = "UNABLE_CURATE";
@@ -322,7 +323,7 @@ public class MongoSummaryWriter extends UntypedActor {
         detailRecord.put("Source", actorDetail.get("source"));
         detailRecord.put("Actor Result", marker);
 
-
+        // TODO: Need to replace these magic strings with referenced constants.
         for (String label : record.keySet()) {
             if (highlights.contains(label)){
                 validationState.put(label, marker);
@@ -330,7 +331,7 @@ public class MongoSummaryWriter extends UntypedActor {
                 if (marker.equals("CORRECT")) detailRecord.put(label, "CORRECT: " + record.get(label));
                 //no original record is available
                 //else if (marker.equals("CURATED")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
-                else if (marker.equals("CURATED")){
+                else if (marker.equals("CURATED") || marker.equals("FILLED_IN")){
                    // System.out.println("source = " + source);
                     //System.out.println("originMap = " + originMap);
                     //System.out.println("record = " + record);
@@ -342,7 +343,7 @@ public class MongoSummaryWriter extends UntypedActor {
                 }
                 else if (marker.equals("UNABLE_CURATE")) detailRecord.put(label, "UNABLE_TO_CURATE: " + record.get(label));
                 else if (marker.equals("UNABLE_DETERMINE_VALIDITY")) detailRecord.put(label, "UNABLE_DETERMINE_VALIDITY_OF: " + record.get(label));
-                else System.out.println("detail comment type is wrong");
+                else System.out.println("detail comment ("+marker+") type is not known");
             }else{
                 //detailRecord.put(label, "");
             }
