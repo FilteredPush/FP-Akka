@@ -166,7 +166,7 @@ public class CSVReader extends UntypedActor {
 				while (iterator.hasNext() && cValidRecords < initialLoad) {
 					readRecord();
 				}
-                System.out.println("Read initial " + cValidRecords + " records.") ;
+                System.out.println("Read initial " + cValidRecords + " records.  Will report every " + this.reportSize + " records.") ;
 			}catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}catch (IOException e) {
