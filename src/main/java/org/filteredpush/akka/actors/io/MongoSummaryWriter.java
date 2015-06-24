@@ -332,9 +332,12 @@ public class MongoSummaryWriter extends UntypedActor {
                 //no original record is available
                 //else if (marker.equals("CURATED")) detailRecord.put(label, "yellow: WAS: " + record.get(label) + " CHANGED TO: "  + record.get("label"));
                 else if (marker.equals("CURATED") || marker.equals("FILLED_IN")){
-                   // System.out.println("source = " + source);
+                    //System.out.println("source = " + actorDetail.get("source"));
+                    //System.out.println("marker = " + marker);
                     //System.out.println("originMap = " + originMap);
                     //System.out.println("record = " + record);
+                    //System.out.println("label = " + label);
+                    //System.out.println("originMap(label) = " + originMap.get(label));
                     if (originMap.containsKey(label) && !originMap.get(label).equals(record.get(label))) {
                         detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
                     } else {
