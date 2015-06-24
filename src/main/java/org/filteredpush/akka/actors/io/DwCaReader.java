@@ -236,7 +236,7 @@ public class DwCaReader extends UntypedActor {
 				cValidRecords++;
                 listener.tell(t,getSelf());
 			}
-            System.out.println("Read initial " + cValidRecords + " records.");
+            System.out.println("Read initial " + cValidRecords + " records.  Will report every " + this.reportSize + " records.") ;
 				
 			
 		} else if (message instanceof ReadMore ) { 
