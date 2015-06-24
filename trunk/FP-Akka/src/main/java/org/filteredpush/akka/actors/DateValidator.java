@@ -190,7 +190,7 @@ public class DateValidator extends UntypedActor {
 
 
             CurationStatus curationStatus = internalSingleDateValidationService.getCurationStatus();
-            if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+            if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN){
                 inputSpecimenRecord.put("eventDate", internalSingleDateValidationService.getCorrectedDate());
             }
 

@@ -40,7 +40,7 @@ public abstract class Component extends UntypedActor{
             record.put(SpecimenRecord.SciName_Source_Label, record.get(SpecimenRecord.SciName_Source_Label) + " | " + curationComment.getSource());
         }
 
-        if(status.equals(CurationComment.CURATED.toString()) || status.equals(CurationComment.Filled_in.toString())){
+        if(status.equals(CurationComment.CURATED.toString()) || status.equals(CurationComment.FILLED_IN.toString())){
             record.put("scientificName", validName);
             record.put("scientificNameAuthorship", validAuthor);
         }
@@ -51,7 +51,7 @@ public abstract class Component extends UntypedActor{
     private int getRank(String status){
         if(status.equals(CurationComment.CORRECT.toString())) return 1;
         else if(status.equals(CurationComment.UNABLE_DETERMINE_VALIDITY.toString())) return 2;
-        else if(status.equals(CurationComment.Filled_in.toString())) return 3;
+        else if(status.equals(CurationComment.FILLED_IN.toString())) return 3;
         else if(status.equals(CurationComment.CURATED.toString())) return 4;
         else if(status.equals(CurationComment.UNABLE_CURATED.toString())) return 5;
         else{

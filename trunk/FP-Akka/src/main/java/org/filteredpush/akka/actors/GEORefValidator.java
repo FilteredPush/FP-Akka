@@ -228,7 +228,7 @@ public class GEORefValidator extends UntypedActor {
                     }
 
                     CurationStatus curationStatus = geoRefValidationService.getCurationStatus();
-                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN){
                         String originalLat = fields.get(SpecimenRecord.dwc_decimalLatitude);
                         String originalLng = fields.get(SpecimenRecord.dwc_decimalLongitude);
                         String newLat = String.valueOf(geoRefValidationService.getCorrectedLatitude());

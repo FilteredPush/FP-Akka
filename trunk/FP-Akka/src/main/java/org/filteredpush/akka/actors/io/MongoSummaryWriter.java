@@ -201,8 +201,8 @@ public class MongoSummaryWriter extends UntypedActor {
                 if(eachActorStatusMap.get("status").equals(CurationComment.CORRECT.toString())){
                     marker = "CORRECT";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.CURATED.toString()) ||
-                        eachActorStatusMap.get("status").equals(CurationComment.Filled_in.toString())){
-                    marker = "CURATED";
+                        eachActorStatusMap.get("status").equals(CurationComment.FILLED_IN.toString())){
+                    marker = "FILLED_IN";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.UNABLE_CURATED.toString())){
                     marker = "UNABLE_CURATE";
                 }else if(eachActorStatusMap.get("status").equals(CurationComment.UNABLE_DETERMINE_VALIDITY.toString())){
