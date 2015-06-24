@@ -232,12 +232,25 @@ public class InternalDateValidator extends UntypedActor {
                 //System.out.println("singleDateValidationService.getComment() = " + singleDateValidationService.getComment());
                 //System.out.println("singleDateValidationService.getServiceName() = " + singleDateValidationService.getServiceName());
 
-                if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN) {
+                if (curationStatus == CurationComment.CURATED) {
                     //replace the old value if curated
                     //inputSpecimenRecord.put("eventDate", String.valueOf(singleDateValidationService.getCorrectedDate()));
                     String originalDate = inputSpecimenRecord.get(SpecimenRecord.dwc_eventDate);
                     String newDate = singleDateValidationService.getCorrectedDate();
                     if(originalDate != null && originalDate.length() != 0 &&  !originalDate.equals(newDate)){
+                        inputSpecimenRecord.put(SpecimenRecord.Original_EventDate_Label, originalDate);
+                        inputSpecimenRecord.put(SpecimenRecord.dwc_eventDate, newDate);
+                    }
+                }
+                if (curationStatus == CurationComment.FILLED_IN) {
+                    //provide the filled in value 
+                    //inputSpecimenRecord.put("eventDate", String.valueOf(singleDateValidationService.getCorrectedDate()));
+                    String originalDate = inputSpecimenRecord.get(SpecimenRecord.dwc_eventDate);
+                    String newDate = singleDateValidationService.getCorrectedDate();
+                    if(originalDate != null && originalDate.length() != 0 &&  !originalDate.equals(newDate)){
+                        inputSpecimenRecord.put(SpecimenRecord.Original_EventDate_Label, originalDate);
+                        inputSpecimenRecord.put(SpecimenRecord.dwc_eventDate, newDate);
+                    } else { 
                         inputSpecimenRecord.put(SpecimenRecord.Original_EventDate_Label, originalDate);
                         inputSpecimenRecord.put(SpecimenRecord.dwc_eventDate, newDate);
                     }
