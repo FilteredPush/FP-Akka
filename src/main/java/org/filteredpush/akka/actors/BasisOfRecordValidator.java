@@ -169,7 +169,7 @@ public class BasisOfRecordValidator extends UntypedActor {
                 //System.out.println("basisOfRecordValidationService.getComment() = " + basisOfRecordValidationService.getComment());
                 //System.out.println("basisOfRecordValidationService.getServiceName() = " + basisOfRecordValidationService.getServiceName());
 
-                if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in) {
+                if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN) {
                     //replace the old value if curated
                     //inputSpecimenRecord.put("eventDate", String.valueOf(basisOfRecordValidationService.getCorrectedDate()));
                     String originalBasis = inputSpecimenRecord.get(SpecimenRecord.dwc_basisOfRecord);

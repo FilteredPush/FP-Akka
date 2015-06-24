@@ -92,7 +92,7 @@ public class AnnotationInserter extends UntypedActor {
 
                         //there are two cases with different types of annotation
                         if(status.equals(CurationComment.CURATED.toString()) ||
-                                status.equals(CurationComment.Filled_in.toString()) ){
+                                status.equals(CurationComment.FILLED_IN.toString()) ){
 
                             //distinguish two types of curated status: update or insert
                             if (status.equals(CurationComment.CURATED.toString())) {

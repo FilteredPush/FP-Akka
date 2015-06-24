@@ -273,7 +273,7 @@ public class NewScientificNameValidator extends UntypedActor {
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     
-                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in){
+                    if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN){
                         //put in original value first
                         String originalSciName =  inputSpecimenRecord.get(SpecimenRecord.dwc_scientificName);
                         String originalAuthor = inputSpecimenRecord.get(SpecimenRecord.dwc_scientificNameAuthorship);

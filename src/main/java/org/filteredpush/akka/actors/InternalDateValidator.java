@@ -232,7 +232,7 @@ public class InternalDateValidator extends UntypedActor {
                 //System.out.println("singleDateValidationService.getComment() = " + singleDateValidationService.getComment());
                 //System.out.println("singleDateValidationService.getServiceName() = " + singleDateValidationService.getServiceName());
 
-                if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.Filled_in) {
+                if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN) {
                     //replace the old value if curated
                     //inputSpecimenRecord.put("eventDate", String.valueOf(singleDateValidationService.getCorrectedDate()));
                     String originalDate = inputSpecimenRecord.get(SpecimenRecord.dwc_eventDate);

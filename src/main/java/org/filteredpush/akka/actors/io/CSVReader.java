@@ -9,10 +9,14 @@ import org.filteredpush.kuration.util.SpecimenRecord;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.filteredpush.akka.data.ReadMore;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
 import org.filteredpush.akka.data.Curate;
+import org.gbif.dwc.terms.Term;
+import org.gbif.dwc.terms.TermFactory;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -41,6 +45,8 @@ import java.util.Map;
  * 
  */
 public class CSVReader extends UntypedActor {
+	
+	private static final Log log = LogFactory.getLog(CSVReader.class);
 	
 	private final ActorRef listener;
 
@@ -150,6 +156,8 @@ public class CSVReader extends UntypedActor {
 				headers = new String[csvHeader.size()];
 				int i = 0;
 				for (String header: csvHeader.keySet()) {
+
+		            
 					headers[i++] = header;
 				}
 
@@ -189,6 +197,8 @@ public class CSVReader extends UntypedActor {
 		invoc++;
 	}
 
+	private TermFactory termFactory = TermFactory.instance();	
+	
 	protected void readRecord() throws Exception { 
         CSVRecord csvRecord = iterator.next();
         debug = csvRecord;
@@ -202,10 +212,29 @@ public class CSVReader extends UntypedActor {
 
         for (String header : headers) {
             String value = csvRecord.get(header);
+			// Handle some conversion of alternative forms of headers as found in file to dwc expectations
+			
+            try { 
+            	// Try to obtain standard DarwinCore simple name for term
+                Term headerTerm = termFactory.findTerm(header);
+                header = headerTerm.simpleName();
+            } catch (IllegalArgumentException e) { 
+            	log.debug(e.getMessage());
+            }
+            
             // TODO: Need to handle header elements in the form vocabulary:term
+/*            
             if (header.contains(":")) { 
             	header  = header.substring(header.indexOf(":") + 1);
             }
+            
+            if (header.toLowerCase().equals("occurrenceid")) { 
+            	header = "occurrenceId";
+            }
+            if (header.toLowerCase().equals("recordid")) { 
+            	header = "recordId";
+            }
+*/            
             record.put(header, value);
         }
        // broadcast(record);
