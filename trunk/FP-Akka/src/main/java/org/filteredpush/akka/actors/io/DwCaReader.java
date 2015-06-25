@@ -105,10 +105,27 @@ public class DwCaReader extends UntypedActor {
 				try {
 					dwcArchive = ArchiveFactory.openArchive(file);
 				} catch (UnsupportedArchiveException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error(e.getMessage());
+					File[] containedFiles = file.listFiles();
+					boolean foundContained = false;
+					for (int i = 0; i<containedFiles.length; i++) { 
+						if (containedFiles[i].isDirectory()) {
+							try {
+								// Try harder, some pathological archives contain a extra level of subdirectory
+					            dwcArchive = ArchiveFactory.openArchive(containedFiles[i]);
+							    foundContained = true;
+							} catch (Exception e1) { 
+					            logger.error(e.getMessage());
+						        System.out.println("Unable to open archive directory " + e.getMessage());
+						        System.out.println("Unable to open directory contained within archive directory " + e1.getMessage());
+							}
+						}
+					}
+					if (!foundContained) { 
+						System.out.println("Unable to open archive directory " + e.getMessage());
+					} 
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					logger.error(e.getMessage());
 					e.printStackTrace();
 				}
                 
@@ -151,11 +168,28 @@ public class DwCaReader extends UntypedActor {
     		    try {
 					dwcArchive = ArchiveFactory.openArchive(outputDirectory);
 				} catch (UnsupportedArchiveException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error(e.getMessage());
+					File[] containedFiles = outputDirectory.listFiles();
+					boolean foundContained = false;
+					for (int i = 0; i<containedFiles.length; i++) { 
+						if (containedFiles[i].isDirectory()) {
+							try {
+								// Try harder, some pathological archives contain a extra level of subdirectory
+					            dwcArchive = ArchiveFactory.openArchive(containedFiles[i]);
+							    foundContained = true;
+							} catch (Exception e1) { 
+					            logger.error(e.getMessage());
+						        System.out.println("Unable to open archive directory " + e.getMessage());
+						        System.out.println("Unable to open directory contained within archive directory " + e1.getMessage());
+							}
+						}
+					}
+					if (!foundContained) { 
+						System.out.println("Unable to open archive directory " + e.getMessage());
+					}					
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error(e.getMessage());
+					System.out.println("Unable to open archive directory " + e.getMessage());
 				}
         	}
         	if (dwcArchive!=null) { 
