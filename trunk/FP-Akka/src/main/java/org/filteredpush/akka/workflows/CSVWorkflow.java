@@ -56,7 +56,7 @@ public class CSVWorkflow implements AkkaWorkflow{
     /*@Option(name="-e",usage="encoding for output file")
     private String enc = "UTF-8";          */
 
-    @Option(name="-o",usage="output JSON file")
+    @Option(name="-o",usage="output file (.json unless -s is specified, in which case .csv)")
     //private String out = "/Users/cobalt/X31out.txt";
     private String outputFilename = "/home/thsong/data/scan_data/test.json";
     //private String outputFilename = "output.json";
@@ -65,7 +65,7 @@ public class CSVWorkflow implements AkkaWorkflow{
     private String inputFilename = "/home/thsong/data/scan_data/occurrenceproblem2.txt";
     //private String inputFilename = "input.txt";
 
-    @Option(name="-s",usage="Only with SciNameValidator")
+    @Option(name="-s",usage="Only check scientific names with SciNameValidator (outputs will be .csv, not .json)")
     private boolean sciNameOnly = false;
 
     @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
@@ -96,6 +96,12 @@ public class CSVWorkflow implements AkkaWorkflow{
             if (!inputFile.canRead()) { 
                 throw new CmdLineException(parser,"Can't read Input File " + inputFilename );
             }
+            if (sciNameOnly && !outputFilename.endsWith(".csv")) {
+            	outputFilename = outputFilename + ".csv";
+            }
+            if (!sciNameOnly && !outputFilename.endsWith(".json")) {
+            	outputFilename = outputFilename + ".json";
+            }
             File outputFile = new File(outputFilename);
             if (outputFile.exists()) { 
                 throw new CmdLineException(parser,"Output File Exists " + outputFilename );
@@ -117,73 +123,6 @@ public class CSVWorkflow implements AkkaWorkflow{
 
         // Create an Akka system
         ActorSystem system = ActorSystem.create("FpSystem");
-        /*
-        // create the result listener, which will print the result and shutdown the system
-        //final ActorRef display = system.actorOf(new Props(TextDisplay.class), "display");
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBWriter(host,db,collectionOut,"",out,enc);
-            }
-        }), "MongoDBWriter");
-
-
-        final ActorRef flwtValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new FloweringTimeValidator("org.filteredpush.kuration.services.test.FNAFloweringTimeService",true,true,writer);
-            }
-        }), "flwtValidator");
-
-
-        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new ScientificNameValidator("org.filteredpush.kuration.services.test.IPNIService",true,true,flwtValidator);
-            }
-        }), "scinValidator");
-
-
-        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-          public UntypedActor create() {
-           return new GEORefValidator("org.filteredpush.kuration.services.test.GeoLocate2",true,certainty,flwtValidator);
-          }
-        }), "geoValidator");
-
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBReader(host,db,collectionIn,query,geoValidator);
-            }
-        }), "reader");
-
-         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVReader(inputFilename, scinValidator);
-            }
-        }), "reader");
-
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVWriter(outputFilename);
-            }
-        }), "writer");
-
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBWriter(host,db,collectionOut,"", enc);
-            }
-        }), "MongoDBWriter");
-
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVWriter(outputFilename);
-            }
-        }), "writer");
-
-            scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new SciNameSubWorkflow("-t",false,writer);
-                }
-            }), "scinValidator");*/
 
         final ActorRef scinValidator;
 
@@ -214,6 +153,7 @@ public class CSVWorkflow implements AkkaWorkflow{
             }), "scinValidator");
 
         }else{
+        	System.out.println("Validating scientific names only, writing to csv.");
             final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
                 public UntypedActor create() {
                     return new CSVWriter(outputFilename, true);

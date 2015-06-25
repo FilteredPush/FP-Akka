@@ -2,6 +2,7 @@ package org.filteredpush.akka.actors.io;
 
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
+
 import org.filteredpush.akka.workflows.CSVWorkflow;
 import org.filteredpush.kuration.util.SpecimenRecord;
 
@@ -11,6 +12,7 @@ import java.util.*;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.QuoteMode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.filteredpush.akka.data.Prov;
@@ -46,7 +48,7 @@ public class CSVWriter extends UntypedActor {
         if (filePath != null) this._filePath = filePath;
         try {
             //System.out.println("filePath = " + filePath);
-            csvPrinter = new CSVPrinter(new FileWriter(_filePath, true), CSVFormat.DEFAULT);
+            csvPrinter = new CSVPrinter(new FileWriter(_filePath, true), CSVFormat.DEFAULT.withQuoteMode(QuoteMode.NON_NUMERIC));
         } catch (IOException e) {
         	log.error(e.getMessage(),e);
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -93,8 +95,9 @@ public class CSVWriter extends UntypedActor {
 
                 //write the values
                 for (String header : headers){
-                    //System.out.println("asfeafadf" + ((SpecimenRecord)o).get(header));
-                    csvPrinter.print(((SpecimenRecord)o).get(header));
+                	String output = ((SpecimenRecord)o).get(header);
+                	if (output!=null) { output = output.trim(); } 
+                    csvPrinter.print(output);
                 }
                 csvPrinter.println();
                 csvPrinter.flush();
@@ -134,14 +137,16 @@ public class CSVWriter extends UntypedActor {
     public Map<String, String> constructTaxonOnlyLabels(){
 
         //key is the label in the record, value is the label in the csv file
-        Map<String, String> result = new HashMap<String, String>();
+    	// order is important, so using a LinkedHashMap.
+        Map<String, String> result = new LinkedHashMap<String, String>();
         result.put("dbpk", "dbpk");
         result.put("scientificName", "scientificName");
         result.put("scientificNameAuthorship", "authorship");
         result.put("taxonID", "guid");
-        result.put(SpecimenRecord.SciName_Status_Label, "match");
+        result.put(SpecimenRecord.SciName_Status_Label, "status");
         result.put(SpecimenRecord.Original_SciName_Label, "sciNameWas");
         result.put(SpecimenRecord.Original_Authorship_Label, "sciNameAuthorshipWas");
+        result.put(SpecimenRecord.SciName_Comment_Label, "provenance");
         return result;
     }
 
