@@ -96,39 +96,15 @@ public class DwCaReader extends UntypedActor {
         	File file =  new File(filePath);
         	if (!file.exists()) { 
         		// Error
+        		logger.error(filePath + " not found.");
         	}
         	if (!file.canRead()) { 
         		// error
+        		logger.error("Unable to read " + filePath);
         	}
         	if (file.isDirectory()) { 
         		// check if it is an unzipped dwc archive.
-				try {
-					dwcArchive = ArchiveFactory.openArchive(file);
-				} catch (UnsupportedArchiveException e) {
-					logger.error(e.getMessage());
-					File[] containedFiles = file.listFiles();
-					boolean foundContained = false;
-					for (int i = 0; i<containedFiles.length; i++) { 
-						if (containedFiles[i].isDirectory()) {
-							try {
-								// Try harder, some pathological archives contain a extra level of subdirectory
-					            dwcArchive = ArchiveFactory.openArchive(containedFiles[i]);
-							    foundContained = true;
-							} catch (Exception e1) { 
-					            logger.error(e.getMessage());
-						        System.out.println("Unable to open archive directory " + e.getMessage());
-						        System.out.println("Unable to open directory contained within archive directory " + e1.getMessage());
-							}
-						}
-					}
-					if (!foundContained) { 
-						System.out.println("Unable to open archive directory " + e.getMessage());
-					} 
-				} catch (IOException e) {
-					logger.error(e.getMessage());
-					e.printStackTrace();
-				}
-                
+        		dwcArchive = openArchive(file);
         	}
         	if (file.isFile()) { 
         		// unzip it
@@ -165,42 +141,59 @@ public class DwCaReader extends UntypedActor {
 					}
         		}
         		// look into the unzipped directory
-    		    try {
-					dwcArchive = ArchiveFactory.openArchive(outputDirectory);
-				} catch (UnsupportedArchiveException e) {
-					logger.error(e.getMessage());
-					File[] containedFiles = outputDirectory.listFiles();
-					boolean foundContained = false;
-					for (int i = 0; i<containedFiles.length; i++) { 
-						if (containedFiles[i].isDirectory()) {
-							try {
-								// Try harder, some pathological archives contain a extra level of subdirectory
-					            dwcArchive = ArchiveFactory.openArchive(containedFiles[i]);
-							    foundContained = true;
-							} catch (Exception e1) { 
-					            logger.error(e.getMessage());
-						        System.out.println("Unable to open archive directory " + e.getMessage());
-						        System.out.println("Unable to open directory contained within archive directory " + e1.getMessage());
-							}
-						}
-					}
-					if (!foundContained) { 
-						System.out.println("Unable to open archive directory " + e.getMessage());
-					}					
-				} catch (IOException e) {
-					logger.error(e.getMessage());
-					System.out.println("Unable to open archive directory " + e.getMessage());
-				}
+        		dwcArchive = openArchive(outputDirectory);
         	}
         	if (dwcArchive!=null) { 
         		if (checkArchive()) {
         			// good to go
         		}
+        	} else { 
+				System.out.println("Problem opening archive.");
         	}
         }
         invoc = 0;
     }
 
+    /**
+     * Attempt to open a DarwinCore archive directory and return it as an Archive object.  
+     * If an UnsupportedArchiveException is thrown, trys again harder by looking for an archive
+     * directory inside the provided directory.
+     * 
+     * @param outputDirectory directory that should represent an unzipped DarwinCore archive.
+     * @return an Archive object repsesenting the content of the directory or null if unable
+     * to open an archive object.
+     */
+    protected Archive openArchive(File outputDirectory) { 
+    	Archive result = null;
+    	try {
+    		result = ArchiveFactory.openArchive(outputDirectory);
+    	} catch (UnsupportedArchiveException e) {
+    		logger.error(e.getMessage());
+    		File[] containedFiles = outputDirectory.listFiles();
+    		boolean foundContained = false;
+    		for (int i = 0; i<containedFiles.length; i++) { 
+    			if (containedFiles[i].isDirectory()) {
+    				try {
+    					// Try harder, some pathological archives contain a extra level of subdirectory
+    					result = ArchiveFactory.openArchive(containedFiles[i]);
+    					foundContained = true;
+    				} catch (Exception e1) { 
+    					logger.error(e.getMessage());
+    					System.out.println("Unable to open archive directory " + e.getMessage());
+    					System.out.println("Unable to open directory contained within archive directory " + e1.getMessage());
+    				}
+    			}
+    		}
+    		if (!foundContained) { 
+    			System.out.println("Unable to open archive directory " + e.getMessage());
+    		}					
+    	} catch (IOException e) {
+    		logger.error(e.getMessage());
+    		System.out.println("Unable to open archive directory " + e.getMessage());
+    	}
+    	return result;
+    }
+    
     protected boolean checkArchive() {
     	boolean result = false;
     	if (dwcArchive==null) { 

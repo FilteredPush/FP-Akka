@@ -93,6 +93,7 @@ public class WorkflowStarter{
         }
         */
 
+        System.out.println("Available Workflows: DwCa, CSV, MONGO (specify workflow to run with -w).");
         System.out.println("Selected Workflow: " + workflowName);
 
         AkkaWorkflow fp = null;
