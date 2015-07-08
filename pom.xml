@@ -6,16 +6,30 @@
 	<groupId>org.filteredpush</groupId>
 	<artifactId>FP-Akka</artifactId>
 	<version>1.4.5-SNAPSHOT</version>
-	
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <repositories>
+
         <repository>
             <id>gbif-all</id>
             <url>http://repository.gbif.org/content/groups/gbif</url>
         </repository>
+
+        <repository>
+            <id>ncsa.snapshots</id>
+            <name>NCSA Nexus Snapshots</name>
+            <url>https://opensource.ncsa.illinois.edu/nexus/content/repositories/snapshots</url>
+        </repository>
+
+        <repository>
+            <id>ncsa.releases</id>
+            <name>NCSA Nexus Releases</name>
+            <url>https://opensource.ncsa.illinois.edu/nexus/content/repositories/releases</url>
+        </repository>
+
     </repositories>
 
 	<dependencies>
@@ -31,19 +45,19 @@
 			<artifactId>FP-KurationServices</artifactId>
 			<version>1.1.1-SNAPSHOT</version>
 		</dependency>
-<!-- 
+<!--
         <dependency>
             <groupId>org.gbif</groupId>
             <artifactId>dwca-reader</artifactId>
             <version>1.21</version>
-        </dependency>		
--->        
+        </dependency>
+-->
         <dependency>
             <groupId>org.gbif</groupId>
             <artifactId>dwca-io</artifactId>
             <version>1.23</version>
-        </dependency>        
-		
+        </dependency>
+
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
@@ -171,7 +185,7 @@
 			</build>
 		</profile>
         <profile>
-            <!-- Default build profile, use -P env-dwca, -P env-mongo, or -P env-csv to build with 
+            <!-- Default build profile, use -P env-dwca, -P env-mongo, or -P env-csv to build with
                 other main classes -->
             <!-- (or with -Denv=Mongo or -Denv=csv or -Denv=DwCa) -->
             <id>env-multi</id>
@@ -232,7 +246,7 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>		
+        </profile>
 		<profile>
 			<id>env-dwca</id>
 			<activation>
@@ -470,5 +484,5 @@
 			</build>
 		</profile>
 	</profiles>
-	
+
 </project>
