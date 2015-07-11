@@ -250,6 +250,7 @@ public class NewScientificNameValidator extends UntypedActor {
                     String tclass = inputSpecimenRecord.get("tclass");
                     String order = inputSpecimenRecord.get("order");
                     String family = inputSpecimenRecord.get("family");
+                    String genericEpithet = "";
 
 
                     /*
@@ -261,7 +262,7 @@ public class NewScientificNameValidator extends UntypedActor {
                     System.out.println("genus = " + genus);
                      */
                     try { 
-                        scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family);
+                        scientificNameService.validateScientificName( scientificName, author, genus, subgenus,specificEpithet, verbatimTaxonRank, infraspecificEpithet, taxonRank, kingdom, phylum, tclass, order, family, genericEpithet);
                     } catch (Exception e) { 
                     	// If we don't catch a exception that will stop this actor here, we can starve the
                     	// the workflow by blocking the upstream reader that is waiting for completion.
@@ -273,6 +274,16 @@ public class NewScientificNameValidator extends UntypedActor {
 
                     CurationStatus curationStatus = scientificNameService.getCurationStatus();
                     
+                    if (curationStatus == CurationComment.CORRECT) {
+                    	// If a blank has been filled in from atomic fields and is asserted as correct, put it inot the output.
+                    	if (inputSpecimenRecord.get(SpecimenRecord.dwc_scientificName)==null || inputSpecimenRecord.get(SpecimenRecord.dwc_scientificName).trim().length()==0) { 
+                    		String originalSciName = "";
+                            String newSciName = scientificNameService.getCorrectedScientificName();	
+                            inputSpecimenRecord.put(SpecimenRecord.Original_SciName_Label, originalSciName);
+                            inputSpecimenRecord.put(SpecimenRecord.dwc_scientificName, newSciName);
+                    	}
+                    }
+                    
                     if(curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN){
                         //put in original value first
                         String originalSciName =  inputSpecimenRecord.get(SpecimenRecord.dwc_scientificName);
@@ -282,6 +293,9 @@ public class NewScientificNameValidator extends UntypedActor {
 
                         if(originalSciName != null && originalSciName.length() != 0 &&  !originalSciName.equals(newSciName)){
                             inputSpecimenRecord.put(SpecimenRecord.Original_SciName_Label, originalSciName);
+                            inputSpecimenRecord.put(SpecimenRecord.dwc_scientificName, newSciName);
+                        } else if (originalSciName==null || originalSciName.trim().length()==0) { 
+                            inputSpecimenRecord.put(SpecimenRecord.Original_SciName_Label, "");
                             inputSpecimenRecord.put(SpecimenRecord.dwc_scientificName, newSciName);
                         }
                         if(originalAuthor != null && !originalAuthor.equals(newAuthor)){
@@ -294,7 +308,7 @@ public class NewScientificNameValidator extends UntypedActor {
                     	// TODO: We should be able to handle scientificNameID and acceptedNameUsageID
                     	inputSpecimenRecord.put("taxonID", scientificNameService.getGUID());
                     }
-
+                    
                     //output
                     CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());
                     constructOutput(inputSpecimenRecord, curationComment);
