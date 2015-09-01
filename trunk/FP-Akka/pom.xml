@@ -36,8 +36,8 @@
 
 		<dependency>
 			<groupId>org.filteredpush</groupId>
-			<artifactId>FP-Core</artifactId>
-			<version>1.0.0</version>
+			<artifactId>FP-Client</artifactId>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
