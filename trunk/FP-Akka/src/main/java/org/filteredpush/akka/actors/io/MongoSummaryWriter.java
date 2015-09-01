@@ -339,7 +339,11 @@ public class MongoSummaryWriter extends UntypedActor {
                     //System.out.println("label = " + label);
                     //System.out.println("originMap(label) = " + originMap.get(label));
                     if (originMap.containsKey(label) && !originMap.get(label).equals(record.get(label))) {
-                        detailRecord.put(label, "WAS: " + originMap.get(label) + "; CHANGED TO: " + record.get(label));
+                    	String oldVal =  originMap.get(label);
+                    	if (oldVal==null || oldVal.length()==0) {
+                    		oldVal = "EMPTY";
+                    	}
+                        detailRecord.put(label, "WAS: " + oldVal + "; CHANGED TO: " + record.get(label));
                     } else {
                         detailRecord.put(label, "CORRECT: " + record.get(label));
                     }
