@@ -3,7 +3,6 @@ package org.filteredpush.akka.actors.io;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
 
-import org.filteredpush.akka.workflows.CSVWorkflow;
 import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.io.FileWriter;
