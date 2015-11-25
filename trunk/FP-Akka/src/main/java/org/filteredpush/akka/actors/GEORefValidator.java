@@ -146,6 +146,8 @@ public class GEORefValidator extends UntypedActor {
                     String stateProvince = record.get("stateProvince");
                     String county = record.get("county");
                     String locality = record.get("locality");
+                    String waterBody = record.get("waterBody");
+                    String verbatimDepth = record.get("verbatimDepth");
                     /*
                     //get the needed information from the input SpecimenRecord
                     String country = record.get("country");
@@ -224,7 +226,7 @@ public class GEORefValidator extends UntypedActor {
                         constructOutput(new SpecimenRecord(fields),curationComment);
                         return;
                     }else{
-                        geoRefValidationService.validateGeoRef(country, stateProvince, county, locality,String.valueOf(latitude),String.valueOf(longitude),certainty);
+                        geoRefValidationService.validateGeoRef(country, stateProvince, county, waterBody, verbatimDepth, locality,String.valueOf(latitude),String.valueOf(longitude),certainty);
                     }
 
                     CurationStatus curationStatus = geoRefValidationService.getCurationStatus();
