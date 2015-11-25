@@ -1,7 +1,7 @@
 package org.filteredpush.akka.actors;
 
 import akka.actor.*;
-import org.filteredpush.kuration.services.GeoLocate2;
+import org.filteredpush.kuration.services.GeoLocate3;
 import org.filteredpush.kuration.interfaces.IGeoRefValidationService;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
@@ -77,7 +77,7 @@ public class GEORefValidator extends UntypedActor {
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
     
-    public final static double DEFAULT_CERTAINTY = 20; 
+    public final static double DEFAULT_CERTAINTY = 20; // km distance within which to accept two points as similar.
 
     private class GEORefValidatorInvocation extends UntypedActor {
 
@@ -100,15 +100,15 @@ public class GEORefValidator extends UntypedActor {
                 geoRefValidationService = (IGeoRefValidationService)Class.forName(service).newInstance();
                 geoRefValidationService.setUseCache(useCache);
             } catch (InstantiationException e) {
-                geoRefValidationService = new GeoLocate2();
+                geoRefValidationService = new GeoLocate3();
                 geoRefValidationService.setUseCache(useCache);
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
-                geoRefValidationService = new GeoLocate2();
+                geoRefValidationService = new GeoLocate3();
                 geoRefValidationService.setUseCache(useCache);
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
-                geoRefValidationService = new GeoLocate2();
+                geoRefValidationService = new GeoLocate3();
                 geoRefValidationService.setUseCache(useCache);
                 e.printStackTrace();
             }
