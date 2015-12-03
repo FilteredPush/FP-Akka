@@ -37,6 +37,7 @@ import java.util.Properties;
  */
 public class WorkflowStarter{
     private final String WORKFLOW_PROPERTY = "analysis.workflow";
+    private final String LIMIT_PROPERTY = "analysis.recordlimit";
     private final String INPUT_PROPERTY = "analysis.input";
     private final String OUTPUT_PROPERTY = "analysis.output";
     private final String AUTHORITY_PROPERTY = "analysis.authority";
@@ -126,6 +127,10 @@ public class WorkflowStarter{
         List<String> argsList = new ArrayList<String>();
         if (properties.containsKey(INPUT_PROPERTY)) {
             argsList.add("-i");
+            argsList.add(properties.getProperty(INPUT_PROPERTY));
+        }
+        if (properties.containsKey(LIMIT_PROPERTY)) {
+            argsList.add("-l");
             argsList.add(properties.getProperty(INPUT_PROPERTY));
         }
         if (properties.containsKey(OUTPUT_PROPERTY)) {

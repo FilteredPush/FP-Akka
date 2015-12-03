@@ -93,6 +93,9 @@ public class MongoWorkflow implements AkkaWorkflow {
     @Option(name="-t",usage="Run scientific name validator in taxonomic mode (look up name in current use).")
     private boolean taxonomicMode = false;
     
+    @Option(name="-l",usage="Limit on the number of records to read before stopping.")
+    private int recordLimit = 0;
+    
     /**
      * Setup conditions for the workflow to execute
      * 
@@ -220,7 +223,7 @@ public class MongoWorkflow implements AkkaWorkflow {
          */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new MongoDBReader(host,db,collectionIn,query,scinValidator);
+                return new MongoDBReader(host,db,collectionIn,query,scinValidator,recordLimit);
             }
         }), "reader");
         /* @end MongoDbReader */

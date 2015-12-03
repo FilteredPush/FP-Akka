@@ -52,7 +52,8 @@ public class CSVReader extends UntypedActor {
 
     private String _filePath = "/home/tianhong/test/data/1000.csv";
     
-    private int cValidRecords = 0;
+    private int cValidRecords = 0;  // number of records read.
+    private int recordLimit = 0; // maximum records to read, zero or less for no limit.
     String[] labelList;
 
     public char fieldDelimiter = '\t';
@@ -76,8 +77,16 @@ public class CSVReader extends UntypedActor {
     int invoc;
     long start;
 
-    public CSVReader(String filePath, ActorRef listener) {
+    /**
+     * Read records from a csv file and pass to downstream listener.
+     * 
+     * @param filePath path of csv file to read
+     * @param listener downstream listener to notify
+     * @param maxRecordsToRead read no more than this many records, if 0 or less, then read entire file.
+     */
+    public CSVReader(String filePath, ActorRef listener, int maxRecordsToRead) {
         this.listener = listener;
+        recordLimit = maxRecordsToRead;
         if (filePath != null) this._filePath = filePath;
         invoc = 0;
     }
@@ -163,6 +172,7 @@ public class CSVReader extends UntypedActor {
 
 				iterator = csvParser.iterator();
 				int initialLoad = 30;
+				if (recordLimit>0 && initialLoad>recordLimit) { initialLoad=recordLimit; }
 				while (iterator.hasNext() && cValidRecords < initialLoad) {
 					readRecord();
 				}
@@ -189,7 +199,13 @@ public class CSVReader extends UntypedActor {
 			}
 		}
 
-		if (iterator!=null && !iterator.hasNext()) { 
+        // Check to see if we have reached the limit of number of records to read.
+        boolean readToLimit = false;
+        if (recordLimit>0 && cValidRecords>= recordLimit) {
+        	readToLimit = true;
+        }
+		
+		if ((iterator!=null && !iterator.hasNext()) || readToLimit) { 
 			listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
 			getContext().stop(getSelf());
 			//Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
