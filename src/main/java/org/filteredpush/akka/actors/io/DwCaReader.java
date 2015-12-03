@@ -61,13 +61,15 @@ public class DwCaReader extends UntypedActor {
 
     private String filePath = "dwca.zip";
     
-    private int cValidRecords = 0;
+    private int cValidRecords = 0;  // number of records read.
+    private int recordLimit = 0; // maximum records to read, zero or less for no limit.
     String[] labelList;
 
     public Archive dwcArchive = null;
     public Reader inputReader = null;
     public String recordClass = null;
     public String[] headers = new String[]{};
+    
     
     /**
      * Report reading records in this increment. 
@@ -87,10 +89,12 @@ public class DwCaReader extends UntypedActor {
 	 * If the archiveFilePath is a zip file, it will be unzipped.
 	 * 
 	 * @param archiveFilePath
-	 * @param downstreamListener
+	 * @param downstreamListener 
+	 * @param maxRecordsToRead limit on the number of records to read before stopping, zero or less for no limit.
 	 */
-    public DwCaReader(String archiveFilePath, ActorRef downstreamListener) {
+    public DwCaReader(String archiveFilePath, ActorRef downstreamListener, int maxRecordsToRead) {
         listener = downstreamListener;
+        recordLimit = maxRecordsToRead;
         if (archiveFilePath != null) { 
         	filePath = archiveFilePath;
         	File file =  new File(filePath);
@@ -254,6 +258,7 @@ public class DwCaReader extends UntypedActor {
 			// startup 
 			start = System.currentTimeMillis();
 			int initialLoad = 30;
+			if (recordLimit>0 && initialLoad>recordLimit) { initialLoad=recordLimit; }
 		    iterator = dwcArchive.iterator();
 			while (iterator.hasNext() && cValidRecords < initialLoad) {
 				// read initial set of rows, pass downstream
@@ -282,8 +287,16 @@ public class DwCaReader extends UntypedActor {
         if(cValidRecords % reportSize == 0) { 
              System.out.println("Read " + reportSize + " records, total " + cValidRecords);
         }		
+        
+        // Check to see if we have reached the limit of number of records to read.
+        boolean readToLimit = false;
+        if (recordLimit>0 && cValidRecords>= recordLimit) {
+        	readToLimit = true;
+        }
 		
-		if (iterator!=null && !iterator.hasNext()) { 
+		if ((iterator!=null && !iterator.hasNext()) || readToLimit) {
+			// Reached last record in iterator, or have reached limit of records to read
+			// Done.
 			listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
 			getContext().stop(getSelf());
 			//Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());

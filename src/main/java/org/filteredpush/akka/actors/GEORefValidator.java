@@ -1,10 +1,14 @@
 package org.filteredpush.akka.actors;
 
 import akka.actor.*;
+
 import org.filteredpush.kuration.services.GeoLocate3;
 import org.filteredpush.kuration.interfaces.IGeoRefValidationService;
+
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
+
+import org.filteredpush.kuration.util.CountryLookup;
 import org.filteredpush.kuration.util.CurationStatus;
 import org.filteredpush.kuration.util.SpecimenRecord;
 import org.filteredpush.kuration.util.CurationComment;
@@ -140,9 +144,20 @@ public class GEORefValidator extends UntypedActor {
                         fields.put(key,record.get(key));
                     }
 
+                    // TODO: We need an actor to examine country names and country codes
+                    // able to fill in one when the other is missing, and able to identify conflicts. 
 
                      //if missing, let it run, handle the error in service
                     String country = record.get("country");
+                    String countryCode = record.get("countryCode");
+                    
+                    // Special case handling for GBIF Benin data set which largely lacks the country name.
+                    if (country==null || country.trim().length()==0) { 
+                    	if (countryCode!=null) { 
+                    		country = CountryLookup.lookupCountry(countryCode);
+                    	}
+                    }
+                    
                     String stateProvince = record.get("stateProvince");
                     String county = record.get("county");
                     String locality = record.get("locality");

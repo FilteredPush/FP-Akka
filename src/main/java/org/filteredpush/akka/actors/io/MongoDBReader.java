@@ -70,7 +70,8 @@ public class MongoDBReader extends UntypedActor {
 
     private DBCursor cursor = null;
     private int cRecords = 0;
-    private int cValidRecords = 0;
+    private int cValidRecords = 0;  // number of records read.
+    private int recordLimit = 0; // maximum records to read, zero or less for no limit.
     private int seen = 0;
     private long start; 
     
@@ -83,8 +84,9 @@ public class MongoDBReader extends UntypedActor {
     private static final long serialVersionUID = 1L;
 
 
-    public MongoDBReader(String mongodbHost, String mongodbDB, String mongodbCollection, String mongodbQuery, ActorRef listener) {
+    public MongoDBReader(String mongodbHost, String mongodbDB, String mongodbCollection, String mongodbQuery, ActorRef listener, int maxRecordsToRead) {
         this.listener = listener;
+        recordLimit = maxRecordsToRead;
         if (mongodbHost != null) this.mongoHost = mongodbHost;
         if (mongodbDB != null) this.mongoDB = mongodbDB;
         if (mongodbCollection != null) this.mongoCollection = mongodbCollection;
@@ -141,6 +143,7 @@ public class MongoDBReader extends UntypedActor {
     			e.printStackTrace();
     		}
     		int initialLoad = 30;
+    		if (recordLimit>0 && initialLoad>recordLimit) { initialLoad=recordLimit; }
     		while (cursor.hasNext() && cValidRecords < initialLoad) {
     			seen = cursor.numSeen();
     			try {
@@ -186,7 +189,15 @@ public class MongoDBReader extends UntypedActor {
     			}
     		}
     	}
-    	if (cursor != null && !cursor.hasNext()) { 
+    	
+        // Check to see if we have reached the limit of number of records to read.
+        boolean readToLimit = false;
+        if (recordLimit>0 && cValidRecords>=recordLimit) {
+        	readToLimit = true;
+        }    	
+    	
+    	if (cursor != null && (!cursor.hasNext() || readToLimit)) {
+    		// Done, close cursor, stop (sending poison pill in postStop().
     		cursor.close(); 
     		getContext().stop(getSelf());
     		Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());

@@ -94,6 +94,8 @@ public class DwCaWorkflow implements AkkaWorkflow{
     @Option(name="-t",usage="Run scientific name validator in taxonomic mode (look up name in current use).")
     private boolean taxonomicMode = false;
     
+    @Option(name="-l",usage="Limit on the number of records to read before stopping.")
+    private int recordLimit = 0;
     /**
      * Setup conditions to run the workflow.
      * @begin setup
@@ -233,9 +235,9 @@ public class DwCaWorkflow implements AkkaWorkflow{
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
             	if (inputIsDwCarchive) { 
-                    return new DwCaReader(inputFilename, scinValidator);
+                    return new DwCaReader(inputFilename, scinValidator, recordLimit);
             	} else { 
-                    return new CSVReader(inputFilename, scinValidator);
+                    return new CSVReader(inputFilename, scinValidator, recordLimit);
             	}
             }
         }), "reader");

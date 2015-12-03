@@ -73,6 +73,9 @@ public class CSVWorkflow implements AkkaWorkflow{
 
     @Option(name="-t",usage="SciNameValidator taxonomicMode Mode (look up name in current use).")
     private boolean taxonomicMode = false;
+    
+    @Option(name="-l",usage="Limit on the number of records to read before stopping.")
+    private int recordLimit = 0;
 
     final Double certainty = 200.0;
 
@@ -171,7 +174,7 @@ public class CSVWorkflow implements AkkaWorkflow{
 
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new CSVReader(inputFilename, scinValidator);
+                return new CSVReader(inputFilename, scinValidator, recordLimit);
             }
         }), "reader");
 

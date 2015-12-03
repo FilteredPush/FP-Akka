@@ -8,6 +8,7 @@ import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
 
+import org.apache.jena.atlas.logging.Log;
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
 import org.filteredpush.kuration.services.sciname.*;
 import org.filteredpush.kuration.util.*;
@@ -19,6 +20,9 @@ import org.filteredpush.akka.data.ReadMore;
 import org.filteredpush.akka.data.SetUpstreamListener;
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
+import org.gbif.api.model.checklistbank.ParsedName;
+import org.gbif.nameparser.NameParser;
+import org.gbif.nameparser.UnparsableException;
 
 public class NewScientificNameValidator extends UntypedActor {
 
@@ -238,6 +242,15 @@ public class NewScientificNameValidator extends UntypedActor {
                         constructOutput(new SpecimenRecord(inputSpecimenRecord),curationComment);
                         return;
                     }  */
+                    // TODO: Need an actor to extract scientific name authorships from scientific name when authorship is not provided separately
+                    if(author == null){
+             		   NameParser parser = new NameParser();
+            		   try {
+            			   ParsedName parse = parser.parse(scientificName);
+            			   author = parse.getAuthorship();
+            		   } catch (UnparsableException e) {
+            		   }
+                    }
 
                     String genus = inputSpecimenRecord.get("genus");
                     String subgenus = inputSpecimenRecord.get("subgenus");
