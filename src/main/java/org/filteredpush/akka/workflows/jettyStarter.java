@@ -200,7 +200,7 @@ public class jettyStarter  {
          */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
-                return new IDigBioReader(limit, rq, scinValidator);
+                return new IDigBioReader(Integer.parseInt(limit), rq, scinValidator);
             }
         }), "reader");
         /* @end IDigBioReader */

@@ -1,71 +1,49 @@
-/** A coactor that import collections represented in an XML file.
+/**
+ * IDigBioReader.java
+ * 
+ * Copyright 2015 President and Fellows of Harvard College
  *
- * Copyright (c) 2008 The Regents of the University of California.
- * All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Permission is hereby granted, without written agreement and without
- * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, provided that the
- * above copyright notice and the following two paragraphs appear in
- * all copies of this software.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
- * FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
- * ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
- * IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE
- * PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY
- * OF CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
- * UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.filteredpush.akka.actors.io;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
-import com.mongodb.*;
-import com.mongodb.util.JSON;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.filteredpush.akka.data.Prov;
+
 import org.filteredpush.akka.data.Token;
 import org.filteredpush.akka.data.TokenWithProv;
 import org.filteredpush.kuration.util.SpecimenRecord;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 /**
- * Created with IntelliJ IDEA.
- * User: cobalt
- * Date: 26.04.2013
- * Time: 16:41
- * To change this template use File | Settings | File Templates.
+ * FP-Akka actor to read records as input from iDigBio's api.
+ * 
+ * @author Tianhong Song
  */
-
 public class IDigBioReader extends UntypedActor {
 
     private final ActorRef listener;
-    private String limit;
+    private int limit;
     private int cValidRecords = 0;
     private int totalRecords = 0;
     int invoc;
@@ -73,7 +51,7 @@ public class IDigBioReader extends UntypedActor {
     private static final long serialVersionUID = 1L;
 
 
-    public IDigBioReader(String limit, String rq, ActorRef listener) {
+    public IDigBioReader(int limit, String rq, ActorRef listener) {
         this.listener = listener;
         this.limit = limit;
     }
