@@ -1,5 +1,5 @@
 /** 
- * MongoWorkflow.java 
+ * jettyStarter.java 
  * 
  * Copyright 2013 President and Fellows of Harvard College
  *
@@ -44,7 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /*
-* @begin MongoWorkflow
+* @begin iDigBioWorkflow
 * @param inputFilename
 * @param outputFilename
 * @param nameAuthority
@@ -194,12 +194,16 @@ public class jettyStarter  {
         }), "scinValidator");
 
 
+
+        /* @begin IDigBioReader
+         * @out inputSpecimenRecords
+         */
         final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
             public UntypedActor create() {
                 return new IDigBioReader(limit, rq, scinValidator);
             }
         }), "reader");
-        /* @end CSVReader */
+        /* @end IDigBioReader */
 
 
         // start the calculation
@@ -215,4 +219,4 @@ public class jettyStarter  {
 
 
 }
-/* @end MongoWorkflow */
+/* @end jettyStarter */
