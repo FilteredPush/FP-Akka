@@ -8,7 +8,6 @@ import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
 import edu.harvard.mcz.nametools.NameUsage;
 
-import org.apache.jena.atlas.logging.Log;
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
 import org.filteredpush.kuration.services.sciname.*;
 import org.filteredpush.kuration.util.*;
@@ -75,7 +74,7 @@ public class NewScientificNameValidator extends UntypedActor {
 
     public void onReceive(Object message) {
         //System.out.println("ScinRef message: "+ message.toString());
-        //System.out.println("ScinRef message: "+ message.getClass().getName());
+        //System.out.println("ScinRef message: "+ mFessage.getClass().getName());
     	if (message instanceof SetUpstreamListener) { 
     		this.setUpstreamListener(getSender());
     	} else if (message instanceof Token) {
