@@ -4,7 +4,6 @@ import akka.actor.ActorRef;
 import akka.actor.UntypedActor;
 
 import com.mongodb.BasicDBObject;
-import com.viceversatech.rdfbeans.exceptions.RDFBeanException;
 
 import org.filteredpush.kuration.util.CurationComment;
 import org.filteredpush.kuration.util.CurationCommentType;
@@ -12,11 +11,9 @@ import org.filteredpush.kuration.util.SpecimenRecord;
 
 import org.filteredpush.akka.data.Collection;
 import org.filteredpush.akka.data.Token;
-import org.filteredpush.client.util.ClientHelperService;
-import org.filteredpush.knowledge.rdf.RdfUtil;
-import org.filteredpush.model.annotations.*;
-import org.filteredpush.model.dwc.Georeference;
-import org.ontoware.rdf2go.model.Syntax;
+import org.filteredpush.ws.AnnotationData;
+import org.filteredpush.ws.GeoreferenceData;
+import org.filteredpush.ws.SolveWithMoreDataAnnotationData;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -69,108 +66,61 @@ public class AnnotationInserter extends UntypedActor {
                     String status = record.get(actorName+"Status");
                     String comment = record.get(actorName+"comment");
 
+                    AnnotationData annotationData = null;
 
                     if(!status.equals(CurationComment.CORRECT.toString())){
-
-                        // First we construct an annotation from the following POJOs
-                        Annotation annotation = new Annotation();
-                        SpecificResource target = new SpecificResource();
-                        Selector selector = new Selector();
-                        //Source source = new Source();
-                        Expectation expectation;
-                        Evidence evidence = new Evidence();
-                        Agent annotator = new Agent();
-                        //Agent georefBy = new Agent();
-                        //Generator generator = new Generator();
-                        String configurationFile = null;
-
-                        annotator.setName("Akka Workflow System");
-                        //annotator.setMbox_sha1sum("043856881f6b4d6c87b89a0da68c96b460d07787");
-                        annotation.setAnnotator(annotator);
-
-                        //georefBy.setName("Paul J. Morris");
-
                         //there are two cases with different types of annotation
                         if(status.equals(CurationComment.CURATED.toString()) ||
                                 status.equals(CurationComment.FILLED_IN.toString()) ){
 
-                            //distinguish two types of curated status: update or insert
-                            if (status.equals(CurationComment.CURATED.toString())) {
-                                expectation = Expectation.UPDATE;
-                            }
-                            else{
-                                expectation = Expectation.INSERT;
-                            }
-                            Georeference body = new Georeference();
-                            
-                            annotation.setExpectation(expectation);
-                            evidence.setChars(comment);
-                            annotation.setEvidence(evidence);
+                            GeoreferenceData georeferenceData = new GeoreferenceData();
 
-                            //body.setCoordinatePrecision("9");
-                            //body.setCoordinateUncertaintyInMeters("281");
-                            // body.setGeodeticDatum("WGS84");
+                            georeferenceData.setEvidence(comment);
+
                             try {
-                                body.setDecimalLatitude(record.get("decimalLatitude").toString().replace("\"", ""));
+                                georeferenceData.setDecimalLatitude(record.get("decimalLatitude").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setDecimalLongitude(record.get("decimalLongitude").toString().replace("\"", ""));
+                                georeferenceData.setDecimalLongitude(record.get("decimalLongitude").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setScientificName(record.get("scientificName").toString().replace("\"", ""));
+                                georeferenceData.setScientificName(record.get("scientificName").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setScientificNameAuthorship(record.get("scientificNameAuthorship").toString().replace("\"", ""));
+                                georeferenceData.setScientificNameAuthorship(record.get("scientificNameAuthorship").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setTaxonRank(record.get("taxonRank").toString().replace("\"", ""));
+                                georeferenceData.setTaxonRank(record.get("taxonRank").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setGenus(record.get("genus").toString().replace("\"", ""));
+                                georeferenceData.setGenus(record.get("genus").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setSubgenus(record.get("subgenus").toString().replace("\"", ""));
+                                georeferenceData.setSubgenus(record.get("subgenus").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setGeoreferenceProtocol(record.get("georeferenceProtocol").toString().replace("\"", ""));
+                                georeferenceData.setGeoreferenceProtocol(record.get("georeferenceProtocol").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setGeoreferenceRemarks(record.get("georeferenceRemarks").toString().replace("\"", ""));
+                                georeferenceData.setGeoreferenceRemarks(record.get("georeferenceRemarks").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setGeoreferenceSources(record.get("georeferenceSources").toString().replace("\"", ""));
+                                georeferenceData.setGeoreferenceSources(record.get("georeferenceSources").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
                             try {
-                                body.setGeoreferenceVerificationStatus(record.get("georeferenceVerificationStatus").toString().replace("\"", ""));
+                                georeferenceData.setGeoreferenceVerificationStatus(record.get("georeferenceVerificationStatus").toString().replace("\"", ""));
                             } catch (Exception ignored) {}
 
-
-                            //body.setFootprintSRS("4092");
-                            //body.setFootprintSpatialFit("footprintSpatialFit");
-                            //body.setFootprintWKT("footpringWKT");
-                            //body.setGeoreferenceProtocol("Biogeomancer, Point Radius");
-                            //body.setGeoreferenceRemarks("Locality on shoreline, reached on foot off of dirt road.  Geoferenced from PLSS coordinate and memory of locality, P.J.Morris, 2012.");
-                            //body.setGeoreferenceSources("Schopf, K., Morris, P.. 1994. \"Description of a Muscle Scar and two other novel features from steinkerns of Hypomphalocirrus (Mollusca: Paragastropoda)\" Jour.Paleontology, 68(1):47-58");
-                            //body.setGeoreferenceVerificationStatus("verified by collector");
-                            //body.setGeoreferencedBy(georefBy);
-                            annotation.setBody(body);
-
-                            configurationFile = "georeference.xml";
+                            annotationData = georeferenceData;
                         }
                         else if(status.equals(CurationComment.UNABLE_CURATED.toString()) ){    //||
                             //comment.getStatus().equals(CurationComment.UNABLE_DETERMINE_VALIDITY.toString())){
 
-                        	ContentAsText body = new ContentAsText();
-                            expectation = Expectation.SOLVE_WITH_MORE_DATA;
-                            annotation.setExpectation(expectation);
+                            SolveWithMoreDataAnnotationData solveWithMoreDataAnnotationData = new SolveWithMoreDataAnnotationData();
+                            solveWithMoreDataAnnotationData.setEvidence(comment);
+                            solveWithMoreDataAnnotationData.setChars(comment);
 
-                            evidence.setChars(comment);
-                            annotation.setEvidence(evidence);
-
-                            body.setChars(comment);
-                            annotation.setBody(body);
-
-                            configurationFile = "solve_with_more_data.xml";
+                            annotationData = solveWithMoreDataAnnotationData;
                         }
                         /*
                         else{
@@ -178,26 +128,17 @@ public class AnnotationInserter extends UntypedActor {
                         }
                           */
                         try {
-                            selector.setCatalogNumber(record.get("catalogNumber").toString().replace("\"", ""));
+                            annotationData.setCatalogNumber(record.get("catalogNumber").toString().replace("\"", ""));
                         } catch (Exception ignored) {}
                         try {
-                            selector.setInstitutionCode(record.get("institutionCode").toString().replace("\"", ""));
+                            annotationData.setInstitutionCode(record.get("institutionCode").toString().replace("\"", ""));
                         } catch (Exception ignored) {}
                         try {
-                            selector.setCollectionCode(record.get("collectionCode").toString().replace("\"", ""));
+                            annotationData.setCollectionCode(record.get("collectionCode").toString().replace("\"", ""));
                         } catch (Exception ignored) {}
-
-                        //target.setHasSource(source);
-                        target.setSelector(selector);
-                        annotation.setTarget(target);
-
-                        //evidence.setChars(comment.getDetails());
-                        //annotation.setHasEvidence(evidence);
-
-                        //annotation.setGenerator(generator);
 
                         
-                        try {
+                        /*try {
 							String annotationRdf = RdfUtil.serialize(annotation, Syntax.RdfXml);
 							
 	                        System.out.println("Annotation RDF/XML:");
@@ -205,13 +146,13 @@ public class AnnotationInserter extends UntypedActor {
 	                        System.out.println(annotationRdf);
 						} catch (RDFBeanException e) {
 							e.printStackTrace();
-						}
+						}*/
 
                         //Inject the annotation into the FPush stack in a FP Message
                        // boolean injectOrNot = ((BooleanToken)injectToFPush.getToken()).booleanValue();
                         if (injectOrNot){
                             try {
-                                injectAnnotation(annotation);
+                                //injectAnnotation(annotation);
                             } catch (Exception e) {
                                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                             }
@@ -281,15 +222,15 @@ public class AnnotationInserter extends UntypedActor {
     //private String mongodbCollection = null;
     //private String resultId;
 
-    private void injectAnnotation (Annotation annotation) throws Exception {
+    //private void injectAnnotation (Annotation annotation) throws Exception {
         // Create a new FPMessage and put the annotation rdf/xml into the FPMessage content
 
-    	ClientHelperService service = new ClientHelperService(ENDPOINT_HOST, ENDPOINT_PORT);
-        String response = service.insertIdentification(annotation);
+    //	ClientHelperService service = new ClientHelperService(ENDPOINT_HOST, ENDPOINT_PORT);
+    //    String response = service.insertIdentification(annotation);
         
-        System.out.println();
-        System.out.println("Success: response " + response + " for annotation");
-    }
+    //    System.out.println();
+    //    System.out.println("Success: response " + response + " for annotation");
+    //}
 
     //public final Parameter collectionScope;
 
