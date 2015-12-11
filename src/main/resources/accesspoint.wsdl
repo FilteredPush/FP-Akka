@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://filteredpush.org/ws" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://filteredpush.org/ws" targetNamespace="http://filteredpush.org/ws">
+  <wsdl:types>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://filteredpush.org/ws">
+    <xs:element name="insertIdentificationRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="identificationData" type="tns:identificationData"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="insertIdentificationResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="annotationUri" type="xs:anyURI"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="insertGeoreferenceRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="georeferenceData" type="tns:georeferenceData"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="insertGeoreferenceResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="annotationUri" type="xs:anyURI"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="solveWithMoreDataRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="solveWithMoreDataAnnotationData" type="tns:solveWithMoreDataAnnotationData"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="solveWithMoreDataResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="annotationUri" type="xs:anyURI"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="insertResponseAnnotationRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="responseData" type="tns:responseAnnotationData"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="insertResponseAnnotationResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="annotationUri" type="xs:anyURI"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="queryAnnotationsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="institutionCode" type="xs:string"/>
+                <xs:element name="collectionCode" type="xs:string"/>
+                <xs:element name="catalogNumber" type="xs:string"/>
+                <xs:element name="page" type="xs:int"/>
+                <xs:element name="size" type="xs:int"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="queryAnnotationsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" name="annotationData" type="tns:annotationData"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="queryResponseAnnotationsRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="annotationUri" type="xs:anyURI"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="queryResponseAnnotationsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" name="responseAnnotationData" type="tns:responseAnnotationData"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="annotationData">
+        <xs:sequence>
+            <xs:element name="annotatorName" type="xs:string"/>
+            <xs:element name="annotatorEmail" type="xs:string"/>
+            <xs:element name="evidence" type="xs:string"/>
+            <xs:element name="institutionCode" type="xs:string"/>
+            <xs:element name="collectionCode" type="xs:string"/>
+            <xs:element name="catalogNumber" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="identificationData">
+        <xs:complexContent>
+            <xs:extension base="tns:annotationData">
+                <xs:sequence>
+                    <xs:element name="scientificName" type="xs:string"/>
+                    <xs:element name="scientificNameAuthorship" type="xs:string"/>
+                    <xs:element name="identifiedBy" type="xs:string"/>
+                    <xs:element name="dateIdentified" type="xs:string"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="georeferenceData">
+        <xs:complexContent>
+            <xs:extension base="tns:annotationData">
+                <xs:sequence>
+                    <xs:element name="decimalLatitude" type="xs:string"/>
+                    <xs:element name="decimalLongitude" type="xs:string"/>
+                    <xs:element name="scientificName" type="xs:string"/>
+                    <xs:element name="scientificNameAuthorship" type="xs:string"/>
+                    <xs:element name="taxonRank" type="xs:string"/>
+                    <xs:element name="genus" type="xs:string"/>
+                    <xs:element name="subgenus" type="xs:string"/>
+                    <xs:element name="georeferenceProtocol" type="xs:string"/>
+                    <xs:element name="georeferenceRemarks" type="xs:string"/>
+                    <xs:element name="georeferenceSources" type="xs:string"/>
+                    <xs:element name="georeferenceVerificationStatus" type="xs:string"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="responseAnnotationData">
+        <xs:sequence>
+            <xs:element name="annotatorName" type="xs:string"/>
+            <xs:element name="annotatorEmail" type="xs:string"/>
+            <xs:element name="describesObject" type="xs:anyURI"/>
+            <xs:element name="polarity" type="xs:string"/>
+            <xs:element name="resolution" type="xs:string"/>
+            <xs:element name="opinion" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="solveWithMoreDataAnnotationData">
+        <xs:complexContent>
+            <xs:extension base="tns:annotationData">
+                <xs:sequence>
+                    <xs:element name="chars" type="xs:string"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="insertGeoreferenceResponse">
+    <wsdl:part element="tns:insertGeoreferenceResponse" name="insertGeoreferenceResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="queryAnnotationsRequest">
+    <wsdl:part element="tns:queryAnnotationsRequest" name="queryAnnotationsRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="solveWithMoreDataResponse">
+    <wsdl:part element="tns:solveWithMoreDataResponse" name="solveWithMoreDataResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="insertGeoreferenceRequest">
+    <wsdl:part element="tns:insertGeoreferenceRequest" name="insertGeoreferenceRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="queryAnnotationsResponse">
+    <wsdl:part element="tns:queryAnnotationsResponse" name="queryAnnotationsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="insertIdentificationResponse">
+    <wsdl:part element="tns:insertIdentificationResponse" name="insertIdentificationResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="solveWithMoreDataRequest">
+    <wsdl:part element="tns:solveWithMoreDataRequest" name="solveWithMoreDataRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="queryResponseAnnotationsRequest">
+    <wsdl:part element="tns:queryResponseAnnotationsRequest" name="queryResponseAnnotationsRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="insertResponseAnnotationRequest">
+    <wsdl:part element="tns:insertResponseAnnotationRequest" name="insertResponseAnnotationRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="queryResponseAnnotationsResponse">
+    <wsdl:part element="tns:queryResponseAnnotationsResponse" name="queryResponseAnnotationsResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="insertIdentificationRequest">
+    <wsdl:part element="tns:insertIdentificationRequest" name="insertIdentificationRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="insertResponseAnnotationResponse">
+    <wsdl:part element="tns:insertResponseAnnotationResponse" name="insertResponseAnnotationResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="AccessPointPort">
+    <wsdl:operation name="insertGeoreference">
+      <wsdl:input message="tns:insertGeoreferenceRequest" name="insertGeoreferenceRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:insertGeoreferenceResponse" name="insertGeoreferenceResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="queryAnnotations">
+      <wsdl:input message="tns:queryAnnotationsRequest" name="queryAnnotationsRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:queryAnnotationsResponse" name="queryAnnotationsResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="solveWithMoreData">
+      <wsdl:input message="tns:solveWithMoreDataRequest" name="solveWithMoreDataRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:solveWithMoreDataResponse" name="solveWithMoreDataResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="insertIdentification">
+      <wsdl:input message="tns:insertIdentificationRequest" name="insertIdentificationRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:insertIdentificationResponse" name="insertIdentificationResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="queryResponseAnnotations">
+      <wsdl:input message="tns:queryResponseAnnotationsRequest" name="queryResponseAnnotationsRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:queryResponseAnnotationsResponse" name="queryResponseAnnotationsResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="insertResponseAnnotation">
+      <wsdl:input message="tns:insertResponseAnnotationRequest" name="insertResponseAnnotationRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:insertResponseAnnotationResponse" name="insertResponseAnnotationResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="AccessPointPortSoap11" type="tns:AccessPointPort">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="insertGeoreference">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="insertGeoreferenceRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="insertGeoreferenceResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="queryAnnotations">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="queryAnnotationsRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="queryAnnotationsResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="solveWithMoreData">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="solveWithMoreDataRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="solveWithMoreDataResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="insertIdentification">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="insertIdentificationRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="insertIdentificationResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="queryResponseAnnotations">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="queryResponseAnnotationsRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="queryResponseAnnotationsResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="insertResponseAnnotation">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="insertResponseAnnotationRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="insertResponseAnnotationResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="AccessPointPortService">
+    <wsdl:port binding="tns:AccessPointPortSoap11" name="AccessPointPortSoap11">
+      <soap:address location="http://localhost:8080/ws"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
