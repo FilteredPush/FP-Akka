@@ -319,10 +319,44 @@ public class NewScientificNameValidator extends UntypedActor {
                     if(!scientificNameService.getGUID().equals("")) {
                     	// TODO: We should be able to handle scientificNameID and acceptedNameUsageID
                     	inputSpecimenRecord.put("taxonID", scientificNameService.getGUID());
+                    	
+                    }
+                    
+                    StringBuffer higherFillInComment = new StringBuffer(); 
+                    // if higher taxonomy is absent, fill it in 
+                    if (inputSpecimenRecord.get(SpecimenRecord.dwc_kingdom)==null || inputSpecimenRecord.get(SpecimenRecord.dwc_kingdom).trim().length()==0) { 
+                    	if (scientificNameService.getCorrectedKingdom()!=null && scientificNameService.getCorrectedKingdom().trim().length() >0) { 
+                    	   inputSpecimenRecord.put(SpecimenRecord.dwc_kingdom, scientificNameService.getCorrectedKingdom());
+                    	   higherFillInComment.append(" | Filled In Kingdom ");
+                    	}
+                    }
+                    if (inputSpecimenRecord.get(SpecimenRecord.dwc_phylum)==null || inputSpecimenRecord.get(SpecimenRecord.dwc_phylum).trim().length()==0) { 
+                    	if (scientificNameService.getCorrectedPhylum()!=null && scientificNameService.getCorrectedPhylum().trim().length() >0) { 
+                    	    inputSpecimenRecord.put(SpecimenRecord.dwc_phylum, scientificNameService.getCorrectedPhylum()); 
+                    	    higherFillInComment.append(" | Filled In Phylum ");
+                    	}
+                    }
+                    if (inputSpecimenRecord.get(SpecimenRecord.dwc_class)==null || inputSpecimenRecord.get(SpecimenRecord.dwc_class).trim().length()==0) { 
+                    	if (scientificNameService.getCorrectedClass()!=null && scientificNameService.getCorrectedClass().trim().length() >0) { 
+                    	    inputSpecimenRecord.put(SpecimenRecord.dwc_class, scientificNameService.getCorrectedClass()); 
+                    	    higherFillInComment.append(" | Filled In Class ");
+                    	}
+                    }
+                    if (inputSpecimenRecord.get(SpecimenRecord.dwc_order)==null || inputSpecimenRecord.get(SpecimenRecord.dwc_order).trim().length()==0) { 
+                    	if (scientificNameService.getCorrectedOrder()!=null && scientificNameService.getCorrectedOrder().trim().length() >0) { 
+                    	    inputSpecimenRecord.put(SpecimenRecord.dwc_order, scientificNameService.getCorrectedOrder()); 
+                    	    higherFillInComment.append(" | Filled In Order ");
+                    	}
+                    }
+                    if (inputSpecimenRecord.get(SpecimenRecord.dwc_family)==null || inputSpecimenRecord.get(SpecimenRecord.dwc_family).trim().length()==0) { 
+                    	if (scientificNameService.getCorrectedFamily()!=null && scientificNameService.getCorrectedFamily().trim().length() >0) { 
+                    	    inputSpecimenRecord.put(SpecimenRecord.dwc_family, scientificNameService.getCorrectedFamily()); 
+                    	    higherFillInComment.append(" | Filled In Family ");
+                    	}
                     }
                     
                     //output
-                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment(),scientificNameService.getServiceName());
+                    CurationCommentType curationComment = CurationComment.construct(curationStatus,scientificNameService.getComment().concat(higherFillInComment.toString()),scientificNameService.getServiceName());
                     constructOutput(inputSpecimenRecord, curationComment);
                     /*for (List l : scientificNameService.getLog()) {
                         Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, l.get(0), l.get(1), l.get(2), l.get(3), curationStatus.toString());
