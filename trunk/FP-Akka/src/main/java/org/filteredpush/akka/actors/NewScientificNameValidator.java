@@ -3,10 +3,6 @@ package org.filteredpush.akka.actors;
 import akka.actor.*;
 import akka.routing.Broadcast;
 import akka.routing.SmallestMailboxRouter;
-import edu.harvard.mcz.nametools.AuthorNameComparator;
-import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
-import edu.harvard.mcz.nametools.NameComparison;
-import edu.harvard.mcz.nametools.NameUsage;
 
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
 import org.filteredpush.kuration.services.sciname.*;
