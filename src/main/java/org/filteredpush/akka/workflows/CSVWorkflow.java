@@ -68,6 +68,9 @@ public class CSVWorkflow implements AkkaWorkflow{
     @Option(name="-s",usage="Only check scientific names with SciNameValidator (outputs will be .csv, not .json)")
     private boolean sciNameOnly = false;
 
+    @Option(name="-h",usage="If checking only scientific names (-s), include higher taxa for each name in the output, if available from the selected source.")
+    private boolean includeHigher = false;
+
     @Option(name="-a",usage="Authority to check scientific names against (IPNI, IF, WoRMS, COL, GBIF, GlobalNames), default GBIF.")
     private String service = "GBIF";
 
@@ -159,7 +162,7 @@ public class CSVWorkflow implements AkkaWorkflow{
         	System.out.println("Validating scientific names only, writing to csv.");
             final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
                 public UntypedActor create() {
-                    return new CSVWriter(outputFilename, true);
+                    return new CSVWriter(outputFilename, true, includeHigher);
                 }
             }), "CSVWriter");
 

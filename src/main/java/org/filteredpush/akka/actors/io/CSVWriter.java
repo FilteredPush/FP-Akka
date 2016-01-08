@@ -40,10 +40,12 @@ public class CSVWriter extends UntypedActor {
     Boolean headerWritten = false;
     List<String> headers = new ArrayList<String>();
     boolean taxonOnlyMode = false;
+    boolean includeHigher = false;
     //todo: make it more flexible
 
-    public CSVWriter(String filePath, boolean taxonOnlyMode) {
+    public CSVWriter(String filePath, boolean taxonOnlyMode, boolean includeHigher) {
         this.taxonOnlyMode = taxonOnlyMode;
+        this.includeHigher = includeHigher;
         if (filePath != null) this._filePath = filePath;
         try {
             //System.out.println("filePath = " + filePath);
@@ -82,6 +84,7 @@ public class CSVWriter extends UntypedActor {
                         }
 
                     }else{
+                    	
                         Map<String, String> taxonHeaderLabels = constructTaxonOnlyLabels();
                         for (String label  : taxonHeaderLabels.keySet()) {
                             csvPrinter.print(taxonHeaderLabels.get(label));
@@ -142,11 +145,18 @@ public class CSVWriter extends UntypedActor {
         result.put("scientificName", "scientificName");
         result.put("scientificNameAuthorship", "authorship");
         result.put("taxonID", "guid");
+        if (includeHigher) { 
+           result.put(SpecimenRecord.dwc_kingdom, "kingdom");
+           result.put(SpecimenRecord.dwc_phylum, "phylum");
+           result.put(SpecimenRecord.dwc_class, "class");
+           result.put(SpecimenRecord.dwc_order, "order");
+           result.put(SpecimenRecord.dwc_family, "family");
+        }
         result.put(SpecimenRecord.SciName_Status_Label, "status");
         result.put(SpecimenRecord.Original_SciName_Label, "sciNameWas");
         result.put(SpecimenRecord.Original_Authorship_Label, "sciNameAuthorshipWas");
         result.put(SpecimenRecord.SciName_Comment_Label, "provenance");
         return result;
     }
-
+    
 }
