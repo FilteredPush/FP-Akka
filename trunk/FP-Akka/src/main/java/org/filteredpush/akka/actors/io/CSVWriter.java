@@ -3,6 +3,7 @@ package org.filteredpush.akka.actors.io;
 import akka.actor.UntypedActor;
 import akka.routing.Broadcast;
 
+import org.filteredpush.kuration.services.sciname.SciNameServiceParent;
 import org.filteredpush.kuration.util.SpecimenRecord;
 
 import java.io.FileWriter;
@@ -75,8 +76,6 @@ public class CSVWriter extends UntypedActor {
                 if (!headerWritten) {
                     //write header first
                     //use headers list to keep track of the order
-
-                    Set<String> headerLabels;
                     if(!taxonOnlyMode){
                         for (String label  : ((SpecimenRecord)o).keySet()) {
                             csvPrinter.print(label);
@@ -99,6 +98,14 @@ public class CSVWriter extends UntypedActor {
                 for (String header : headers){
                 	String output = ((SpecimenRecord)o).get(header);
                 	if (output!=null) { output = output.trim(); } 
+                	if (!includeHigher) { 
+                		// Remove comments about filling in higher taxa if they aren't included in the output
+                		if (header.equals(SpecimenRecord.SciName_Comment_Label)) { 
+                			if (output!=null) { 
+                				output = output.replaceAll(SciNameServiceParent.FILL_IN_HIGHER_REGEX, "");
+                			}
+                		}
+                	}
                     csvPrinter.print(output);
                 }
                 csvPrinter.println();
@@ -151,7 +158,7 @@ public class CSVWriter extends UntypedActor {
            result.put(SpecimenRecord.dwc_class, "class");
            result.put(SpecimenRecord.dwc_order, "order");
            result.put(SpecimenRecord.dwc_family, "family");
-        }
+        } 
         result.put(SpecimenRecord.SciName_Status_Label, "status");
         result.put(SpecimenRecord.Original_SciName_Label, "sciNameWas");
         result.put(SpecimenRecord.Original_Authorship_Label, "sciNameAuthorshipWas");
