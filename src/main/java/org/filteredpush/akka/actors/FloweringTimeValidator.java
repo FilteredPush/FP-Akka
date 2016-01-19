@@ -178,6 +178,8 @@ public class FloweringTimeValidator extends UntypedActor {
 
                     String country = inputSpecimenRecord.get("country");
                     String kingdom = inputSpecimenRecord.get("kingdom");
+                    String latitude = inputSpecimenRecord.get("decimalLatitude");
+                    String longitude = inputSpecimenRecord.get("decimalLongitude");
                     
                     Vector<String> floweringMonthVector = parseReproductiveCondition(reproductiveCondtion);
 
@@ -185,7 +187,7 @@ public class FloweringTimeValidator extends UntypedActor {
                     // floweringTimeValidationService.validateFloweringTime(scientificName,floweringMonthVector);
                     // TODO: obtain data and run against serivice
                    
-                    floweringTimeValidationService.validateFloweringTime(scientificName, eventDate, reproductiveCondtion, country, kingdom);
+                    floweringTimeValidationService.validateFloweringTime(scientificName, eventDate, reproductiveCondtion, country, kingdom, latitude, longitude);
 
                     //construct the reproductive condition and construct curation comment
                     SpecimenRecord cleanedSpecimenRecord = null;
