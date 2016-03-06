@@ -162,7 +162,6 @@ public class BasisOfRecordValidator extends UntypedActor {
                 basisOfRecordValidationService.validateString(basisOfRecord);
                 //System.err.println("servicesend#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
 
-                CurationCommentType curationComment = null;
                 CurationStatus curationStatus = basisOfRecordValidationService.getCurationStatus();
 
                 //System.out.println("curationStatus = " + curationStatus);
@@ -180,7 +179,7 @@ public class BasisOfRecordValidator extends UntypedActor {
                     }
                 }
 
-                curationComment = CurationComment.construct(curationStatus, basisOfRecordValidationService.getComment(), basisOfRecordValidationService.getServiceName());
+                CurationCommentType curationComment = CurationComment.construct(curationStatus, basisOfRecordValidationService.getComment(), basisOfRecordValidationService.getServiceName());
                 constructOutput(inputSpecimenRecord, curationComment);
                 /*
                 for (List l : basisOfRecordValidationService.getLog()) {
@@ -207,7 +206,7 @@ public class BasisOfRecordValidator extends UntypedActor {
                 result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
             }
             //System.err.println("dateend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
-            listener.tell(new TokenWithProv<SpecimenRecord>(result, getClass().getSimpleName(), invoc), getContext().parent());
+            listener.tell(new TokenWithProv<SpecimenRecord>(result, getClass().getName(), invoc), getContext().parent());
         }
 
 
