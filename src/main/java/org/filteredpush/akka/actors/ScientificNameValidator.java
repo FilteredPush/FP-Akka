@@ -1,6 +1,7 @@
 package org.filteredpush.akka.actors;
 
 import akka.actor.*;
+import akka.japi.Creator;
 import edu.harvard.mcz.nametools.AuthorNameComparator;
 import edu.harvard.mcz.nametools.ICNafpAuthorNameComparator;
 import edu.harvard.mcz.nametools.NameComparison;
@@ -45,9 +46,9 @@ public class ScientificNameValidator extends UntypedActor {
         this.service = service;
         this.useCache = useCache;
         this.insertLSID = insertGUID;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+        workerRouter = this.getContext().actorOf(Props.create(new Creator<ScientificNameValidatorInvocation>() {
             @Override
-            public Actor create() throws Exception {
+            public ScientificNameValidatorInvocation create() throws Exception {
                 return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
             }
         }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
@@ -69,9 +70,9 @@ public class ScientificNameValidator extends UntypedActor {
         this.service = service;
         this.useCache = useCache;
         this.insertLSID = insertGUID;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+        workerRouter = this.getContext().actorOf(Props.create(new Creator<ScientificNameValidatorInvocation>() {
             @Override
-            public Actor create() throws Exception {
+            public ScientificNameValidatorInvocation create() throws Exception {
                 return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
             }
         }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");

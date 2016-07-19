@@ -133,53 +133,22 @@ public class CSVWorkflow implements AkkaWorkflow{
         final ActorRef scinValidator;
 
         if(!sciNameOnly){
-            final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new MongoSummaryWriter(outputFilename);
-                }
-            }), "JsonWriter");
+            final ActorRef writer = system.actorOf(Props.create(MongoSummaryWriter.class, outputFilename), "JsonWriter");
 
-            final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer);
-                }
-            }), "geoValidator");
+            final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class, "org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer), "geoValidator");
 
+            final ActorRef dateValidator = system.actorOf(Props.create(InternalDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
 
-            final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
-                }
-            }), "dateValidator");
-
-            scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new NewScientificNameValidator(true,true, service, taxonomicMode, dateValidator);
-                }
-            }), "scinValidator");
+            scinValidator = system.actorOf(Props.create(NewScientificNameValidator.class, true,true, service, taxonomicMode, dateValidator), "scinValidator");
 
         }else{
         	System.out.println("Validating scientific names only, writing to csv.");
-            final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new CSVWriter(outputFilename, true, includeHigher);
-                }
-            }), "CSVWriter");
+            final ActorRef writer = system.actorOf(Props.create(CSVWriter.class, outputFilename, true, includeHigher), "CSVWriter");
 
-            scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new NewScientificNameValidator(true,true, service, false, writer);
-                }
-            }), "scinValidator");
+            scinValidator = system.actorOf(Props.create(NewScientificNameValidator.class, true,true, service, false, writer), "scinValidator");
         }
 
-
-
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new CSVReader(inputFilename, scinValidator, recordLimit);
-            }
-        }), "reader");
+        final ActorRef reader = system.actorOf(Props.create(CSVReader.class, inputFilename, scinValidator, recordLimit), "reader");
 
         
         scinValidator.tell(new SetUpstreamListener(), reader);

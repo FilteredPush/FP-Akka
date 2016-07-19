@@ -39,12 +39,7 @@ public class SciNameSubWorkflow extends UntypedActor {
 
     public SciNameSubWorkflow(final String serviceSwitch, final boolean writeToFile, final ActorRef listener) {
         this.listener = listener;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
-            @Override
-            public Actor create() throws Exception {
-                return new SciNameWorkflowInvocation(serviceSwitch, writeToFile, listener);
-            }
-        }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
+        workerRouter = this.getContext().actorOf(Props.create(SciNameWorkflowInvocation.class, serviceSwitch, writeToFile, listener).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
@@ -154,11 +149,7 @@ public class SciNameSubWorkflow extends UntypedActor {
 
             */
 
-            final ActorRef nr = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new NameReconciliation(listener);
-                }
-            }), "NameReconciliation");
+            final ActorRef nr = system.actorOf(Props.create(NameReconciliation.class, listener), "NameReconciliation");
 
             /*
             final ActorRef me1 = system.actorOf(new Props(new UntypedActorFactory() {
@@ -168,11 +159,7 @@ public class SciNameSubWorkflow extends UntypedActor {
             }), "MongoDBWriter");
              */
 
-            final ActorRef cni = system.actorOf(new Props(new UntypedActorFactory() {
-                public UntypedActor create() {
-                    return new checkNameInconsistency(nr);
-                }
-            }), "checkNameInconsistency");
+            final ActorRef cni = system.actorOf(Props.create(checkNameInconsistency.class,nr), "checkNameInconsistency");
 
             starter = cni;
 

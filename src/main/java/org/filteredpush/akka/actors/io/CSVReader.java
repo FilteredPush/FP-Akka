@@ -270,7 +270,6 @@ public class CSVReader extends UntypedActor {
         System.out.println("Read a total of " + cValidRecords + " records.");
         System.out.println("Stopped Reader, processing remaining records.");
         //System.out.println(System.currentTimeMillis() - start);
-        super.postStop();
     }
 
 }

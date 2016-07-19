@@ -238,7 +238,6 @@ public class MongoDBReader extends UntypedActor {
         System.out.println("Read " + cValidRecords + " records");
         System.out.println("Stopped MongoDB Reader");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
-        super.postStop();
     }
         
 }

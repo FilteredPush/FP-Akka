@@ -274,8 +274,6 @@ public class MongoSummaryWriter extends UntypedActor {
         }
         System.out.println("Wrote out " + validCount + " records");
         getContext().system().shutdown();
-
-        super.postStop();
     }
 
 

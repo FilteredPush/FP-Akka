@@ -18,6 +18,7 @@
 package org.filteredpush.akka.workflows;
 
 
+import kamon.Kamon;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
@@ -45,8 +46,10 @@ public class WorkflowStarter{
     private final String SCI_NAME_VALIDATOR_ONLY_PROPERTY = "analysis.sciNameValidatorOnly";
 
     public static void main(String[] args) {
+        Kamon.start();
         WorkflowStarter ws = new WorkflowStarter();
         ws.execute(args);
+        Kamon.shutdown();
     }
 
 

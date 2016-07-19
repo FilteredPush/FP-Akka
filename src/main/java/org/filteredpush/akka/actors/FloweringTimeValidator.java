@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import akka.actor.*;
 
+import akka.japi.Creator;
 import org.filteredpush.kuration.interfaces.IFloweringTimeValidationService;
 import org.filteredpush.kuration.util.*;
 
@@ -37,9 +38,9 @@ public class FloweringTimeValidator extends UntypedActor {
         this.listener = listener;
         this.service = service;
         this.useCache = useCache;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+        workerRouter = this.getContext().actorOf(Props.create(new Creator<FloweringTimeValidatorInvocation>() {
             @Override
-            public Actor create() throws Exception {
+            public FloweringTimeValidatorInvocation create() throws Exception {
                 return new FloweringTimeValidatorInvocation(service, useCache, listener);
             }
         }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");

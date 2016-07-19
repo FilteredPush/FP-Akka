@@ -139,7 +139,6 @@ public class IDigBioReader extends UntypedActor {
         System.out.println("Read " + cValidRecords + " records");
         System.out.println("Stopped iDigBio Reader");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
-        super.postStop();
     }
 }
 

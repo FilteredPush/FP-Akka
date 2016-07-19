@@ -54,6 +54,5 @@ public class TextDisplay extends UntypedActor {
         //System.out.println("Stopped Display");
         System.out.println("Wrote " + cRecords + " records.");
         getContext().system().shutdown();
-        super.postStop();
     }
 }
