@@ -140,7 +140,6 @@ public class CSVWriter extends UntypedActor {
         	log.error(e.getMessage(),e);
 		}
         getContext().system().shutdown();
-        super.postStop();
     }
 
     public Map<String, String> constructTaxonOnlyLabels(){

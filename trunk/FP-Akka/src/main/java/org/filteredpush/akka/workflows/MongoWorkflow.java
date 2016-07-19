@@ -145,11 +145,7 @@ public class MongoWorkflow implements AkkaWorkflow {
          * @in passThroughRecords
          * @out outputFile @uri {host}{db}{collectionOut}
          */
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoSummaryWriter(host,db,collectionOut,null);
-            }
-        }), "MongoDBWriter");
+        final ActorRef writer = system.actorOf(Props.create(MongoSummaryWriter.class,host,db,collectionOut,null), "MongoDBWriter");
         /* @end MongoSummaryWriter */
         
         /* @begin PullRequestor
@@ -157,11 +153,7 @@ public class MongoWorkflow implements AkkaWorkflow {
          * @out passThroughRecords
          * @out loadMore
          */
-        final ActorRef pullTap = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new PullRequestor(writer);
-            }
-        }), "pullRequestor");
+        final ActorRef pullTap = system.actorOf(Props.create(PullRequestor.class, writer), "pullRequestor");
         /* @end PullRequestor */
                 
 
@@ -169,33 +161,21 @@ public class MongoWorkflow implements AkkaWorkflow {
          * @in dateValidatedRecords
          * @out geoRefValidatedRecords
          */
-        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,certainty, pullTap);
-            }
-        }), "geoValidator");
+        final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class, "org.filteredpush.kuration.services.GeoLocate3",false,certainty, pullTap), "geoValidator");
         /* @end GEORefValidator */
         
         /* @begin InternalDateValidator
          * @in borValidatedRecords
          * @out dateValidatedRecords
          */
-        final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
-            }
-        }), "dateValidator");
+        final ActorRef dateValidator = system.actorOf(Props.create(InternalDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
         /* @end InternalDateValidator */
         
         /* @begin BasisOfRecordValidator
          * @in nameValidatedRecords
          * @out borValidatedRecords
          */
-        final ActorRef basisOfRecordValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new BasisOfRecordValidator("org.filteredpush.kuration.services.BasisOfRecordValidationService", dateValidator);
-            }
-        }), "basisOfRecordValidator");
+        final ActorRef basisOfRecordValidator = system.actorOf(Props.create(BasisOfRecordValidator.class, "org.filteredpush.kuration.services.BasisOfRecordValidationService", dateValidator), "basisOfRecordValidator");
         /* @end BasisOfRecordValidator */        
         
         /* @begin ScientificNameValidator
@@ -203,17 +183,16 @@ public class MongoWorkflow implements AkkaWorkflow {
          * @in inputSpecimenRecords
          * @out nameValidatedRecords
          */
-        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-            	if (service.toUpperCase().equals("GLOBALNAMES")) { 
-                    return new SciNameSubWorkflow("-t",false,basisOfRecordValidator);
-            	} else { 
-            		boolean useCache = true;
-            		boolean insertGuid = true;
-                    return new NewScientificNameValidator(useCache,insertGuid,service, taxonomicMode, basisOfRecordValidator);
-            	}
-            }
-        }), "scinValidator");
+
+        Props props;
+        if (service.toUpperCase().equals("GLOBALNAMES")) {
+            props = Props.create(SciNameSubWorkflow.class,"-t",false,basisOfRecordValidator);
+        } else {
+            boolean useCache = true;
+            boolean insertGuid = true;
+            props = Props.create(NewScientificNameValidator.class,useCache,insertGuid,service, taxonomicMode, basisOfRecordValidator);
+        }
+        final ActorRef scinValidator = system.actorOf(props, "scinValidator");
         /* @end ScientificNameValidator */
 
         /* @begin MongoDbReader 
@@ -221,11 +200,7 @@ public class MongoWorkflow implements AkkaWorkflow {
          * @in inputFile @uri {host}{db}{collectionIn}{query}
          * @out inputSpecimenRecords
          */
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoDBReader(host,db,collectionIn,query,scinValidator,recordLimit);
-            }
-        }), "reader");
+        final ActorRef reader = system.actorOf(Props.create(MongoDBReader.class,host,db,collectionIn,query,scinValidator,recordLimit), "reader");
         /* @end MongoDbReader */
 
 

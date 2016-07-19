@@ -150,7 +150,6 @@ public class MongoDBWriter extends UntypedActor {
         }
         */
         getContext().system().shutdown();
-        super.postStop();
     }
 
     private Object convertObject(Object o) {

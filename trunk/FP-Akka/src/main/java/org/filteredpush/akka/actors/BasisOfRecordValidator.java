@@ -1,7 +1,9 @@
 package org.filteredpush.akka.actors;
 
 import akka.actor.*;
+import akka.japi.Creator;
 import akka.routing.Broadcast;
+import akka.routing.RoundRobinPool;
 import akka.routing.SmallestMailboxRouter;
 
 import org.filteredpush.kuration.interfaces.IInternalDateValidationService;
@@ -33,21 +35,18 @@ public class BasisOfRecordValidator extends UntypedActor {
     public BasisOfRecordValidator(final String service, final ActorRef listener) {
 
         this.listener = listener;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
-            @Override
-            public Actor create() throws Exception {
-                return new BasisOfRecordValidatorInvocation(service,  listener);
-            }
-        }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
+        workerRouter = getContext().actorOf(new RoundRobinPool(6).props(BasisOfRecordValidatorInvocation.props(service, listener)),
+                "workerRouter");
+
         getContext().watch(workerRouter);
     }
 
     public BasisOfRecordValidator(final String service, int numIns, final ActorRef listener) {
 
         this.listener = listener;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+        workerRouter = this.getContext().actorOf(Props.create(new Creator<BasisOfRecordValidatorInvocation>() {
             @Override
-            public Actor create() throws Exception {
+            public BasisOfRecordValidatorInvocation create() throws Exception {
                 return new BasisOfRecordValidatorInvocation(service,  listener);
             }
         }).withRouter(new SmallestMailboxRouter(numIns)), "workerRouter");
@@ -93,94 +92,106 @@ public class BasisOfRecordValidator extends UntypedActor {
         System.out.println("Stopped BasisOfRecordValidator");
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
+}
 
-    public class BasisOfRecordValidatorInvocation extends UntypedActor {
-        private final ActorRef listener;
-        private String singleServiceClassQN;
+class BasisOfRecordValidatorInvocation extends UntypedActor {
+    private final ActorRef listener;
+    private String singleServiceClassQN;
 
-        private String basisOfRecordLabel;
+    private String basisOfRecordLabel;
 
-        //for invocation id
-        private final Random rand;
-        private int invoc;
+    //for invocation id
+    private final Random rand;
+    private int invoc;
 
-        IStringValidationService basisOfRecordValidationService = null;
-        private LinkedList<SpecimenRecord> inputObjList = new LinkedList<SpecimenRecord>();
-        private LinkedHashMap<String, TreeSet<SpecimenRecord>> inputDataMap = new LinkedHashMap<String, TreeSet<SpecimenRecord>>();        
-        
-        public BasisOfRecordValidatorInvocation(String singleServiceClassQN, ActorRef listener) {
-            this.listener = listener;
-            this.rand = new Random();
+    IStringValidationService basisOfRecordValidationService = null;
+    private LinkedList<SpecimenRecord> inputObjList = new LinkedList<SpecimenRecord>();
+    private LinkedHashMap<String, TreeSet<SpecimenRecord>> inputDataMap = new LinkedHashMap<String, TreeSet<SpecimenRecord>>();
 
-            try {
-                //initialize required label
-                SpecimenRecordTypeConf speicmenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
+    public BasisOfRecordValidatorInvocation(String singleServiceClassQN, ActorRef listener) {
+        this.listener = listener;
+        this.rand = new Random();
 
-                basisOfRecordLabel = speicmenRecordTypeConf.getLabel("BasisOfRecord");
-                if (basisOfRecordLabel == null) {
-                    throw new CurationException(getName() + " failed since the basisOfRecord label of the SpecimenRecordType is not set.");
-                }
+        try {
+            //initialize required label
+            SpecimenRecordTypeConf speicmenRecordTypeConf = SpecimenRecordTypeConf.getInstance();
 
-                //resolve service
-                basisOfRecordValidationService = (IStringValidationService) new BasisOfRecordValidationService();
-
-            } catch (CurationException e) {
-                e.printStackTrace();
+            basisOfRecordLabel = speicmenRecordTypeConf.getLabel("BasisOfRecord");
+            if (basisOfRecordLabel == null) {
+                throw new CurationException(getName() + " failed since the basisOfRecord label of the SpecimenRecordType is not set.");
             }
 
-            // handleScopeStart
-            inputObjList.clear();
-            inputDataMap.clear();
+            //resolve service
+            basisOfRecordValidationService = (IStringValidationService) new BasisOfRecordValidationService();
 
-            //workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
-            //    @Override
-            //    public Actor create() throws Exception {
-            //        return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
-            //    }
-            //}).withRouter(new RoundRobinRouter(6)), "workerRouter");
-            //getContext().watch(workerRouter);
+        } catch (CurationException e) {
+            e.printStackTrace();
         }
 
-        public String getName() {
-            return "BasisOfRecordValidator";
-        }
+        // handleScopeStart
+        inputObjList.clear();
+        inputDataMap.clear();
 
-        @Override
-        public void onReceive(Object message) throws Exception {
-            invoc = rand.nextInt();
+        //workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
+        //    @Override
+        //    public Actor create() throws Exception {
+        //        return new ScientificNameValidatorInvocation(service, useCache, insertLSID, listener);
+        //    }
+        //}).withRouter(new RoundRobinRouter(6)), "workerRouter");
+        //getContext().watch(workerRouter);
+    }
 
-            //for date validation for each record
-            if (message instanceof TokenWithProv) {
-                //if(dataLabelStr.equals(getCurrentToken().getLabel().toString())){
+    public static Props props(final String service, final ActorRef listener) {
+        return Props.create(new Creator<BasisOfRecordValidatorInvocation>() {
+            private static final long serialVersionUID = 1L;
 
-                SpecimenRecord inputSpecimenRecord = (SpecimenRecord) ((Token) message).getData();
+            @Override
+            public BasisOfRecordValidatorInvocation create() throws Exception {
+                return new BasisOfRecordValidatorInvocation(service, listener);
+            }
+        });
+    }
 
-                //System.err.println("datestart#"+inputSpecimenRecord.get("oaiid").toString() + "#" + System.currentTimeMillis());
+    public String getName() {
+        return "BasisOfRecordValidator";
+    }
 
-                String basisOfRecord = inputSpecimenRecord.get(basisOfRecordLabel);
-                //System.err.println("servicestart#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
-                basisOfRecordValidationService.validateString(basisOfRecord);
-                //System.err.println("servicesend#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
+    @Override
+    public void onReceive(Object message) throws Exception {
+        invoc = rand.nextInt();
 
-                CurationStatus curationStatus = basisOfRecordValidationService.getCurationStatus();
+        //for date validation for each record
+        if (message instanceof TokenWithProv) {
+            //if(dataLabelStr.equals(getCurrentToken().getLabel().toString())){
 
-                //System.out.println("curationStatus = " + curationStatus);
-                //System.out.println("basisOfRecordValidationService.getComment() = " + basisOfRecordValidationService.getComment());
-                //System.out.println("basisOfRecordValidationService.getServiceName() = " + basisOfRecordValidationService.getServiceName());
+            SpecimenRecord inputSpecimenRecord = (SpecimenRecord) ((Token) message).getData();
 
-                if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN) {
-                    //replace the old value if curated
-                    //inputSpecimenRecord.put("eventDate", String.valueOf(basisOfRecordValidationService.getCorrectedDate()));
-                    String originalBasis = inputSpecimenRecord.get(SpecimenRecord.dwc_basisOfRecord);
-                    String newBasis = basisOfRecordValidationService.getCorrectedValue();
-                    if(originalBasis != null && originalBasis.length() != 0 &&  !originalBasis.equals(newBasis)){
-                        inputSpecimenRecord.put(SpecimenRecord.Original_BasisOfRecord_Label, originalBasis);
-                        inputSpecimenRecord.put(SpecimenRecord.dwc_basisOfRecord, newBasis);
-                    }
+            //System.err.println("datestart#"+inputSpecimenRecord.get("oaiid").toString() + "#" + System.currentTimeMillis());
+
+            String basisOfRecord = inputSpecimenRecord.get(basisOfRecordLabel);
+            //System.err.println("servicestart#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
+            basisOfRecordValidationService.validateString(basisOfRecord);
+            //System.err.println("servicesend#"+ inputSpecimenRecord.get("oaiid").toString() + "#" + ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime()/1000);
+
+            CurationStatus curationStatus = basisOfRecordValidationService.getCurationStatus();
+
+            //System.out.println("curationStatus = " + curationStatus);
+            //System.out.println("basisOfRecordValidationService.getComment() = " + basisOfRecordValidationService.getComment());
+            //System.out.println("basisOfRecordValidationService.getServiceName() = " + basisOfRecordValidationService.getServiceName());
+
+            if (curationStatus == CurationComment.CURATED || curationStatus == CurationComment.FILLED_IN) {
+                //replace the old value if curated
+                //inputSpecimenRecord.put("eventDate", String.valueOf(basisOfRecordValidationService.getCorrectedDate()));
+                String originalBasis = inputSpecimenRecord.get(SpecimenRecord.dwc_basisOfRecord);
+                String newBasis = basisOfRecordValidationService.getCorrectedValue();
+                if(originalBasis != null && originalBasis.length() != 0 &&  !originalBasis.equals(newBasis)){
+                    inputSpecimenRecord.put(SpecimenRecord.Original_BasisOfRecord_Label, originalBasis);
+                    inputSpecimenRecord.put(SpecimenRecord.dwc_basisOfRecord, newBasis);
                 }
+            }
 
-                CurationCommentType curationComment = CurationComment.construct(curationStatus, basisOfRecordValidationService.getComment(), basisOfRecordValidationService.getServiceName());
-                constructOutput(inputSpecimenRecord, curationComment);
+            CurationCommentType curationComment = CurationComment.construct(curationStatus, basisOfRecordValidationService.getComment(), basisOfRecordValidationService.getServiceName());
+            constructOutput(inputSpecimenRecord, curationComment);
                 /*
                 for (List l : basisOfRecordValidationService.getLog()) {
                     Prov.log().printf("service\t%s\t%d\t%s\t%d\t%d\t%s\t%s\n", this.getClass().getSimpleName(), invoc, (String)l.get(0), (Long)l.get(1), (Long)l.get(2),l.get(3),curationStatus.toString());
@@ -190,25 +201,24 @@ public class BasisOfRecordValidator extends UntypedActor {
                 //if (((Terminated) message).getActor().equals(workerRouter))
                     this.getContext().stop(getSelf());
                     */
-            } else {
-                unhandled(message);
-            }
+        } else {
+            unhandled(message);
         }
-
-        private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
-            if (comment != null) {
-                result.put(SpecimenRecord.borRef_Comment_Label, comment.getDetails());
-                result.put(SpecimenRecord.borRef_Status_Label, comment.getStatus());
-                result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
-            } else {
-                result.put(SpecimenRecord.borRef_Comment_Label, "None");
-                result.put(SpecimenRecord.borRef_Status_Label, CurationComment.CORRECT.toString());
-                result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
-            }
-            //System.err.println("dateend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
-            listener.tell(new TokenWithProv<SpecimenRecord>(result, getClass().getName(), invoc), getContext().parent());
-        }
-
-
     }
+
+    private void constructOutput(SpecimenRecord result, CurationCommentType comment) {
+        if (comment != null) {
+            result.put(SpecimenRecord.borRef_Comment_Label, comment.getDetails());
+            result.put(SpecimenRecord.borRef_Status_Label, comment.getStatus());
+            result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
+        } else {
+            result.put(SpecimenRecord.borRef_Comment_Label, "None");
+            result.put(SpecimenRecord.borRef_Status_Label, CurationComment.CORRECT.toString());
+            result.put(SpecimenRecord.borRef_Source_Label, comment.getSource());
+        }
+        //System.err.println("dateend#"+result.get("oaiid").toString() + "#" + System.currentTimeMillis());
+        listener.tell(new TokenWithProv<SpecimenRecord>(result, getClass().getName(), invoc), getContext().parent());
+    }
+
+
 }

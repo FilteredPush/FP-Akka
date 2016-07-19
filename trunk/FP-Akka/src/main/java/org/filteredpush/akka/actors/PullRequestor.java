@@ -9,7 +9,9 @@ import akka.actor.Props;
 import akka.actor.Terminated;
 import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
+import akka.japi.Creator;
 import akka.routing.Broadcast;
+import akka.routing.RoundRobinPool;
 import akka.routing.SmallestMailboxRouter;
 
 import org.apache.commons.logging.Log;
@@ -73,12 +75,10 @@ public class PullRequestor extends UntypedActor {
     public PullRequestor(final int instances, final ActorRef listener ) {
         this.upstreamListener = null;
         this.listener = listener;
-        workerRouter = this.getContext().actorOf(new Props(new UntypedActorFactory() {
-            @Override
-            public Actor create() throws Exception {
-                return new PullRequestorInvocation(listener);
-            }
-        }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
+
+        workerRouter = getContext().actorOf(new RoundRobinPool(instances).props(PullRequestorInvocation.props(listener)),
+                "workerRouter");
+
         getContext().watch(workerRouter);
     }
 
@@ -87,7 +87,12 @@ public class PullRequestor extends UntypedActor {
     		this.setUpstreamListener(getSender());
     	} else if (message instanceof Token) {
             if (!getSender().equals(getSelf())) {
-                workerRouter.tell(message, getSelf());
+                workerRouter.tell(message, upstreamListener);
+
+                msgCount++;
+                if(msgCount % reportSize == 0) {
+                    System.out.println("Messages to PullRequestor: " + msgCount);
+                }
             } else {
                 listener.tell(message, getSelf());
             }
@@ -113,59 +118,66 @@ public class PullRequestor extends UntypedActor {
         listener.tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
-    public class PullRequestorInvocation extends UntypedActor {
 
-        private String serviceClassPath = null;
+    /**
+     * @return the upstreamListener
+     */
+    public ActorRef getUpstreamListener() {
+        return upstreamListener;
+    }
 
-        private final Random rand;
-        private int invoc;
-        private final ActorRef listener;
+    /**
+     * @param upstreamListener the upstreamListener to set
+     */
+    public void setUpstreamListener(ActorRef upstreamListener) {
+        this.upstreamListener = upstreamListener;
+        System.out.println(this.getClass().getSimpleName() + " will make pull requests to " + upstreamListener.path());
+    }
+}
 
-        public PullRequestorInvocation(ActorRef listener) {
-            this.listener = listener;
-            this.rand = new Random();
-        }
 
-        public void onReceive(Object message) {
-            //System.out.println("ScinRefWorker message: "+ message+toString());
-        	
-        	logger.debug(message.toString());
-        	
-            long start = System.currentTimeMillis();
-            invoc = rand.nextInt();
+class PullRequestorInvocation extends UntypedActor {
+    private static final Log logger = LogFactory.getLog(PullRequestor.class);
+    private String serviceClassPath = null;
 
-            if (message instanceof Token) {
-            	// Tell the upstream listener to load more data.
-                if (upstreamListener!=null) { 
-                	upstreamListener.tell(new ReadMore(), getSelf());
-                }
-                // Pass the message on to the downstream listener.
-                listener.tell(message,getContext().parent());
+    private final Random rand;
+    private int invoc;
+    private final ActorRef listener;
+
+    public PullRequestorInvocation(ActorRef listener) {
+        this.listener = listener;
+        this.rand = new Random();
+    }
+
+    public static Props props(final ActorRef listener) {
+        return Props.create(new Creator<PullRequestorInvocation>() {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public PullRequestorInvocation create() throws Exception {
+                return new PullRequestorInvocation(listener);
             }
-            
-            msgCount++;
-            if(msgCount % reportSize == 0) { 
-                 System.out.println("Messages to PullRequestor: " + msgCount);
-            }
-        }
+        });
+    }
 
-        public String getName() {
-            return "PullRequestor";
+    public void onReceive(Object message) {
+        //System.out.println("ScinRefWorker message: "+ message+toString());
+
+        logger.debug(message.toString());
+
+        long start = System.currentTimeMillis();
+        invoc = rand.nextInt();
+
+        if (message instanceof Token) {
+            // Tell the upstream listener to load more data.
+            sender().tell(new ReadMore(), getSelf());
+            // Pass the message on to the downstream listener.
+            listener.tell(message,getContext().parent());
         }
     }
 
-	/**
-	 * @return the upstreamListener
-	 */
-	public ActorRef getUpstreamListener() {
-		return upstreamListener;
-	}
-
-	/**
-	 * @param upstreamListener the upstreamListener to set
-	 */
-	public void setUpstreamListener(ActorRef upstreamListener) {
-		this.upstreamListener = upstreamListener;
-		System.out.println(this.getClass().getSimpleName() + " will make pull requests to " + upstreamListener.path());
-	}
+    public String getName() {
+        return "PullRequestor";
+    }
 }
+

@@ -133,44 +133,28 @@ public class jettyStarter  {
         // Create an Akka system
         final  ActorSystem system = ActorSystem.create("FpSystem");
 
-        final ActorRef writer = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new MongoSummaryWriter(outputFilename);
-            }
-        }), "MongoDBWriter");
+        final ActorRef writer = system.actorOf(Props.create(MongoSummaryWriter.class, outputFilename), "MongoDBWriter");
         /* @end MongoSummaryWriter */
 
         /* @begin GEORefValidator
          * @in dateValidatedRecords
          * @out geoRefValidatedRecords
          */
-        final ActorRef geoValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new GEORefValidator("org.filteredpush.kuration.services.GeoLocate3",false,200.0, writer);
-            }
-        }), "geoValidator");
+        final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class,"org.filteredpush.kuration.services.GeoLocate3",false,200.0, writer), "geoValidator");
         /* @end GEORefValidator */
 
         /* @begin InternalDateValidator
          * @in borValidatedRecords
          * @out dateValidatedRecords
          */
-        final ActorRef dateValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new InternalDateValidator("org.filteredpush.kuration.services.InternalDateValidationService", geoValidator);
-            }
-        }), "dateValidator");
+        final ActorRef dateValidator = system.actorOf(Props.create(InternalDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
         /* @end InternalDateValidator */
 
         /* @begin BasisOfRecordValidator
          * @in nameValidatedRecords
          * @out borValidatedRecords
          */
-        final ActorRef basisOfRecordValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new BasisOfRecordValidator("org.filteredpush.kuration.services.BasisOfRecordValidationService", geoValidator);
-            }
-        }), "basisOfRecordValidator");
+        final ActorRef basisOfRecordValidator = system.actorOf(Props.create(BasisOfRecordValidator.class, "org.filteredpush.kuration.services.BasisOfRecordValidationService", geoValidator), "basisOfRecordValidator");
         /* @end BasisOfRecordValidator */
 
         /* @begin ScientificNameValidator
@@ -178,37 +162,29 @@ public class jettyStarter  {
          * @in inputSpecimenRecords
          * @out nameValidatedRecords
          */
-        final ActorRef scinValidator = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                // TODO: Need to see if this sort of picking inside create() will work
-                // to allow choice between CSV or MongoDB input from command line parameters
-                // letting DwCaWorkflow and MongoWorkflow be collapsed into a single workflow.
-                if (authority.toUpperCase().equals("GLOBALNAMES")) {
-                    return new SciNameSubWorkflow("-t",false,basisOfRecordValidator);
-                } else {
-                    boolean useCache = true;
-                    boolean insertGuid = true;
-                    return new NewScientificNameValidator(useCache,insertGuid,authority, taxMode, basisOfRecordValidator);
-                }
-            }
-        }), "scinValidator");
+        final Props props;
+        if (authority.toUpperCase().equals("GLOBALNAMES")) {
+            props = Props.create(SciNameSubWorkflow.class, "-t",false,basisOfRecordValidator);
+        } else {
+            boolean useCache = true;
+            boolean insertGuid = true;
+            props = Props.create(NewScientificNameValidator.class,useCache,insertGuid,authority, taxMode, basisOfRecordValidator);
+        }
+
+        final ActorRef scinValidator = system.actorOf(props, "scinValidator");
 
 
 
         /* @begin IDigBioReader
          * @out inputSpecimenRecords
          */
-        final ActorRef reader = system.actorOf(new Props(new UntypedActorFactory() {
-            public UntypedActor create() {
-                return new IDigBioReader(Integer.parseInt(limit), rq, scinValidator);
-            }
-        }), "reader");
+        final ActorRef reader = system.actorOf(Props.create(IDigBioReader.class, Integer.parseInt(limit), rq, scinValidator), "reader");
         /* @end IDigBioReader */
 
 
         // start the calculation
         System.err.println("systemstart#"+" " + "#" + System.currentTimeMillis());
-        reader.tell(new Curate());
+        reader.tell(new Curate(), null);
         //system.shutdown();
         system.awaitTermination();
         long stoptime = System.currentTimeMillis();
