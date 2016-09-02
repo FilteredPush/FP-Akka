@@ -56,12 +56,12 @@ import org.filteredpush.akka.data.TokenWithProv;
  * @author fancy
  *
  */
-public class DateValidator extends UntypedActor {
+public class CollectorPlaceDateValidator extends UntypedActor {
     private final ActorRef listener;
 
     //final ActorRef workerRouter;
 
-    public DateValidator(String serviceClassQN, String dataLabelStr,
+    public CollectorPlaceDateValidator(String serviceClassQN, String dataLabelStr,
                                 String resultCollectionLabelStr, String normalDataCollectionLabelStr,
                                 String outlierCommentLabelStr, String outlierCollectionLabelStr,
                                 String outlierDataLabelStr, String normalDataLabelStr,
@@ -212,7 +212,7 @@ public class DateValidator extends UntypedActor {
 
     @Override
     public void postStop() {
-        System.out.println("Stopped DateValidator");
+        System.out.println("Stopped CollectorPlaceDateValidator");
         getSelf().tell(new Broadcast(PoisonPill.getInstance()), getSelf());
     }
 
