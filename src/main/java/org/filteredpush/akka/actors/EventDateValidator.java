@@ -263,6 +263,7 @@ class InternalEventDateValidatorInvocation extends UntypedActor {
 				}
 			}                
 
+			// Curated follows (and trumps) filled in here where only one curation status is used.
 			if (curationStatus.equals(CurationComment.CURATED)) {
 				//replace the old value if curated
 				String originalDate = inputSpecimenRecord.get(SpecimenRecord.dwc_eventDate);
