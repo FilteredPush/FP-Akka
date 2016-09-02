@@ -4,7 +4,6 @@ import akka.actor.*;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.RoundRobinPool;
-import akka.routing.SmallestMailboxRouter;
 
 import org.filteredpush.kuration.interfaces.INewScientificNameValidationService;
 import org.filteredpush.kuration.services.sciname.*;

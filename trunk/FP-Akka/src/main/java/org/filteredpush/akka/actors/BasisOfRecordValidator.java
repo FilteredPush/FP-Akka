@@ -4,7 +4,7 @@ import akka.actor.*;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.RoundRobinPool;
-import akka.routing.SmallestMailboxRouter;
+import akka.routing.SmallestMailboxPool;
 
 import org.filteredpush.kuration.interfaces.IInternalDateValidationService;
 import org.filteredpush.kuration.interfaces.IStringValidationService;
@@ -49,7 +49,7 @@ public class BasisOfRecordValidator extends UntypedActor {
             public BasisOfRecordValidatorInvocation create() throws Exception {
                 return new BasisOfRecordValidatorInvocation(service,  listener);
             }
-        }).withRouter(new SmallestMailboxRouter(numIns)), "workerRouter");
+        }).withRouter(new SmallestMailboxPool(numIns)), "workerRouter");
         getContext().watch(workerRouter);
     }
 

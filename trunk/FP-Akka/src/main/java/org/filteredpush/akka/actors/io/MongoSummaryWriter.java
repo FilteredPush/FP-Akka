@@ -160,6 +160,14 @@ public class MongoSummaryWriter extends UntypedActor {
                 actorStatusMap.put("source", record.get("flwtSource"));
                 actorSet.add(actorStatusMap);
             }
+            if (record.get(SpecimenRecord.eventDate_Status_Label) != null) {
+                Map<String, String> actorStatusMap = new HashMap<String, String>();
+                actorStatusMap.put("actor", "EventDateValidator");
+                actorStatusMap.put("status", record.get(SpecimenRecord.eventDate_Status_Label));
+                actorStatusMap.put("comment", record.get(SpecimenRecord.eventDate_Comment_Label));
+                actorStatusMap.put("source", record.get(SpecimenRecord.eventDate_Source_Label));
+                actorSet.add(actorStatusMap);
+            }            
             if (record.get("dateStatus") != null) {
                 Map<String, String> actorStatusMap = new HashMap<String, String>();
                 actorStatusMap.put("actor", "DateValidator");
@@ -183,6 +191,7 @@ public class MongoSummaryWriter extends UntypedActor {
             removeLables.add(SpecimenRecord.SciName_Status_Label);removeLables.add(SpecimenRecord.SciName_Comment_Label);removeLables.add(SpecimenRecord.SciName_Source_Label);
             removeLables.add("flwtStatus");removeLables.add("flwtComment");removeLables.add("flwtSource");
             removeLables.add("dateStatus");removeLables.add("dateComment");removeLables.add("dateSource");
+            removeLables.add(SpecimenRecord.eventDate_Status_Label);removeLables.add(SpecimenRecord.eventDate_Comment_Label);removeLables.add(SpecimenRecord.eventDate_Source_Label);
             removeLables.add("borStatus");removeLables.add("borComment");removeLables.add("borSource");
             for (String label:removeLables){
                 if (record.keySet().contains(label)) record.remove(label);
@@ -476,6 +485,10 @@ public class MongoSummaryWriter extends UntypedActor {
         HashSet<String> dset = new HashSet<String>();
         dset.add(eventDateLabel);
         highlightedLabelsMap.put("DateValidator", dset);
+        
+        HashSet<String> edset = new HashSet<String>();
+        edset.add(eventDateLabel);
+        highlightedLabelsMap.put("EventDateValidator", edset);        
         
         HashSet<String> borset = new HashSet<String>();
         borset.add(basisOfRecordLabel);

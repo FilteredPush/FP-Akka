@@ -29,7 +29,8 @@ import akka.actor.*;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.RoundRobinPool;
-import akka.routing.SmallestMailboxRouter;
+import akka.routing.SmallestMailboxPool;
+
 import org.filteredpush.kuration.interfaces.IInternalDateValidationService;
 import org.filteredpush.kuration.util.*;
 
@@ -49,13 +50,13 @@ import org.filteredpush.akka.data.TokenWithProv;
  * @author fancy
  *
  */
-public class InternalDateValidator extends UntypedActor {
+public class CollectorCollectedDateValidator extends UntypedActor {
     private final ActorRef listener;
     private final String service;
     private final ActorRef workerRouter;
     //todo: use router for multiple instance
 
-    public InternalDateValidator(final String service, final ActorRef listener) {
+    public CollectorCollectedDateValidator(final String service, final ActorRef listener) {
 
         this.listener = listener;
         this.service = service;
@@ -66,7 +67,7 @@ public class InternalDateValidator extends UntypedActor {
         getContext().watch(workerRouter);
     }
 
-    public InternalDateValidator(final String service, int numIns, final ActorRef listener) {
+    public CollectorCollectedDateValidator(final String service, int numIns, final ActorRef listener) {
 
         this.listener = listener;
         this.service = service;
@@ -75,7 +76,7 @@ public class InternalDateValidator extends UntypedActor {
             public InternalDateValidatorInvocation create() throws Exception {
                 return new InternalDateValidatorInvocation(service,  listener);
             }
-        }).withRouter(new SmallestMailboxRouter(numIns)), "workerRouter");
+        }).withRouter(new SmallestMailboxPool(numIns)), "workerRouter");
         getContext().watch(workerRouter);
     }
 

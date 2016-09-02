@@ -28,12 +28,11 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.filteredpush.akka.actors.BasisOfRecordValidator;
 import org.filteredpush.akka.actors.GEORefValidator;
-import org.filteredpush.akka.actors.InternalDateValidator;
+import org.filteredpush.akka.actors.CollectorCollectedDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.io.IDigBioReader;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
 import org.filteredpush.akka.data.Curate;
-import org.filteredpush.akka.data.Prov;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -143,12 +142,12 @@ public class jettyStarter  {
         final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class,"org.filteredpush.kuration.services.GeoLocate3",false,200.0, writer), "geoValidator");
         /* @end GEORefValidator */
 
-        /* @begin InternalDateValidator
+        /* @begin CollectorCollectedDateValidator
          * @in borValidatedRecords
          * @out dateValidatedRecords
          */
-        final ActorRef dateValidator = system.actorOf(Props.create(InternalDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
-        /* @end InternalDateValidator */
+        final ActorRef dateValidator = system.actorOf(Props.create(CollectorCollectedDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
+        /* @end CollectorCollectedDateValidator */
 
         /* @begin BasisOfRecordValidator
          * @in nameValidatedRecords

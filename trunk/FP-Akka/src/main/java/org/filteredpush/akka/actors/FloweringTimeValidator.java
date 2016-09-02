@@ -7,13 +7,13 @@ import java.util.Set;
 import java.util.Vector;
 
 import akka.actor.*;
-
 import akka.japi.Creator;
+
 import org.filteredpush.kuration.interfaces.IFloweringTimeValidationService;
 import org.filteredpush.kuration.util.*;
 
 import akka.routing.Broadcast;
-import akka.routing.SmallestMailboxRouter;
+import akka.routing.SmallestMailboxPool;
 
 import org.filteredpush.akka.data.Prov;
 import org.filteredpush.akka.data.Token;
@@ -43,7 +43,7 @@ public class FloweringTimeValidator extends UntypedActor {
             public FloweringTimeValidatorInvocation create() throws Exception {
                 return new FloweringTimeValidatorInvocation(service, useCache, listener);
             }
-        }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
+        }).withRouter(new SmallestMailboxPool(6)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
