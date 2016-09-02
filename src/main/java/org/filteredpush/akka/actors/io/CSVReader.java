@@ -188,6 +188,10 @@ public class CSVReader extends UntypedActor {
 				e.printStackTrace();
 			}
 		} else if (message instanceof ReadMore) { 
+            if (iterator==null) { 
+			    System.out.println("Error in Parsing CSV file.  Are your headers DarwinCore terms?");
+			    System.out.println("4wrongcValidRecords = " + cValidRecords);
+            } else { 
 			if (iterator.hasNext()) { 
 				try { 
 					readRecord();
@@ -197,6 +201,7 @@ public class CSVReader extends UntypedActor {
 					e.printStackTrace();
 				}
 			}
+            }
 		}
 
         // Check to see if we have reached the limit of number of records to read.
@@ -205,11 +210,16 @@ public class CSVReader extends UntypedActor {
         	readToLimit = true;
         }
 		
-		if ((iterator!=null && !iterator.hasNext()) || readToLimit) { 
-			listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
-			getContext().stop(getSelf());
-			//Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
-		}
+        try {
+		    if ((iterator!=null && !iterator.hasNext()) || readToLimit) { 
+			    listener.tell(new Broadcast(PoisonPill.getInstance()),getSelf());
+  			    getContext().stop(getSelf());
+			    //Prov.log().printf("invocation\t%s\t%d\t%d\t%d\n",this.getClass().getName(),invoc,start,System.currentTimeMillis());
+		    }
+        } catch (Exception e) { 
+			System.out.println("Error in Parsing CSV file.  Is your file a CSV file, and are your headers DarwinCore terms?");
+		    System.out.println("5wrongcValidRecords = " + cValidRecords);
+        }
 		invoc++;
 	}
 

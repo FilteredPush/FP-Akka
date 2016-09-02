@@ -8,11 +8,9 @@ import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.Terminated;
 import akka.actor.UntypedActor;
-import akka.actor.UntypedActorFactory;
 import akka.japi.Creator;
 import akka.routing.Broadcast;
 import akka.routing.RoundRobinPool;
-import akka.routing.SmallestMailboxRouter;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

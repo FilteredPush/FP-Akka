@@ -8,7 +8,6 @@ import org.filteredpush.kuration.services.GeoLocate3;
 import org.filteredpush.kuration.interfaces.IGeoRefValidationService;
 
 import akka.routing.Broadcast;
-import akka.routing.SmallestMailboxRouter;
 
 import org.filteredpush.kuration.util.CountryLookup;
 import org.filteredpush.kuration.util.CurationStatus;

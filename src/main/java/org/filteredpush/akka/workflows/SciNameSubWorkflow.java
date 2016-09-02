@@ -19,7 +19,7 @@ package org.filteredpush.akka.workflows;
 
 import akka.actor.*;
 import akka.routing.Broadcast;
-import akka.routing.SmallestMailboxRouter;
+import akka.routing.SmallestMailboxPool;
 
 import java.util.HashMap;
 
@@ -39,7 +39,7 @@ public class SciNameSubWorkflow extends UntypedActor {
 
     public SciNameSubWorkflow(final String serviceSwitch, final boolean writeToFile, final ActorRef listener) {
         this.listener = listener;
-        workerRouter = this.getContext().actorOf(Props.create(SciNameWorkflowInvocation.class, serviceSwitch, writeToFile, listener).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
+        workerRouter = this.getContext().actorOf(Props.create(SciNameWorkflowInvocation.class, serviceSwitch, writeToFile, listener).withRouter(new SmallestMailboxPool(6)), "workerRouter");
         getContext().watch(workerRouter);
     }
 

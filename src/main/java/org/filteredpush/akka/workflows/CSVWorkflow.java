@@ -21,7 +21,7 @@ package org.filteredpush.akka.workflows;
 import akka.actor.*;
 
 import org.filteredpush.akka.actors.GEORefValidator;
-import org.filteredpush.akka.actors.InternalDateValidator;
+import org.filteredpush.akka.actors.CollectorCollectedDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.io.CSVReader;
 import org.filteredpush.akka.actors.io.CSVWriter;
@@ -137,7 +137,7 @@ public class CSVWorkflow implements AkkaWorkflow{
 
             final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class, "org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer), "geoValidator");
 
-            final ActorRef dateValidator = system.actorOf(Props.create(InternalDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
+            final ActorRef dateValidator = system.actorOf(Props.create(CollectorCollectedDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
 
             scinValidator = system.actorOf(Props.create(NewScientificNameValidator.class, true,true, service, taxonomicMode, dateValidator), "scinValidator");
 

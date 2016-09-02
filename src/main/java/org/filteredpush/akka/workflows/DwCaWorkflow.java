@@ -20,12 +20,11 @@ package org.filteredpush.akka.workflows;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.actor.UntypedActor;
-import akka.actor.UntypedActorFactory;
 
 import org.filteredpush.akka.actors.BasisOfRecordValidator;
+import org.filteredpush.akka.actors.EventDateValidator;
 import org.filteredpush.akka.actors.GEORefValidator;
-import org.filteredpush.akka.actors.InternalDateValidator;
+import org.filteredpush.akka.actors.CollectorCollectedDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
 import org.filteredpush.akka.actors.PullRequestor;
 import org.filteredpush.akka.actors.io.CSVReader;
@@ -174,18 +173,26 @@ public class DwCaWorkflow implements AkkaWorkflow{
         final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class, "org.filteredpush.kuration.services.GeoLocate3",false,certainty,pullTap), "geoValidator");
         /* @end GEORefValidator */
         
-        /* @begin InternalDateValidator
-         * @in borValidatedRecords
+        /* @begin CollectorCollectedDateValidator
+         * @in eventDateValidatedRecords
          * @out dateValidatedRecords
          */
-        final ActorRef dateValidator = system.actorOf(Props.create(InternalDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
-        /* @end InternalDateValidator */
+        final ActorRef dateValidator = system.actorOf(Props.create(CollectorCollectedDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
+        /* @end CollectorCollectedDateValidator */
+        
+        /* @begin EventDateValidator
+         * @in borValidatedRecords
+         * @out eventDateValidatedRecords
+         */
+        final ActorRef eventDateValidator = system.actorOf(Props.create(EventDateValidator.class, dateValidator), "eventDateValidator");
+        /* @end EventDateValidator */
+                
         
         /* @begin BasisOfRecordValidator
          * @in nameValidatedRecords
          * @out borValidatedRecords
          */
-        final ActorRef basisOfRecordValidator = system.actorOf(Props.create(BasisOfRecordValidator.class, "org.filteredpush.kuration.services.BasisOfRecordValidationService", dateValidator), "basisOfRecordValidator");
+        final ActorRef basisOfRecordValidator = system.actorOf(Props.create(BasisOfRecordValidator.class, "org.filteredpush.kuration.services.BasisOfRecordValidationService", eventDateValidator), "basisOfRecordValidator");
         /* @end BasisOfRecordValidator */        
         
         /* @begin ScientificNameValidator

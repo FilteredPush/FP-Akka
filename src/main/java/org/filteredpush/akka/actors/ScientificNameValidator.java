@@ -15,7 +15,7 @@ import org.filteredpush.kuration.util.SpecimenRecord;
 import org.filteredpush.kuration.util.SpecimenRecordTypeConf;
 
 import akka.routing.Broadcast;
-import akka.routing.SmallestMailboxRouter;
+import akka.routing.SmallestMailboxPool;
 
 import java.util.*;
 
@@ -51,7 +51,7 @@ public class ScientificNameValidator extends UntypedActor {
             public ScientificNameValidatorInvocation create() throws Exception {
                 return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
             }
-        }).withRouter(new SmallestMailboxRouter(6)), "workerRouter");
+        }).withRouter(new SmallestMailboxPool(6)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
@@ -75,7 +75,7 @@ public class ScientificNameValidator extends UntypedActor {
             public ScientificNameValidatorInvocation create() throws Exception {
                 return new ScientificNameValidatorInvocation(service, useCache, insertGUID, listener);
             }
-        }).withRouter(new SmallestMailboxRouter(instances)), "workerRouter");
+        }).withRouter(new SmallestMailboxPool(instances)), "workerRouter");
         getContext().watch(workerRouter);
     }
 
