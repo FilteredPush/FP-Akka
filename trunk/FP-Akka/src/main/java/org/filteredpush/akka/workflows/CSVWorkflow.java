@@ -23,6 +23,7 @@ import akka.actor.*;
 import org.filteredpush.akka.actors.GEORefValidator;
 import org.filteredpush.akka.actors.CollectorCollectedDateValidator;
 import org.filteredpush.akka.actors.NewScientificNameValidator;
+import org.filteredpush.akka.actors.PullRequestor;
 import org.filteredpush.akka.actors.io.CSVReader;
 import org.filteredpush.akka.actors.io.CSVWriter;
 import org.filteredpush.akka.actors.io.MongoSummaryWriter;
@@ -131,27 +132,34 @@ public class CSVWorkflow implements AkkaWorkflow{
         ActorSystem system = ActorSystem.create("FpSystem");
 
         final ActorRef scinValidator;
+        
+        final ActorRef pullTap;
 
         if(!sciNameOnly){
             final ActorRef writer = system.actorOf(Props.create(MongoSummaryWriter.class, outputFilename), "JsonWriter");
 
-            final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class, "org.filteredpush.kuration.services.GeoLocate3",false,certainty,writer), "geoValidator");
+            pullTap = system.actorOf(Props.create(PullRequestor.class, writer), "pullRequestor");            
+            
+            final ActorRef geoValidator = system.actorOf(Props.create(GEORefValidator.class, "org.filteredpush.kuration.services.GeoLocate3",false,certainty,pullTap), "geoValidator");
 
             final ActorRef dateValidator = system.actorOf(Props.create(CollectorCollectedDateValidator.class, "org.filteredpush.kuration.services.InternalDateValidationService", geoValidator), "dateValidator");
 
             scinValidator = system.actorOf(Props.create(NewScientificNameValidator.class, true,true, service, taxonomicMode, dateValidator), "scinValidator");
-
+            
         }else{
         	System.out.println("Validating scientific names only, writing to csv.");
             final ActorRef writer = system.actorOf(Props.create(CSVWriter.class, outputFilename, true, includeHigher), "CSVWriter");
 
-            scinValidator = system.actorOf(Props.create(NewScientificNameValidator.class, true,true, service, false, writer), "scinValidator");
+            pullTap = system.actorOf(Props.create(PullRequestor.class, writer), "pullRequestor");
+            
+            scinValidator = system.actorOf(Props.create(NewScientificNameValidator.class, true,true, service, false, pullTap), "scinValidator");
+            
         }
 
         final ActorRef reader = system.actorOf(Props.create(CSVReader.class, inputFilename, scinValidator, recordLimit), "reader");
 
+        pullTap.tell(new SetUpstreamListener(), reader);
         
-        scinValidator.tell(new SetUpstreamListener(), reader);
         // start the calculation
         reader.tell(new Curate(),null);
         system.awaitTermination();
