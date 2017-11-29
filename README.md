@@ -7,6 +7,8 @@ set of predefined data quality control workflows on flat
 DarwinCore data held in MongoDB, DarwinCore archive files with
 a dwc:Occurrence core, or csv files containing DarwinCore data.
 
+[![DOI](https://zenodo.org/badge/76992913.svg)](https://zenodo.org/badge/latestdoi/76992913)
+
 # Documentation
 
 See: http://wiki.datakurator.org/wiki/FP-Akka_User_Documentation
